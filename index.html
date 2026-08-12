@@ -930,33 +930,37 @@ body.rail-off .rl-toggle{inset-inline-end:8px}
 .ring .rv{position:relative;font-size:23px;font-weight:900;line-height:1}
 .ring .rk{position:relative;font-size:10.5px;font-weight:800;color:var(--dim);margin-top:2px}
 
-/* ---- the build guide: four numbered stages ---- */
+/* ---- the build guide: four numbered stages ----
+   a grid of cards, each one a column — nothing can paint over its neighbour */
 .steps{
-  display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-bottom:22px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:10px;margin-bottom:22px;
   background:linear-gradient(180deg,var(--sheen),transparent 45%),var(--card);
   border:1px solid var(--line2);border-radius:18px;padding:14px 16px;
 }
-.step{
-  flex:1;min-width:190px;display:flex;align-items:center;gap:11px;
-  border:1px solid transparent;border-radius:13px;padding:9px 12px;
+/* named gstep: .step is already taken by the +/− bed counter widget, and the
+   collision squeezed these buttons to 28px — the owner's broken screenshot */
+.gstep{
+  display:flex;flex-direction:column;gap:8px;min-width:0;
+  border:1px solid var(--line);border-radius:13px;padding:11px 13px;
+  background:var(--sunk);
 }
-.step.now{border-color:color-mix(in srgb,var(--acc) 40%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent)}
-.step.done{opacity:.75}
+.gstep.now{border-color:color-mix(in srgb,var(--acc) 40%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent)}
+.gstep.done{opacity:.72}
+.st-head{display:flex;align-items:center;gap:9px;min-width:0}
 .st-n{
-  width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
-  font-size:13.5px;font-weight:900;color:var(--dim);
+  width:27px;height:27px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:12.5px;font-weight:900;color:var(--dim);
   background:var(--card2);border:1.5px solid var(--line2);
 }
-.step.now .st-n{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
-.step.done .st-n{color:var(--green);border-color:color-mix(in srgb,var(--green) 50%,transparent)}
-.st-tx{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
-.st-tx b{font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-tx small{font-size:11px;color:var(--dim);font-weight:700;line-height:1.4}
-.st-sep{align-self:center;width:16px;height:2px;border-radius:99px;background:var(--line2);flex:none}
-.steps.slim{padding:10px 16px}
+.gstep.now .st-n{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
+.gstep.done .st-n{color:var(--green);border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.st-head b{font-size:13.5px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gstep small{font-size:11px;color:var(--dim);font-weight:700;line-height:1.5}
+.gstep .btn{align-self:flex-start;margin-top:auto;white-space:nowrap}
+.steps.slim{display:flex;align-items:center;flex-wrap:wrap;padding:10px 16px}
 .steps-done{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--green)}
 .steps-done span{margin-inline-end:6px}
-@media (max-width:980px){.st-sep{display:none}.step{min-width:100%}}
 
 .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
 .card{
@@ -1415,6 +1419,34 @@ body.nopulse .pb-room.warn-hard{animation:none}
 .blank .bi{font-size:38px;margin-bottom:9px;opacity:.75}
 .blank b{display:block;font-size:15.5px;color:var(--tx2);margin-bottom:5px}
 .blank p{font-size:13px;line-height:1.8;max-width:430px;margin:0 auto 14px}
+/* ---- notes ---- */
+.nbtn{
+  background:none;border:none;cursor:pointer;font-size:13px;line-height:1;
+  padding:3px 6px;border-radius:7px;opacity:.35;transition:.12s;flex:none;
+  filter:grayscale(1);
+}
+.nbtn:hover{opacity:1;background:var(--card2);filter:none}
+.nbtn.has{opacity:.95;filter:none}
+.note-line{
+  display:flex;align-items:flex-start;gap:7px;margin-top:7px;
+  background:color-mix(in srgb,var(--amber) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--amber) 28%,transparent);
+  border-radius:10px;padding:7px 11px;font-size:12.5px;line-height:1.6;
+}
+.note-line .ni{flex:none;font-size:12px}
+.note-line .nt{color:var(--tx3);font-weight:600;white-space:pre-wrap;word-break:break-word}
+.chip .ndot{
+  position:absolute;top:-4px;inset-inline-end:-4px;width:13px;height:13px;
+  border-radius:50%;background:var(--amber);border:2px solid var(--card);
+  pointer-events:none;
+}
+.pb-room .ndot2{position:absolute;top:2px;inset-inline-end:3px;font-size:8px;line-height:1;pointer-events:none}
+#noteText{
+  background:var(--card2);border:1px solid var(--line);border-radius:12px;
+  color:var(--tx);padding:11px 13px;font:inherit;font-size:14px;outline:none;line-height:1.7;
+}
+#noteText:focus{border-color:var(--acc)}
+
 /* ---- groups ---- */
 .gdot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--gc,var(--muted));
   box-shadow:0 0 0 1.5px var(--card2)}
@@ -1647,6 +1679,25 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
   </div>
   <div class="ab-body" id="abRooms"></div>
 </div>
+
+<dialog id="dlgNote">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3 id="noteTtl">📝 הערה</h3>
+      <button class="dlg-x" id="noteX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <textarea id="noteText" rows="5" maxlength="500"
+        placeholder="מה חשוב לזכור כאן? למשל: מיטה שבורה, חלון תקוע, שמור למקרה חירום…"
+        style="width:100%;resize:vertical"></textarea>
+      <p class="hint" style="margin-top:8px">ההערה נשמרת בפרויקט ומופיעה בכל מקום שהפריט מופיע. עד 500 תווים.</p>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="noteSave">שמירה</button>
+      <button class="btn" id="noteCancel">ביטול</button>
+      <span class="ab-sp"></span>
+      <button class="btn danger-btn" id="noteDel" hidden>🗑️ מחיקת ההערה</button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="dlgGroups">
   <div class="dlg-in">
@@ -2446,6 +2497,13 @@ function migrate(s){
   s.sims=s.sims.filter(x=>x&&x.assign&&typeof x.assign==='object');
   if(typeof s.zman!=='string'||!s.zman.trim())s.zman='הזמן הבא';
   s.desc=typeof s.desc==='string'?s.desc.slice(0,240):'';
+  /* notes hang off anything: project / wing:<id> / room:<num> / boy:<name> /
+     rule:<id> / group:<id> / sim:<id> */
+  if(!s.notes||typeof s.notes!=='object'||Array.isArray(s.notes))s.notes={};
+  for(const k of Object.keys(s.notes)){
+    const v=String(s.notes[k]==null?'':s.notes[k]).trim().slice(0,500);
+    if(v)s.notes[k]=v; else delete s.notes[k];
+  }
   if(!Array.isArray(s.groups))s.groups=[];
   s.groups=s.groups.filter(g=>g&&g.id).map(g=>({
     id:String(g.id),name:String(g.name||'קבוצה').slice(0,40),
@@ -2536,6 +2594,15 @@ function migrate(s){
   /* drop anything pointing at a boy or room that no longer exists */
   const roomSet=new Set(s.rooms.map(r=>r.num)), boySet=new Set(s.boys);
   s.groups.forEach(g=>{g.members=g.members.filter(b=>boySet.has(b));});
+  const ruleSet=new Set(s.rules.map(r=>r.id)),wingSet2=new Set(s.wings.map(w=>w.id)),
+        groupSet=new Set(s.groups.map(g=>g.id)),simSet=new Set(s.sims.map(x=>x.id));
+  for(const k of Object.keys(s.notes)){
+    const i=k.indexOf(':');
+    if(i<0){if(k!=='project')delete s.notes[k];continue;}
+    const kind=k.slice(0,i),id=k.slice(i+1);
+    const ok={boy:boySet,room:roomSet,wing:wingSet2,rule:ruleSet,group:groupSet,sim:simSet}[kind];
+    if(!ok||!ok.has(id))delete s.notes[k];
+  }
   s.rules=s.rules.filter(r=>{
     if(!r||!r.type)return false;
     if(r.members){r.members=r.members.filter(b=>boySet.has(b));return r.members.length>=2;}
@@ -2747,7 +2814,7 @@ function alarm(txt){
 /* ---------- undo ---------- */
 const UNDO=[];
 const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','buildings',
-                 'templates','groups','sims','zman','desc'];
+                 'templates','groups','sims','zman','desc','notes'];
 function snapshot(){
   const o={};
   for(const k of UNDO_KEYS)o[k]=S[k];
@@ -2988,16 +3055,24 @@ function chipEl(name,ev,inRoom){
   av.className='av'; av.style.background=avColor(name); av.textContent=name[0];
   const sp=document.createElement('span'); sp.textContent=name;
   el.append(av,sp);
+  const bNote=noteOf('boy',name);
+  if(bNote){
+    const nd=document.createElement('span');
+    nd.className='ndot'; nd.title=bNote;
+    el.appendChild(nd);
+  }
   if(inRoom){
+    el.appendChild(noteBtn('boy',name,'הערה על '+name));
     const lk=document.createElement('button');
     lk.className='lock'; lk.textContent=locked?'🔒':'🔓';
     lk.title=locked?'שחרור נעילה':'נעילה בחדר — לא יזוז בגרירה';
     lk.addEventListener('click',e=>{e.stopPropagation();toggleLock(name);});
     el.appendChild(lk);
   }
-  el.title=locked?'נעול בחדר — לחצו על המנעול לשחרור'
+  el.title=(bNote?'📝 '+bNote+'\n':'')
+    +(locked?'נעול בחדר — לחצו על המנעול לשחרור'
     :inRoom?'לחיצה פותחת את רשימת החדרים · גרירה מזיזה ישירות · לחיצה כפולה מחזירה לממתינים'
-    :'לחיצה פותחת למטה את כל החדרים · אפשר גם לגרור';
+    :'לחיצה פותחת למטה את כל החדרים · אפשר גם לגרור');
   el.addEventListener('dragstart',e=>{
     if(locked){e.preventDefault();return;}
     e.dataTransfer.setData('text/plain',name);
@@ -3342,18 +3417,16 @@ function stepperEl(){
   }
   const firstOpen=steps.findIndex(s=>!s.done);
   steps.forEach((s,i)=>{
-    const st=el('div','step'+(s.done?' done':'')+(i===firstOpen?' now':''));
-    const n=el('span','st-n',s.done?'✓':String(i+1));
-    const tx=el('div','st-tx');
-    tx.append(el('b',null,s.ico+' '+s.t),el('small',null,s.d));
-    st.append(n,tx);
+    const st=el('div','gstep'+(s.done?' done':'')+(i===firstOpen?' now':''));
+    const head=el('div','st-head');
+    head.append(el('span','st-n',s.done?'✓':String(i+1)),el('b',null,s.ico+' '+s.t));
+    st.append(head,el('small',null,s.d));
     if(!s.done){
       const b=el('button','btn'+(i===firstOpen?' accent':' mini'),s.btn);
       b.addEventListener('click',s.act);
       st.appendChild(b);
     }
     box.appendChild(st);
-    if(i<steps.length-1)box.appendChild(el('span','st-sep'));
   });
   return box;
 }
@@ -3391,7 +3464,12 @@ function heroEl(ev){
   zmanEl.hidden=false;
   h1.appendChild(zmanEl);
   L.appendChild(h1);
-  L.appendChild(el('div','empty-note','לחיצה על שם הזמן משנה אותו · הכול נשמר מקומית במחשב הזה'));
+  const heroNote=el('div','empty-note');
+  heroNote.append(document.createTextNode('לחיצה על שם הזמן משנה אותו · הכול נשמר מקומית במחשב הזה '));
+  heroNote.appendChild(noteBtn('project','','הערה על הפרויקט'));
+  L.appendChild(heroNote);
+  const pnl=noteLine('project','');
+  if(pnl)L.appendChild(pnl);
   hero.appendChild(L);
 
   const ring=el('div','ring');
@@ -3604,8 +3682,11 @@ function renderWing(host,ev){
     });
     barRow.appendChild(sel);
   }
+  barRow.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
   barRow.appendChild(mini('⚙️ פריסה וחדרים',()=>openWing(w.id)));
   host.appendChild(barRow);
+  const wnl=noteLine('wing',w.id);
+  if(wnl){wnl.style.marginTop='-6px';wnl.style.marginBottom='14px';host.appendChild(wnl);}
 
   if(!rooms.length){
     const box=el('div','blank');
@@ -3698,7 +3779,11 @@ function pbRoom(room,ev,at,c){
     if(gseen.size>=3)break;
   }
   d.appendChild(dots);
-  d.title=`חדר ${room.num} · ${occ.length}/${room.beds}`+(occ.length?'\n'+occ.join('\n'):'');
+  const rNote=noteOf('room',room.num);
+  if(rNote)d.appendChild(el('span','ndot2','📝'));
+  d.title=`חדר ${room.num} · ${occ.length}/${room.beds}`
+    +(rNote?'\n📝 '+rNote:'')
+    +(occ.length?'\n'+occ.join('\n'):'');
   d.addEventListener('dragover',e=>{
     e.preventDefault();
     d.classList.add(occupants(room.num).length>=room.beds?'full-over':'over');
@@ -3729,12 +3814,15 @@ function roomStrip(ev){
   box.style.setProperty('--ac',RC.get(room.num)||ROOM_COLORS[0]);
   const head=el('div','pbs-head');
   head.append(el('b',null,'חדר '+room.num),
-              el('span','occ'+(occ.length>=room.beds?' fullr':''),`${occ.length}/${room.beds}`));
+              el('span','occ'+(occ.length>=room.beds?' fullr':''),`${occ.length}/${room.beds}`),
+              noteBtn('room',room.num,'הערה על חדר '+room.num));
   const x=el('button','ab-x','✕');
   x.title='סגירה';
   x.addEventListener('click',e=>{e.stopPropagation();RSEL=null;render();});
   head.appendChild(x);
   box.appendChild(head);
+  const nl=noteLine('room',room.num);
+  if(nl)box.appendChild(nl);
   const chips=el('div','pbs-chips');
   for(const b of occ)chips.appendChild(chipEl(b,ev,true));
   if(!occ.length)chips.appendChild(el('span','empty-note','החדר ריק — גררו לכאן בחור, או לחצו על שם ואז על החדר'));
@@ -3765,6 +3853,7 @@ function roomEl(room,ev){
   const door=el('div','fp-door'); door.appendChild(el('i'));
   const head=el('div','fp-head');
   head.appendChild(el('span','no',room.num));
+  head.appendChild(noteBtn('room',room.num,'הערה על חדר '+room.num));
   head.appendChild(el('span','occ'+(free?'':' fullr'),`${occ.length}/${room.beds}`));
 
   const slots=el('div','fp-slots');
@@ -3775,7 +3864,9 @@ function roomEl(room,ev){
     bed.appendChild(el('span',null,'פנוי'));
     slots.appendChild(bed);
   }
-  card.append(door,head,slots);
+  const rnl=noteLine('room',room.num);
+  if(rnl){rnl.style.margin='0 10px 9px';card.append(door,head,slots,rnl);}
+  else card.append(door,head,slots);
 
   card.addEventListener('dragover',e=>{
     e.preventDefault();
@@ -3819,8 +3910,17 @@ function renderAssign(ev){
   av.style.background=p.bg; av.style.color=p.fg; av.textContent=name[0];
   $('#abName').textContent=name;
   const cur=S.assign[name];
-  $('#assignBar').querySelector('.ab-hint').textContent=
-    cur?`נמצא עכשיו בחדר ${cur} — בחרו חדר אחר`:'בחרו חדר — כל החדרים כאן, בלי לגלול';
+  const hint=$('#assignBar').querySelector('.ab-hint');
+  hint.innerHTML='';
+  hint.appendChild(document.createTextNode(
+    cur?`נמצא עכשיו בחדר ${cur} — בחרו חדר אחר`:'בחרו חדר — כל החדרים כאן, בלי לגלול'));
+  hint.appendChild(noteBtn('boy',name,'הערה על '+name));
+  const abn=noteOf('boy',name);
+  if(abn){
+    const sp2=el('span',null,' 📝 '+(abn.length>60?abn.slice(0,60)+'…':abn));
+    sp2.style.color='var(--amber)';
+    hint.appendChild(sp2);
+  }
   $('#abPool').hidden=!cur;
 
   const body=$('#abRooms'); body.innerHTML='';
@@ -3924,6 +4024,8 @@ function renderRules(ev){
       const dt=document.createElement('div'); dt.className='rdetail'; dt.textContent=item.detail;
       txt.appendChild(dt);
     }
+    const rn=noteLine('rule',r.id);
+    if(rn){rn.style.marginTop='4px';txt.appendChild(rn);}
 
     const stat=document.createElement('span');
     if(r.enabled===false){stat.className='rstat pend';stat.textContent='כבוי';}
@@ -3944,7 +4046,7 @@ function renderRules(ev){
     edit.addEventListener('click',()=>startRuleEdit(r.id));
 
     if(editingRule===r.id)row.classList.add('editing');
-    row.append(sw,lvl,txt,stat,edit,del);
+    row.append(sw,lvl,txt,stat,noteBtn('rule',r.id,'הערה על הכלל'),edit,del);
     box.appendChild(row);
   }
 }
@@ -3984,7 +4086,10 @@ function renderSims(){
     if(ev.hard===0&&ev.soft===0) vh+=`<b class="g">✓ נקי</b> `;
     st.innerHTML=`${placed}/${S.boys.length} משובצים · ${vh}`;
 
+    const snl=noteLine('sim',sim.id);
+    if(snl){snl.style.marginTop='2px';card.appendChild(snl);}
     const btns=document.createElement('div'); btns.className='sbtns';
+    btns.appendChild(noteBtn('sim',sim.id,'הערה על "'+sim.name+'"'));
     const bLoad=document.createElement('button'); bLoad.className='btn mini'; bLoad.textContent='טעינה';
     bLoad.addEventListener('click',e=>{e.stopPropagation();loadSim(sim);});
     const bUpd=document.createElement('button'); bUpd.className='btn mini'; bUpd.textContent='עדכון'; bUpd.title='דריסת הסימולציה במצב הנוכחי';
@@ -4409,7 +4514,9 @@ function renderEdit(){
     inp.addEventListener('input',()=>{b.name=inp.value;});
     const x=document.createElement('button'); x.className='ed-x'; x.textContent='✕'; x.title='הסרה';
     x.addEventListener('click',()=>{ED.boys.splice(i,1);renderEdit();});
-    row.append(inp,x); bl.appendChild(row);
+    row.appendChild(inp);
+    if(b.orig)row.appendChild(noteBtn('boy',b.orig,'הערה על '+b.orig));
+    row.appendChild(x); bl.appendChild(row);
   });
   if(!shownB){
     const d=document.createElement('span'); d.className='empty-note';
@@ -4506,6 +4613,8 @@ $('#btnEditApply').addEventListener('click',()=>{
   ED.boys.forEach(b=>{const n=b.name.trim();if(b.orig&&n&&b.orig!==n)renB[b.orig]=n;});
   ED.rooms.forEach(r=>{if(r.orig&&r.orig!==r.num)renR[r.orig]=r.num;});
   const mapB=n=>renB[n]||n, mapR=n=>renR[n]||n;
+  for(const [o,n] of Object.entries(renB))moveNote('boy',o,n);
+  for(const [o,n] of Object.entries(renR))moveNote('room',o,n);
   // commit
   S.boys=names;
   /* a wing carries a building and a corridor layout — the list editor must not drop them */
@@ -4554,6 +4663,7 @@ $('#btnEditApply').addEventListener('click',()=>{
 function dropRooms(nums){
   const set=new Set(nums.map(String));
   if(!set.size)return;
+  for(const n of set)delete S.notes['room:'+n];
   S.rooms=S.rooms.filter(r=>!set.has(r.num));
   for(const b of Object.keys(S.assign))if(set.has(S.assign[b]))delete S.assign[b];
   S.locks=S.locks.filter(b=>S.assign[b]);
@@ -4571,6 +4681,70 @@ function trimOverfull(){
     });
   }
   S.locks=S.locks.filter(b=>S.assign[b]);
+}
+
+/* =====================================================================
+   =====================  notes: on anything, anywhere  =================
+   ===================================================================== */
+const noteKey=(kind,id)=>kind==='project'?'project':kind+':'+id;
+const noteOf=(kind,id)=>S.notes[noteKey(kind,id)]||'';
+/* renames must carry the note along — the note belongs to the thing, not the string */
+function moveNote(kind,oldId,newId){
+  const a=noteKey(kind,oldId),b=noteKey(kind,newId);
+  if(a===b||!S.notes[a])return;
+  S.notes[b]=S.notes[a]; delete S.notes[a];
+}
+let NOTE_ED=null;
+function openNote(kind,id,title){
+  NOTE_ED={kind,id};
+  $('#noteTtl').textContent='📝 '+(title||'הערה');
+  const cur=noteOf(kind,id);
+  $('#noteText').value=cur;
+  $('#noteDel').hidden=!cur;
+  $('#dlgNote').showModal();
+  $('#noteText').focus();
+}
+$('#noteCancel').addEventListener('click',()=>$('#dlgNote').close());
+$('#noteX').addEventListener('click',()=>$('#dlgNote').close());
+$('#noteSave').addEventListener('click',()=>{
+  if(!NOTE_ED)return;
+  const v=$('#noteText').value.trim().slice(0,500);
+  snapshot();
+  const k=noteKey(NOTE_ED.kind,NOTE_ED.id);
+  if(v)S.notes[k]=v; else delete S.notes[k];
+  save();$('#dlgNote').close();
+  refreshNoteHosts();
+  toast(v?'ההערה נשמרה 📝':'ההערה נמחקה');
+});
+$('#noteDel').addEventListener('click',()=>{
+  if(!NOTE_ED)return;
+  snapshot();
+  delete S.notes[noteKey(NOTE_ED.kind,NOTE_ED.id)];
+  save();$('#dlgNote').close();
+  refreshNoteHosts();
+  toast('ההערה נמחקה');
+});
+/* repaint whichever surfaces can be showing notes right now */
+function refreshNoteHosts(){
+  render();
+  if($('#dlgGroups').open)renderGroups();
+  if($('#dlgEdit').open&&ED)renderEdit();
+}
+/* the 📝 button that hangs off any row or bar */
+function noteBtn(kind,id,title){
+  const has=!!noteOf(kind,id);
+  const b=el('button','nbtn'+(has?' has':''),has?'📝':'🗒️');
+  b.title=has?noteOf(kind,id):'הוספת הערה';
+  b.addEventListener('click',e=>{e.stopPropagation();openNote(kind,id,title);});
+  return b;
+}
+/* an inline strip showing the note text where the thing itself lives */
+function noteLine(kind,id){
+  const v=noteOf(kind,id);
+  if(!v)return null;
+  const d=el('div','note-line');
+  d.append(el('span','ni','📝'),el('span','nt',v));
+  return d;
 }
 
 /* =====================================================================
@@ -4609,6 +4783,7 @@ function renderGroups(){
     const cnt=el('span','gr-n',`${g.members.length} בחורים`);
     const pick=el('button','btn mini',GSEL===g.id?'סגירת הבחירה':'בחירת בחורים');
     pick.addEventListener('click',()=>{GSEL=GSEL===g.id?null:g.id;renderGroups();});
+    const gn2=noteBtn('group',g.id,'הערה על '+g.name);
     const del=el('button','ed-x','✕');
     del.title='מחיקת הקבוצה';
     del.addEventListener('click',()=>{
@@ -4619,8 +4794,10 @@ function renderGroups(){
       if(railGroup===g.id)railGroup=null;
       save();renderGroups();render();
     });
-    row.append(sw,nm,cnt,pick,del);
+    row.append(sw,nm,cnt,pick,gn2,del);
     box.appendChild(row);
+    const gl=noteLine('group',g.id);
+    if(gl)box.appendChild(gl);
   });
   /* the member picker for whichever group is open */
   const g=GSEL?S.groups.find(x=>x.id===GSEL):null;
@@ -5532,6 +5709,7 @@ $('#wgSave').addEventListener('click',()=>{
   const ren={};
   rooms.forEach(c=>{if(c.orig&&c.orig!==c.num)ren[c.orig]=c.num;});
   const mapR=n=>(Object.prototype.hasOwnProperty.call(ren,n)?ren[n]:n);
+  for(const [o,n] of Object.entries(ren))moveNote('room',o,n);
   const kept=new Set(rooms.map(c=>c.orig).filter(Boolean));
   const gone=(EDW.id?roomsOf(EDW.id):[]).filter(r=>!kept.has(r.num)).map(r=>r.num);
 
@@ -6221,6 +6399,8 @@ const ACT_LEVEL={
   addWing:'full',renameWing:'full',removeWing:'full',
   // app
   setZman:'act',display:'act',setting:'full',clearAll:'full',reset:'full',
+  // notes
+  setNote:'act',
   // itself
   identity:'act',setLevel:'act'
 };
@@ -6231,7 +6411,7 @@ const ACT_HE={move:'שיבוץ',swap:'החלפה',auto:'שיבוץ אוטומט�
   addRoom:'הוספת חדר',editRoom:'עריכת חדר',removeRoom:'מחיקת חדר',
   addWing:'הוספת אגף',renameWing:'שינוי שם אגף',removeWing:'מחיקת אגף',
   setZman:'שם הזמן',display:'שינוי תצוגה',setting:'הגדרות מערכת',clearAll:'ניקוי מלא',reset:'איפוס',
-  identity:'שם ואימוג׳י',setLevel:'רמת הרשאה'};
+  setNote:'הערה',identity:'שם ואימוג׳י',setLevel:'רמת הרשאה'};
 const DESTRUCTIVE=new Set(['deleteRule','deleteAllRules','deleteSim','clear','clearAll','reset',
                            'removeBoy','removeRoom','removeWing']);
 const LEVEL_NOTE={
@@ -6272,6 +6452,8 @@ const ACT_DOC={
   renameWing:'{"type":"renameWing","wing":"ישן","newName":"חדש"}',
   removeWing:'{"type":"removeWing","wing":"שם"}   ← מוחק גם את כל חדריו',
   setZman:'{"type":"setZman","value":"זמן חורף תשפ״ח"}   ← שם הפרויקט בכותרת',
+  setNote:'{"type":"setNote","on":"boy|room|wing|rule|group|sim|project","id":"שם/מספר/אינדקס כלל","text":"ההערה"}\n'
+         +'   ← הצמדת הערה (text ריק מוחק). לכלל: id = מספרו ברשימה. לפרויקט: בלי id.',
   identity:'{"type":"identity","name":"שם חדש","emoji":"🧠"}   ← שינוי השם והאימוג׳י שלך עצמך',
   setLevel:'{"type":"setLevel","level":"advise|act|full"}   ← העלאה תדרוש אישור מהמשתמש',
   display:'{"type":"display","theme":"light"}   ← theme dark/light/auto · accent · text 90-125 ·\n'
@@ -6348,6 +6530,16 @@ function stateBrief(){
     ev.list.forEach((it,i)=>lines.push(`${i+1}. ${ruleText(it.rule)} [${it.rule.level==='hard'?'בלתי מתפשר':'עדיף'}] — ${it.st==='violated'?'מופר!':it.st==='ok'?'מתקיים':it.st==='off'?'כבוי':'ממתין'}`));
   }else lines.push('כללים: אין');
   lines.push('סימולציות שמורות: '+(S.sims.map(s=>s.name).join(', ')||'אין'));
+  const nkeys=Object.keys(S.notes);
+  if(nkeys.length){
+    lines.push('הערות:');
+    for(const k of nkeys.slice(0,40)){
+      const i=k.indexOf(':');
+      const kind=i<0?'פרויקט':{boy:'בחור',room:'חדר',wing:'אגף',rule:'כלל',group:'קבוצה',sim:'סימולציה'}[k.slice(0,i)]||k.slice(0,i);
+      const id=i<0?'':' '+k.slice(i+1);
+      lines.push(`- ${kind}${id}: ${S.notes[k]}`);
+    }
+  }
   return lines.join('\n');
 }
 function addMsg(role,text){
@@ -6384,9 +6576,13 @@ function actionLabel(a){
     setLevel:`שינוי רמת ההרשאה שלי ל"${LEVEL_SHORT[a.level]||a.level}"`,
     display:'שינוי הגדרות תצוגה',
     setting:`שינוי ההגדרה ${a.key}`,
+    setNote:`הערה על ${ACT_HE_NOTE(a.on)} ${a.id||''}`.trim(),
     clearAll:'ניקוי הלוח כולל שחרור נעולים',
     reset:'איפוס מלא של התוכנה'
   }[a.type]||a.type;
+}
+function ACT_HE_NOTE(kind){
+  return {boy:'הבחור',room:'חדר',wing:'האגף',rule:'כלל',group:'הקבוצה',sim:'הסימולציה',project:'הפרויקט'}[kind]||kind;
 }
 function runActions(acts){
   const done=[],fail=[],blocked=[],declined=[];
@@ -6591,6 +6787,7 @@ function runActions(acts){
         if(S.boys.includes(nn))throw new Error('השם "'+nn+'" כבר קיים');
         snapshot();
         S.boys[i]=nn;
+        moveNote('boy',a.boy,nn);
         if(S.assign[a.boy]){S.assign[nn]=S.assign[a.boy];delete S.assign[a.boy];}
         S.locks=S.locks.map(b=>b===a.boy?nn:b);
         S.sims.forEach(s=>{if(s.assign[a.boy]){s.assign[nn]=s.assign[a.boy];delete s.assign[a.boy];}});
@@ -6612,6 +6809,7 @@ function runActions(acts){
         if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
         snapshot();
         S.boys=S.boys.filter(b=>b!==a.boy);
+        delete S.notes['boy:'+a.boy];
         delete S.assign[a.boy];
         S.locks=S.locks.filter(b=>b!==a.boy);
         S.sims.forEach(s=>delete s.assign[a.boy]);
@@ -6644,6 +6842,7 @@ function runActions(acts){
           if(!nn)throw new Error('מספר החדר החדש ריק');
           if(nn!==old&&roomBy(nn))throw new Error('חדר '+nn+' כבר קיים');
           r.num=nn;
+          moveNote('room',old,nn);
           for(const b of Object.keys(S.assign))if(S.assign[b]===old)S.assign[b]=nn;
           S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(s.assign[b]===old)s.assign[b]=nn;});
           S.rules.forEach(x=>{if(x.room===old)x.room=nn;});
@@ -6752,6 +6951,40 @@ function runActions(acts){
         aiCfg().level=want;save();applyAiIdentity();
         if($('#dlgSettings').open){paintAiLevel();renderSetStats();}
         done.push(`רמת ההרשאה: ${LEVEL_SHORT[cur]} ← ${LEVEL_SHORT[want]}`);
+      }
+      else if(a.type==='setNote'){
+        const kind=String(a.on||'').trim();
+        const txt=String(a.text==null?'':a.text).trim().slice(0,500);
+        let id='';
+        if(kind==='project')id='';
+        else if(kind==='boy'){
+          if(!S.boys.includes(a.id))throw new Error('שם לא קיים: '+a.id);
+          id=a.id;
+        }else if(kind==='room'){
+          if(!roomBy(String(a.id)))throw new Error('חדר לא קיים: '+a.id);
+          id=String(a.id);
+        }else if(kind==='wing'){
+          const w=S.wings.find(x=>x.name===a.id||x.id===a.id);
+          if(!w)throw new Error('אגף לא קיים: '+a.id);
+          id=w.id;
+        }else if(kind==='rule'){
+          const i=(+a.id)-1;
+          if(!(i>=0&&i<S.rules.length))throw new Error('אין כלל מספר '+a.id);
+          id=S.rules[i].id;
+        }else if(kind==='group'){
+          const g=S.groups.find(x=>x.name===a.id||x.id===a.id);
+          if(!g)throw new Error('קבוצה לא קיימת: '+a.id);
+          id=g.id;
+        }else if(kind==='sim'){
+          const s2=S.sims.find(x=>x.name===a.id||x.id===a.id);
+          if(!s2)throw new Error('אין סימולציה בשם '+a.id);
+          id=s2.id;
+        }else throw new Error('יעד הערה לא מוכר: '+kind);
+        snapshot();
+        const k=noteKey(kind,id);
+        if(txt)S.notes[k]=txt; else delete S.notes[k];
+        save();render();
+        done.push(txt?`📝 הערה על ${ACT_HE_NOTE(kind)} ${a.id||''}`.trim():'ההערה נמחקה');
       }
       else if(a.type==='setting'){
         const allowed=['sound','flash','pulse','suggest','confirm','aiFab'];
