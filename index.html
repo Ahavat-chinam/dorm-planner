@@ -860,8 +860,9 @@ body.no-project #aiFab,body.no-project #aiPanel{display:none!important}
 body.rail-off #rail{transform:translateX(-100%)}
 #rail.over{background:color-mix(in srgb,var(--acc) 12%,var(--card));box-shadow:inset 0 0 0 2.5px var(--acc)}
 .rl-head{
-  display:flex;align-items:center;gap:8px;padding:13px 14px 10px;flex:none;
+  display:flex;align-items:center;gap:8px;padding:14px 16px 11px;flex:none;
   border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 6%,transparent),transparent 70%);
 }
 .rl-head h2{margin:0;font-size:13px;flex:none}
 .rl-head h2::before{width:18px;height:4px}
@@ -874,10 +875,23 @@ body.rail-off #rail{transform:translateX(-100%)}
 .rl-srch .search{width:100%}
 .rl-chips{
   flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
-  padding:6px 12px 16px;display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start;
+  padding:6px 10px 16px;display:flex;flex-direction:column;gap:5px;
 }
-.rl-chips .chip{max-width:100%;font-size:13.5px;padding:6px 11px 6px 9px}
-.rl-chips .chip>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* in the rail a boy is a clean row, not a scattered sticky note */
+.rl-chips .chip{
+  width:100%;transform:none!important;border-radius:11px;
+  background:var(--card2);box-shadow:none;
+  padding:7px 11px;font-size:13.5px;justify-content:flex-start;
+  transition:border-color .12s,background .12s;
+}
+.rl-chips .chip:hover{
+  border-color:var(--hover2);background:var(--raise);
+  transform:none!important;box-shadow:none;
+}
+.rl-chips .chip>span:not(.av):not(.gdot){
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;
+}
+.rl-chips .chip .gdot{order:9;margin-inline-start:auto}
 .rl-chips::-webkit-scrollbar{width:9px}
 .rl-chips::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
 .rl-foot{
@@ -915,6 +929,34 @@ body.rail-off .rl-toggle{inset-inline-end:8px}
 .ring::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--card)}
 .ring .rv{position:relative;font-size:23px;font-weight:900;line-height:1}
 .ring .rk{position:relative;font-size:10.5px;font-weight:800;color:var(--dim);margin-top:2px}
+
+/* ---- the build guide: four numbered stages ---- */
+.steps{
+  display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-bottom:22px;
+  background:linear-gradient(180deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:18px;padding:14px 16px;
+}
+.step{
+  flex:1;min-width:190px;display:flex;align-items:center;gap:11px;
+  border:1px solid transparent;border-radius:13px;padding:9px 12px;
+}
+.step.now{border-color:color-mix(in srgb,var(--acc) 40%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent)}
+.step.done{opacity:.75}
+.st-n{
+  width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:13.5px;font-weight:900;color:var(--dim);
+  background:var(--card2);border:1.5px solid var(--line2);
+}
+.step.now .st-n{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
+.step.done .st-n{color:var(--green);border-color:color-mix(in srgb,var(--green) 50%,transparent)}
+.st-tx{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.st-tx b{font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-tx small{font-size:11px;color:var(--dim);font-weight:700;line-height:1.4}
+.st-sep{align-self:center;width:16px;height:2px;border-radius:99px;background:var(--line2);flex:none}
+.steps.slim{padding:10px 16px}
+.steps-done{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--green)}
+.steps-done span{margin-inline-end:6px}
+@media (max-width:980px){.st-sep{display:none}.step{min-width:100%}}
 
 .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
 .card{
@@ -1081,6 +1123,68 @@ body.nopulse .fp-room.warn-hard{animation:none}
 .wg-grid .fp-room{flex:auto;border-radius:18px}
 .wg-grid .fp-door{display:none}
 
+/* ============ the spatial plan: drawn to shape, corridor and all ============ */
+.pboard{position:relative;margin:4px auto;direction:ltr}
+.pb-hall{
+  position:absolute;width:62px;height:62px;box-sizing:border-box;
+  background:
+    radial-gradient(circle at 30% 40%,var(--glow) 1.5px,transparent 2px),
+    color-mix(in srgb,var(--muted) 14%,transparent);
+  border:1.5px solid color-mix(in srgb,var(--muted) 30%,transparent);
+}
+.pb-hall.cN{border-top-color:transparent}
+.pb-hall.cS{border-bottom-color:transparent}
+.pb-hall.cE{border-right-color:transparent}
+.pb-hall.cW{border-left-color:transparent}
+.pb-svc{
+  position:absolute;width:56px;height:56px;margin:3px;border-radius:12px;
+  border:1.5px dashed var(--dash);background:var(--sunk);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  color:var(--muted);text-align:center;direction:rtl;overflow:hidden;
+}
+.pb-svc .si{font-size:16px;line-height:1.1}
+.pb-svc .sn{font-size:8.5px;font-weight:800;line-height:1.2;max-width:52px;overflow:hidden}
+.pb-svc.dead{background:repeating-linear-gradient(45deg,var(--sunk) 0 6px,transparent 6px 12px);opacity:.6}
+.pb-svc.entrance{border-style:solid;border-color:color-mix(in srgb,var(--green) 45%,transparent);color:var(--green);background:color-mix(in srgb,var(--green) 7%,transparent)}
+.pb-svc.exit{border-style:solid;border-color:color-mix(in srgb,var(--red) 40%,transparent);color:var(--red2);background:color-mix(in srgb,var(--red) 6%,transparent)}
+.pb-room{
+  position:absolute;width:56px;height:56px;margin:3px;border-radius:12px;cursor:pointer;
+  background:linear-gradient(168deg,var(--roomA),var(--roomB));
+  border:1.5px solid var(--line2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  direction:rtl;transition:border-color .13s,box-shadow .13s,transform .13s;
+}
+.pb-room::after{content:'';position:absolute;background:var(--ac);opacity:.9;border-radius:99px}
+.pb-room.dN::after{top:-2px;left:50%;transform:translateX(-50%);width:22px;height:4px}
+.pb-room.dS::after{bottom:-2px;left:50%;transform:translateX(-50%);width:22px;height:4px}
+.pb-room.dE::after{right:-2px;top:50%;transform:translateY(-50%);height:22px;width:4px}
+.pb-room.dW::after{left:-2px;top:50%;transform:translateY(-50%);height:22px;width:4px}
+.pb-room:hover{transform:translateY(-2px);border-color:var(--ac);box-shadow:0 6px 14px var(--sh2)}
+.pb-room .no{font-size:15px;font-weight:900;color:var(--ac);line-height:1.1;max-width:52px;overflow:hidden}
+.pb-room .oc{font-size:9.5px;font-weight:800;color:var(--dim)}
+.pb-room .oc.fullr{color:var(--green)}
+.pb-room .gds{display:flex;gap:2px;min-height:5px}
+.pb-room.open{border-color:var(--acc);box-shadow:0 0 0 2.5px color-mix(in srgb,var(--acc) 40%,transparent)}
+.pb-room.target{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 40%,transparent)}
+.pb-room.over{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 45%,transparent);transform:translateY(-2px)}
+.pb-room.full-over{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.35)}
+.pb-room.warn-hard{border-color:var(--red);animation:roomAlarm 1.1s infinite}
+.pb-room.warn-soft{border-color:rgba(251,191,36,.6)}
+.pb-room.hasHit{border-color:rgba(34,211,238,.7);box-shadow:0 0 12px rgba(34,211,238,.3)}
+body.nopulse .pb-room.warn-hard{animation:none}
+/* the occupants of the room clicked on the plan */
+.pb-strip{
+  margin-top:12px;border:1px solid var(--line2);border-radius:16px;
+  border-inline-start:4px solid var(--ac);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 8%,transparent),transparent 60%),var(--card);
+  padding:11px 15px;
+}
+.pbs-head{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.pbs-head b{font-size:15px}
+.pbs-head .ab-x{margin-inline-start:auto}
+.pbs-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pbs-chips .chip{width:auto;min-width:150px}
+
 /* =====================================================================
    ====================  ASSIGN DRAWER (no scrolling)  =================
    ===================================================================== */
@@ -1149,20 +1253,22 @@ body.nopulse .fp-room.warn-hard{animation:none}
 .tpl-t b{font-size:14px;font-weight:900}
 .tpl-d{font-size:11.5px;color:var(--dim);font-weight:600;line-height:1.65}
 .cell-ed{margin-top:12px}
-/* a template at a glance: filled blocks are rooms, icons are what sits between them */
-.tpl-prev{
-  display:flex;flex-direction:column;gap:3px;margin-top:2px;
+/* a plan at a glance, shape and all — used on wing cards and template cards */
+.mini2{
+  display:grid;gap:1.5px;margin-top:2px;justify-content:start;direction:ltr;
   padding:8px 9px;border-radius:11px;background:var(--sunk2);border:1px solid var(--line);
+  overflow:hidden;
 }
-.tpl-prow{display:flex;gap:3px;min-height:16px;align-items:center;flex-wrap:nowrap;overflow:hidden}
-.tpl-pc{
-  flex:0 0 auto;min-width:16px;height:16px;border-radius:4px;
-  display:grid;place-items:center;font-size:10px;line-height:1;
-  border:1px dashed var(--line2);
-}
-.tpl-pc.rm{background:color-mix(in srgb,var(--acc) 45%,transparent);border:none;min-width:19px}
-.tpl-pc.empty{border-style:solid;opacity:.4}
-.tpl-prev .mini-hall{margin:1px 0}
+.mini2-c{width:var(--mc,7px);height:var(--mc,7px);border-radius:2px;background:var(--line2)}
+.mini2-c.void{background:none}
+.mini2-c.hall{background:color-mix(in srgb,var(--muted) 40%,transparent);border-radius:0}
+.mini2-c.svc{background:none;border:1px dashed var(--line2)}
+.mini2-c.r0{background:color-mix(in srgb,var(--dim) 35%,transparent)}
+.mini2-c.r1{background:color-mix(in srgb,var(--acc) 45%,transparent)}
+.mini2-c.r2{background:var(--acc)}
+.mini2-c.rf{background:var(--green)}
+.mini2-c.rx{background:var(--red)}
+.mini2-empty{font-size:10.5px;color:var(--muted);font-weight:700}
 #tmList .tpl{cursor:default}
 #tmList .tpl:hover{transform:none;box-shadow:none;border-color:var(--line2)}
 .tpl-x{
@@ -1178,50 +1284,51 @@ body.nopulse .fp-room.warn-hard{animation:none}
 .wiz-f label{font-size:11.5px;font-weight:800;color:var(--dim)}
 .wiz-f input{width:104px;text-align:center;font-weight:900}
 
-/* the editor: two tracks either side of a corridor */
+/* ================= the free layout editor: paint on a grid =================
+   pick a tool, drag — the corridor bends wherever the pointer goes, and cells
+   can sit on any of its four sides */
+.le-tools{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.le-tool{
+  background:var(--card2);border:1px solid var(--line);color:var(--dim);
+  font:inherit;font-size:12px;font-weight:800;padding:6px 11px;border-radius:9px;
+  cursor:pointer;transition:.12s;
+}
+.le-tool:hover{color:var(--tx);border-color:var(--hover)}
+.le-tool.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc);border-color:transparent}
+.le-more{
+  background:var(--card2);border:1px solid var(--line);color:var(--dim);
+  font:inherit;font-size:12px;font-weight:800;padding:6px 8px;border-radius:9px;
+}
+.le-more.on{border-color:var(--acc);color:var(--tx)}
 .lay{
   background:var(--sunk);border:1px solid var(--line);border-radius:16px;
-  padding:13px 12px;overflow-x:auto;
+  padding:10px;overflow:auto;direction:ltr;
 }
-.lay-in{display:flex;flex-direction:column;gap:7px;min-width:min-content}
-.lay-side{display:flex;align-items:center;gap:6px;min-height:62px}
-.lay-tag{
-  flex:none;font-size:10.5px;font-weight:900;color:var(--muted);
-  background:var(--card2);border:1px solid var(--line);border-radius:8px;
-  padding:4px 7px;align-self:center;white-space:nowrap;
+.le-grid{
+  position:relative;touch-action:none;
+  width:calc(26px * 26);height:calc(26px * 12);
+  background-image:
+    linear-gradient(to left,var(--line) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--line) 1px,transparent 1px);
+  background-size:26px 26px;border-radius:8px;
 }
-.lay-hall{
-  height:16px;border-radius:99px;margin:1px 22px;
-  background:repeating-linear-gradient(90deg,var(--line2) 0 9px,transparent 9px 17px);
-  display:flex;align-items:center;justify-content:center;
+.le-grid.tool-paint{cursor:crosshair}
+.le-grid.tool-erase{cursor:not-allowed}
+.le-grid.tool-move{cursor:grab}
+.le-c{
+  position:absolute;width:24px;height:24px;border-radius:5px;
+  display:grid;place-items:center;pointer-events:none;
+  background:var(--card2);border:1px solid var(--line2);
 }
-.lay-hall span{font-size:9.5px;font-weight:900;letter-spacing:2.5px;color:var(--muted);background:var(--sunk);padding:0 9px}
-.lay-c{
-  flex:0 0 auto;min-width:70px;border-radius:11px;padding:6px 8px;cursor:grab;
-  border:1.5px solid var(--line2);background:var(--card2);
-  display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;transition:.12s;
-}
-.lay-c:hover{border-color:var(--hover2)}
-.lay-c.sel{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 32%,transparent)}
-.lay-c.dragging{opacity:.35}
-.lay-c.dropbefore{box-shadow:inset 3px 0 0 var(--acc)}
-.lay-c .ci{font-size:16px;line-height:1.2}
-.lay-c .cn{font-size:10.5px;font-weight:900;line-height:1.3;text-align:center}
-.lay-c .cb{font-size:9.5px;color:var(--dim);font-weight:800}
-.lay-c.is-room{background:linear-gradient(168deg,var(--roomA),var(--roomB));min-width:78px}
-.lay-c .cx{
-  position:absolute;inset-block-start:-6px;inset-inline-start:-6px;
-  width:18px;height:18px;border-radius:50%;line-height:1;
-  background:var(--card);border:1px solid var(--line2);color:var(--muted);
-  cursor:pointer;font-size:10px;opacity:0;transition:.12s;
-}
-.lay-c:hover .cx{opacity:1}
-.lay-c .cx:hover{color:#fff;background:var(--red);border-color:var(--red)}
-.lay-add{
-  flex:0 0 auto;min-width:44px;min-height:52px;border-radius:11px;cursor:pointer;
-  border:1.5px dashed var(--dash);background:none;color:var(--dim);font-size:17px;transition:.12s;
-}
-.lay-add:hover{border-color:var(--acc);color:var(--acc)}
+.le-grid.tool-move .le-c{pointer-events:auto;cursor:grab}
+.le-c.hall{background:color-mix(in srgb,var(--muted) 30%,transparent);border-color:transparent;border-radius:0}
+.le-c.room{background:linear-gradient(160deg,color-mix(in srgb,var(--acc) 40%,var(--card)),var(--card2));border-color:color-mix(in srgb,var(--acc) 55%,transparent)}
+.le-c.dead{background:repeating-linear-gradient(45deg,var(--sunk2) 0 4px,transparent 4px 8px)}
+.le-c.entrance{border-color:color-mix(in srgb,var(--green) 55%,transparent)}
+.le-c.exit{border-color:color-mix(in srgb,var(--red) 50%,transparent)}
+.le-c.sel{outline:2px solid var(--acc);outline-offset:1px;z-index:2}
+.le-c .cn{font-size:8.5px;font-weight:900;line-height:1;direction:rtl;overflow:hidden;max-width:23px}
+.le-c .ci{font-size:12px;line-height:1}
 .pal{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pal button{
   display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:inherit;
@@ -1676,7 +1783,10 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
       </div>
 
       <div class="ed-sec">
-        <h4>🧱 הפריסה <span class="cnt">גררו לסידור · לחצו על משבצת לעריכה</span></h4>
+        <h4>🧱 הפריסה <span class="cnt">בוחרים כלי ומציירים — לכל כיוון</span></h4>
+        <p class="hint">המסדרון יכול להתפתל לכל צורה — גררו אותו כמו מכחול, גם בפניות.
+          חדרים ושטחי שירות מניחים סביבו מכל צד: מעל, מתחת, מימין ומשמאל.
+          בכלי 🖐️ בוחרים משבצת לעריכה או גוררים אותה למקום אחר.</p>
         <div class="layout-editor" id="wgLayEd">
           <div class="lay"></div>
           <div class="cell-ed" hidden>
@@ -1746,9 +1856,9 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
                placeholder="למשל: מסדרון · חדרים משני הצדדים · שירותים ומקלחות בקצה">
       </div>
       <div class="ed-sec">
-        <h4>🧱 הפריסה <span class="cnt">גררו לסידור · לחצו על משבצת לעריכה</span></h4>
-        <p class="hint">בתבנית אין מספרי חדרים — רק כמה חדרים יש ואיפה הם.
-          המספרים נקבעים כשבונים ממנה אגף.</p>
+        <h4>🧱 הפריסה <span class="cnt">בוחרים כלי ומציירים — לכל כיוון</span></h4>
+        <p class="hint">בתבנית אין מספרי חדרים — רק כמה חדרים יש ואיפה הם; המספרים נקבעים
+          כשבונים ממנה אגף. המסדרון מתפתל לכל צורה, ומשבצות מונחות סביבו מכל צד.</p>
         <div class="layout-editor" id="teLayEd">
           <div class="lay"></div>
           <div class="cell-ed" hidden>
@@ -2078,6 +2188,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
    A wing is a corridor with two sides. Every side is an ordered list of cells,
    and a cell is either a room or one of the fixed things a dorm corridor has. */
 const CELL_TYPES={
+  hall:    {he:'מסדרון',      ico:'👣'},
   room:    {he:'חדר',         ico:'🚪'},
   entrance:{he:'כניסה',       ico:'🚶'},
   exit:    {he:'יציאת חירום', ico:'🆘'},
@@ -2146,34 +2257,82 @@ function autoLayout(nums){
   nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:String(n)}));
   return {a,b};
 }
-/* the layout is a view of S.rooms, never a second source of truth:
-   cells naming a room that is gone are dropped, rooms missing from it are appended */
-function normLayout(lay,rooms){
+
+/* ================= the wing plan: a free 2D grid =================
+   A wing is not two straight rows anymore. Its plan is a small grid of cells:
+   hall tiles that can turn anywhere (L, U, a bend in the middle), and rooms or
+   service cells placed on any side of them — 360°, like drawing a real floor. */
+const PW=26,PH=12;
+const pk=(x,y)=>x+','+y;
+/* the two-sided legacy shape becomes three rows on the grid: side, hall, side */
+function sidesToPlan(sides){
+  const cells=[];
+  const a=(sides&&sides.a)||[],b=(sides&&sides.b)||[];
+  const len=Math.min(PW-2,Math.max(a.length,b.length));
+  a.slice(0,len).forEach((c,i)=>cells.push({...c,x:1+i,y:1}));
+  for(let i=0;i<len;i++)cells.push({t:'hall',x:1+i,y:2});
+  b.slice(0,len).forEach((c,i)=>cells.push({...c,x:1+i,y:3}));
+  return cells;
+}
+const autoPlan=nums=>sidesToPlan(autoLayout(nums));
+/* the plan is a view of S.rooms, never a second source of truth: cells naming a
+   room that is gone are dropped, rooms missing from it are pulled in next to a hall */
+function normPlan(plan,rooms){
   const want=rooms.map(r=>String(r.num));
-  const wantSet=new Set(want),seen=new Set();
-  const clean=arr=>(Array.isArray(arr)?arr:[]).map(c=>{
-    if(!c||typeof c!=='object')return null;
+  const wantSet=new Set(want),seenNum=new Set(),seenXY=new Set();
+  const cells=[];
+  for(const c of (Array.isArray(plan)?plan:[])){
+    if(!c||typeof c!=='object')continue;
     const t=CELL_TYPES[c.t]?c.t:'dead';
+    const x=clampI(c.x,0,PW-1),y=clampI(c.y,0,PH-1);
+    if(seenXY.has(pk(x,y)))continue;
     if(t==='room'){
       const num=String(c.num==null?'':c.num);
-      if(!wantSet.has(num)||seen.has(num))return null;
-      seen.add(num);
-      return {t:'room',num};
+      if(!wantSet.has(num)||seenNum.has(num))continue;
+      seenNum.add(num); seenXY.add(pk(x,y));
+      cells.push({t:'room',num,x,y});
+    }else{
+      seenXY.add(pk(x,y));
+      const o={t,x,y};
+      if(c.label)o.label=String(c.label).slice(0,24);
+      cells.push(o);
     }
-    const o={t};
-    if(c.label)o.label=String(c.label).slice(0,24);
-    return o;
-  }).filter(Boolean);
-  const out={a:clean(lay&&lay.a),b:clean(lay&&lay.b)};
-  if(!lay||(!out.a.length&&!out.b.length&&want.length))return autoLayout(want);
-  for(const n of want){
-    if(seen.has(n))continue;
-    (out.a.length<=out.b.length?out.a:out.b).push({t:'room',num:n});
   }
-  return out;
+  if(!cells.length)return want.length?autoPlan(want):[];
+  const missing=want.filter(n=>!seenNum.has(n));
+  if(missing.length){
+    /* free cells that touch a hall first, then any free cell */
+    const spots=[];
+    for(const h of cells)if(h.t==='hall')
+      for(const [dx,dy] of [[0,-1],[0,1],[1,0],[-1,0]]){
+        const x=h.x+dx,y=h.y+dy;
+        if(x>=0&&x<PW&&y>=0&&y<PH&&!seenXY.has(pk(x,y))){seenXY.add(pk(x,y));spots.push([x,y]);}
+      }
+    let fx=0,fy=0;
+    for(const n of missing){
+      let s=spots.shift();
+      if(!s){
+        while(fy<PH&&seenXY.has(pk(fx,fy))){fx++;if(fx>=PW){fx=0;fy++;}}
+        if(fy>=PH)break;
+        s=[fx,fy]; seenXY.add(pk(fx,fy));
+      }
+      cells.push({t:'room',num:n,x:s[0],y:s[1]});
+    }
+  }
+  return cells;
 }
-const layoutRoomNums=lay=>[...(lay&&lay.a||[]),...(lay&&lay.b||[])]
-  .filter(c=>c.t==='room').map(c=>c.num);
+/* room order for filling and for the grid view: walk the plan like a page */
+const planRoomNums=plan=>(plan||[]).filter(c=>c.t==='room')
+  .slice().sort((p,q)=>p.y-q.y||p.x-q.x).map(c=>c.num);
+function planBBox(plan){
+  let x0=1e9,y0=1e9,x1=-1,y1=-1;
+  for(const c of plan||[]){
+    x0=Math.min(x0,c.x);y0=Math.min(y0,c.y);
+    x1=Math.max(x1,c.x);y1=Math.max(y1,c.y);
+  }
+  return x1<0?null:{x0,y0,x1,y1};
+}
+const planAt=(plan,x,y)=>(plan||[]).find(c=>c.x===x&&c.y===y)||null;
 
 /* ================= ready-made wing shapes =================
    make() receives the room numbers and returns the two sides.
@@ -2301,7 +2460,8 @@ function migrate(s){
   s.wings=s.wings.filter(w=>w&&w.id!=null).map(w=>({
     id:String(w.id),
     name:String(w.name==null?'':w.name).trim()||'אגף',
-    building:w.building,layout:w.layout
+    building:w.building,floor:w.floor,geom:w.geom,
+    plan:w.plan,layout:w.layout      /* layout = the pre-grid legacy shape */
   }));
   if(!s.wings.length)s.wings=[{id:'w1',name:'אגף ראשי'}];
   /* a room pointing at a wing that no longer exists would never be drawn anywhere —
@@ -2347,13 +2507,26 @@ function migrate(s){
     w.geom=normGeom({x:Math.min(GW-len,1+col*(len+2)),y:2+row*3,len,dir:'h'});
   });
 
-  /* ---- v2: corridor layout per wing, plus the user's own saved templates ---- */
+  /* ---- v3: free-grid plan per wing, plus the user's own saved templates ---- */
   if(!Array.isArray(s.templates))s.templates=[];
-  s.templates=s.templates.filter(t=>t&&t.id&&t.sides&&typeof t.sides==='object')
-    .map(t=>({id:String(t.id),name:String(t.name||'תבנית').slice(0,40),
+  s.templates=s.templates.filter(t=>t&&t.id&&(Array.isArray(t.plan)||(t.sides&&typeof t.sides==='object')))
+    .map(t=>{
+      const plan=Array.isArray(t.plan)?t.plan
+        :sidesToPlan({a:Array.isArray(t.sides.a)?t.sides.a:[],b:Array.isArray(t.sides.b)?t.sides.b:[]});
+      return {id:String(t.id),name:String(t.name||'תבנית').slice(0,40),
               ico:String(t.ico||'⭐').slice(0,4),desc:String(t.desc||'').slice(0,120),
-              sides:{a:Array.isArray(t.sides.a)?t.sides.a:[],b:Array.isArray(t.sides.b)?t.sides.b:[]}}));
-  s.wings.forEach(w=>{w.layout=normLayout(w.layout,s.rooms.filter(r=>r.wing===w.id));});
+              plan:plan.filter(c=>c&&CELL_TYPES[c.t]).map(c=>{
+                const o={t:c.t,x:clampI(c.x,0,PW-1),y:clampI(c.y,0,PH-1)};
+                if(c.t==='room')o.beds=Math.max(1,Math.min(12,+c.beds||4));
+                else if(c.label)o.label=String(c.label).slice(0,24);
+                return o;
+              })};
+    });
+  s.wings.forEach(w=>{
+    w.plan=normPlan(Array.isArray(w.plan)?w.plan:(w.layout?sidesToPlan(w.layout):null),
+                    s.rooms.filter(r=>r.wing===w.id));
+    delete w.layout;
+  });
 
   if(!Array.isArray(s.locks))s.locks=[];
   s.rules.forEach(r=>{
@@ -2847,7 +3020,7 @@ function chipEl(name,ev,inRoom){
 }
 
 /* the tree has several editors and an AI that can all reshape it. Rather than
-   trusting each of them to keep the layouts in step, the board repairs itself. */
+   trusting each of them to keep the plans in step, the board repairs itself. */
 function syncLayouts(){
   const bld=new Set(S.buildings.map(b=>b.id));
   const byWing=new Map();
@@ -2859,7 +3032,7 @@ function syncLayouts(){
     if(!byWing.has(r.wing))r.wing=S.wings[0].id;
     byWing.get(r.wing).push(r);
   }
-  for(const w of S.wings)w.layout=normLayout(w.layout,byWing.get(w.id));
+  for(const w of S.wings)w.plan=normPlan(w.plan,byWing.get(w.id));
 }
 function render(){
   if(batchDepth){batchDirty=true;return;}
@@ -2970,6 +3143,7 @@ function tally(rooms){
 
 let V={level:'home',bld:null,wing:null};
 function go(level,bld,wing){
+  if(V.wing!==wing)RSEL=null;
   V={level,bld:bld||null,wing:wing||null};
   clearSel();
   render();
@@ -3131,9 +3305,61 @@ function warnCount(ev,nums){
   return {hard,soft};
 }
 
-/* ---------- home ---------- */
+/* ---------- home: the build guide ----------
+   the same four stages every institution walks through, as a visible path:
+   draw the building → rooms per wing → the boys → the assignment itself */
+function buildSteps(){
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  return [
+    {ico:'🏢',t:'שרטוט הבניין',d:'קומות, ומתיחת קו לכל אגף על הרשת',
+     done:S.wings.some(w=>w.geom)&&(S.wings.length>1||S.rooms.length>0),
+     act:()=>openBld(S.buildings[0].id),btn:'📐 לשרטוט'},
+    {ico:'🚪',t:'חדרים ופריסה',d:'תבנית מוכנה או ציור חופשי לכל אגף',
+     done:S.rooms.length>0,
+     act:()=>{const w=S.wings.find(x=>!roomsOf(x.id).length)||S.wings[0];openWing(w.id);},btn:'🧱 לפריסה'},
+    {ico:'👥',t:'רשימת הבחורים',d:'ייבוא מאקסל, הדבקה או הזנה ידנית',
+     done:S.boys.length>0,
+     act:()=>$('#btnEdit').click(),btn:'📥 לרשימה'},
+    {ico:'🛏️',t:'השיבוץ',d:'לחיצה על שם ← חדר, כללים, ואוטומט',
+     done:placed>0,
+     act:()=>{const w=S.wings.find(x=>roomsOf(x.id).length);if(w)go('wing',w.building,w.id);},btn:'▶️ לשיבוץ'}
+  ];
+}
+function stepperEl(){
+  const steps=buildSteps();
+  const allDone=steps.every(s=>s.done);
+  const box=el('div','steps'+(allDone?' slim':''));
+  if(allDone){
+    const line=el('div','steps-done');
+    line.append(el('span',null,'✓ הכול מוגדר — הבניין, החדרים, הבחורים והשיבוץ פועלים.'));
+    steps.forEach(s=>{
+      const b=el('button','btn mini',s.ico+' '+s.t);
+      b.addEventListener('click',s.act);
+      line.appendChild(b);
+    });
+    box.appendChild(line);
+    return box;
+  }
+  const firstOpen=steps.findIndex(s=>!s.done);
+  steps.forEach((s,i)=>{
+    const st=el('div','step'+(s.done?' done':'')+(i===firstOpen?' now':''));
+    const n=el('span','st-n',s.done?'✓':String(i+1));
+    const tx=el('div','st-tx');
+    tx.append(el('b',null,s.ico+' '+s.t),el('small',null,s.d));
+    st.append(n,tx);
+    if(!s.done){
+      const b=el('button','btn'+(i===firstOpen?' accent':' mini'),s.btn);
+      b.addEventListener('click',s.act);
+      st.appendChild(b);
+    }
+    box.appendChild(st);
+    if(i<steps.length-1)box.appendChild(el('span','st-sep'));
+  });
+  return box;
+}
 function renderHome(host,ev){
   host.appendChild(heroEl(ev));
+  host.appendChild(stepperEl());
   if(S.buildings.length>1){
     host.appendChild(secHead('🏢 בניינים',[mini('+ בניין חדש',()=>openBld(null))]));
     const g=el('div','grid-cards');
@@ -3306,24 +3532,31 @@ function wingCard(w,ev){
   });
   return card;
 }
+/* tiny true-to-shape preview of the plan — the bent corridor shows bent */
 function miniPlan(w,ev){
-  const lay=w.layout||{a:[],b:[]};
-  const box=el('div','mini');
-  const rowOf=side=>{
-    const row=el('div','mini-row');
-    const cells=(lay[side]||[]).slice(0,28);
-    if(!cells.length)row.appendChild(el('div','mini-c svc'));
-    for(const c of cells){
-      if(c.t!=='room'){row.appendChild(el('div','mini-c svc'));continue;}
-      const room=roomBy(c.num); if(!room)continue;
-      const n=occIn(c.num).length;
-      const cls=ev.badRooms.get(c.num)==='hard'?'rx'
-        :n===0?'r0':n>=room.beds?'rf':(n/room.beds>=.5?'r2':'r1');
-      row.appendChild(el('div','mini-c '+cls));
+  const box=el('div','mini2');
+  const bb=planBBox(w.plan);
+  if(!bb){box.appendChild(el('span','mini2-empty','— עדיין ריק —'));return box;}
+  const cols=bb.x1-bb.x0+1,rows=bb.y1-bb.y0+1;
+  const M=7;
+  box.style.setProperty('--mc',Math.min(M,Math.floor(182/cols))+'px');
+  box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
+  const map=new Map();
+  for(const c of w.plan)map.set(pk(c.x,c.y),c);
+  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
+    const c=map.get(pk(x,y));
+    let cls='mini2-c';
+    if(!c)cls+=' void';
+    else if(c.t==='hall')cls+=' hall';
+    else if(c.t!=='room')cls+=' svc';
+    else{
+      const room=roomBy(c.num);
+      const n=room?occIn(c.num).length:0;
+      cls+=ev.badRooms.get(c.num)==='hard'?' rx'
+        :!room||n===0?' r0':n>=room.beds?' rf':(n/room.beds>=.5?' r2':' r1');
     }
-    return row;
-  };
-  box.append(rowOf('a'),el('div','mini-hall'),rowOf('b'));
+    box.appendChild(el('span',cls));
+  }
   return box;
 }
 
@@ -3385,41 +3618,133 @@ function renderWing(host,ev){
     host.appendChild(box);
     return;
   }
-  host.appendChild(S.settings.display.planMode==='grid'?gridEl(w,ev):planEl(w,ev));
+  if(S.settings.display.planMode==='grid')host.appendChild(gridEl(w,ev));
+  else{
+    host.appendChild(planEl(w,ev));
+    if(RSEL&&roomsOf(w.id).some(r=>r.num===RSEL)){
+      const strip=roomStrip(ev);
+      if(strip)host.appendChild(strip);
+    }
+  }
 }
+/* the spatial view: the plan drawn to shape. Rooms are compact tiles here —
+   a click opens the room's occupants below, the grid view keeps the full cards */
+let RSEL=null;
 function planEl(w,ev){
   const wrap=el('div','plan');
-  const inn=el('div','plan-in');
-  inn.append(sideRow(w,'a',ev),hallEl(),sideRow(w,'b',ev));
+  const bb=planBBox(w.plan);
+  if(!bb)return wrap;
+  const C=62;
+  const inn=el('div','pboard');
+  inn.style.width=((bb.x1-bb.x0+1)*C)+'px';
+  inn.style.height=((bb.y1-bb.y0+1)*C)+'px';
+  const at=new Map();
+  for(const c of w.plan)at.set(pk(c.x,c.y),c);
+  const place=(node,c)=>{
+    node.style.left=((c.x-bb.x0)*C)+'px';
+    node.style.top=((c.y-bb.y0)*C)+'px';
+    inn.appendChild(node);
+  };
+  for(const c of w.plan){
+    if(c.t==='hall'){
+      /* merge visually with neighbouring hall tiles — the corridor reads as one */
+      let cls='pb-hall';
+      if(at.get(pk(c.x,c.y-1))&&at.get(pk(c.x,c.y-1)).t==='hall')cls+=' cN';
+      if(at.get(pk(c.x,c.y+1))&&at.get(pk(c.x,c.y+1)).t==='hall')cls+=' cS';
+      if(at.get(pk(c.x+1,c.y))&&at.get(pk(c.x+1,c.y)).t==='hall')cls+=' cE';
+      if(at.get(pk(c.x-1,c.y))&&at.get(pk(c.x-1,c.y)).t==='hall')cls+=' cW';
+      place(el('div',cls),c);
+    }else if(c.t==='room'){
+      const room=roomBy(c.num);
+      if(room)place(pbRoom(room,ev,at,c),c);
+    }else{
+      const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
+      const d=el('div','pb-svc '+c.t);
+      d.append(el('span','si',T.ico),el('span','sn',c.label||T.he));
+      d.title=c.label||T.he;
+      place(d,c);
+    }
+  }
   wrap.appendChild(inn);
   return wrap;
 }
-function hallEl(){
-  const h=el('div','fp-hall');
-  h.append(el('span','hl','מסדרון'),el('span','hgrow'));
-  return h;
-}
-function sideRow(w,side,ev){
-  const row=el('div','fp-row '+side);
-  const cells=(w.layout&&w.layout[side])||[];
-  if(!cells.length){row.appendChild(el('div','fp-gap'));return row;}
-  for(const c of cells){
-    if(c.t==='room'){
-      const room=roomBy(c.num);
-      if(room)row.appendChild(roomEl(room,ev));
-    }else row.appendChild(svcEl(c));
+function pbRoom(room,ev,at,c){
+  const occ=occIn(room.num);
+  const warn=ev.badRooms.get(room.num);
+  const free=occ.length<room.beds;
+  const hasHit=Q.board&&occ.some(b=>hits(b,Q.board));
+  const d=el('div','pb-room'
+    +(warn==='hard'?' warn-hard':warn==='soft'?' warn-soft':'')
+    +(hasHit?' hasHit':'')
+    +(RSEL===room.num?' open':'')
+    +(selected&&free&&S.assign[selected]!==room.num?' target':''));
+  d.dataset.num=room.num;
+  d.style.setProperty('--ac',RC.get(room.num)||ROOM_COLORS[0]);
+  /* the door faces the corridor, whichever side it is on */
+  for(const [dx,dy,side] of [[0,-1,'dN'],[0,1,'dS'],[1,0,'dE'],[-1,0,'dW']]){
+    const n=at.get(pk(c.x+dx,c.y+dy));
+    if(n&&n.t==='hall'){d.classList.add(side);break;}
   }
-  return row;
-}
-function svcEl(c){
-  const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
-  const d=el('div','fp-svc '+c.t);
-  d.append(el('span','si',T.ico),el('span','sn',c.label||T.he));
+  d.append(el('span','no',room.num),
+           el('span','oc'+(free?'':' fullr'),`${occ.length}/${room.beds}`));
+  const dots=el('span','gds');
+  const gseen=new Set();
+  for(const b of occ){
+    const g=GRP.get(b);
+    if(!g||gseen.has(g.id))continue;
+    gseen.add(g.id);
+    const gd=el('span','gdot'); gd.style.setProperty('--gc',g.color);
+    dots.appendChild(gd);
+    if(gseen.size>=3)break;
+  }
+  d.appendChild(dots);
+  d.title=`חדר ${room.num} · ${occ.length}/${room.beds}`+(occ.length?'\n'+occ.join('\n'):'');
+  d.addEventListener('dragover',e=>{
+    e.preventDefault();
+    d.classList.add(occupants(room.num).length>=room.beds?'full-over':'over');
+  });
+  d.addEventListener('dragleave',e=>{
+    if(d.contains(e.relatedTarget))return;
+    d.classList.remove('over','full-over');
+  });
+  d.addEventListener('drop',e=>{
+    e.preventDefault(); d.classList.remove('over','full-over');
+    const name=e.dataTransfer.getData('text/plain');
+    if(name)assignBoy(name,room.num);
+  });
+  d.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(selected){assignBoy(selected,room.num);return;}
+    RSEL=RSEL===room.num?null:room.num;
+    render();
+  });
   return d;
+}
+/* the occupants of the room that was clicked on the plan */
+function roomStrip(ev){
+  const room=RSEL?roomBy(RSEL):null;
+  if(!room)return null;
+  const occ=occIn(room.num);
+  const box=el('div','pb-strip');
+  box.style.setProperty('--ac',RC.get(room.num)||ROOM_COLORS[0]);
+  const head=el('div','pbs-head');
+  head.append(el('b',null,'חדר '+room.num),
+              el('span','occ'+(occ.length>=room.beds?' fullr':''),`${occ.length}/${room.beds}`));
+  const x=el('button','ab-x','✕');
+  x.title='סגירה';
+  x.addEventListener('click',e=>{e.stopPropagation();RSEL=null;render();});
+  head.appendChild(x);
+  box.appendChild(head);
+  const chips=el('div','pbs-chips');
+  for(const b of occ)chips.appendChild(chipEl(b,ev,true));
+  if(!occ.length)chips.appendChild(el('span','empty-note','החדר ריק — גררו לכאן בחור, או לחצו על שם ואז על החדר'));
+  box.appendChild(chips);
+  box.addEventListener('click',e=>e.stopPropagation());
+  return box;
 }
 function gridEl(w,ev){
   const g=el('div','wg-grid');
-  const order=layoutRoomNums(w.layout);
+  const order=planRoomNums(w.plan);
   const seen=new Set(order);
   for(const n of order){const r=roomBy(n); if(r)g.appendChild(roomEl(r,ev));}
   for(const r of roomsOf(w.id))if(!seen.has(r.num))g.appendChild(roomEl(r,ev));
@@ -4188,7 +4513,8 @@ $('#btnEditApply').addEventListener('click',()=>{
     const old=wingBy(w.id);
     return {id:w.id,name:w.name.trim()||'אגף',
             building:(old&&old.building)||S.buildings[0].id,
-            layout:old?old.layout:{a:[],b:[]}};
+            floor:old?old.floor:undefined,geom:old?old.geom:undefined,
+            plan:old?old.plan:[]};
   });
   S.rooms=ED.rooms.map(r=>({num:r.num,beds:r.beds,wing:r.wing}));
   const remapAsg=old=>{
@@ -4615,7 +4941,7 @@ function ghostGeom(a,c){
       if(g&&(g.len>=2)&&geomFits(g,floorWings(b.id,EDB.floor),null)){
         snapshot();
         const w={id:'w'+uid(),name:nextWingName(b.id),building:b.id,floor:EDB.floor,
-                 layout:{a:[],b:[]},geom:g};
+                 plan:[],geom:g};
         S.wings.push(w);
         EDB.sel=w.id;
         save();render();
@@ -4707,7 +5033,7 @@ $('#bldDel').addEventListener('click',()=>{
   dropRooms(rooms.map(r=>r.num));
   S.wings=S.wings.filter(w=>!wid.has(w.id));
   S.buildings=S.buildings.filter(x=>x.id!==b.id);
-  if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,layout:{a:[],b:[]}}];
+  if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,plan:[]}];
   save();$('#dlgBld').close();
   V={level:'home',bld:null,wing:null};
   render();toast('הבניין נמחק — Ctrl+Z מחזיר');
@@ -4717,19 +5043,16 @@ $('#bldDel').addEventListener('click',()=>{
 let EDW=null;
 function openWing(id,bldId){
   const w=id?wingBy(id):null;
-  const cells={a:[],b:[]};
-  if(w){
-    for(const side of ['a','b']){
-      for(const c of (w.layout&&w.layout[side])||[]){
-        if(c.t==='room'){
-          const r=roomBy(c.num);
-          if(r)cells[side].push({t:'room',num:r.num,beds:r.beds,orig:r.num});
-        }else cells[side].push({t:c.t,label:c.label||''});
-      }
-    }
+  const cells=[];
+  if(w)for(const c of w.plan||[]){
+    if(c.t==='room'){
+      const r=roomBy(c.num);
+      if(r)cells.push({t:'room',num:r.num,beds:r.beds,orig:r.num,x:c.x,y:c.y});
+    }else cells.push({t:c.t,label:c.label||'',x:c.x,y:c.y});
   }
   EDW={id:id||null,building:w?w.building:(bldId||S.buildings[0].id),tpl:null};
-  WLAY={root:$('#wgLayEd'),cells,sel:null,numbered:true};
+  WLAY={root:$('#wgLayEd'),cells,sel:null,numbered:true,tool:cells.length?'move':'hall',
+        defBeds:Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4))};
   LAY=WLAY;
   $('#wgTtl').textContent=w?'🏗️ '+w.name:'🏗️ אגף חדש';
   $('#wgName').value=w?w.name:'';
@@ -4795,6 +5118,9 @@ function tplNote(){
     +(gone.length?` ${gone.length} חדרים קיימים שאינם ברשימה יוסרו`+(boys?` ו־${boys} בחורים יחזרו לממתינים`:'')+'.':'');
 }
 ['#wgCount','#wgBeds','#wgStart'].forEach(s=>$(s).addEventListener('input',tplNote));
+$('#wgBeds').addEventListener('input',()=>{
+  if(WLAY)WLAY.defBeds=Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4));
+});
 $('#wgApplyTpl').addEventListener('click',()=>{
   if(!EDW.tpl){toast('בחרו קודם תבנית');return;}
   const t=[...WING_TEMPLATES,...S.templates].find(x=>x.id===EDW.tpl);
@@ -4806,104 +5132,149 @@ $('#wgApplyTpl').addEventListener('click',()=>{
      sits there stays put when the template is re-applied */
   const prev=new Map();
   for(const c of layRooms())if(c.orig)prev.set(c.num,c.orig);
-  const raw=t.make?t.make(nums):instantiate(t.sides,nums,beds);
-  const out={a:[],b:[]};
-  for(const side of ['a','b']){
-    for(const c of raw[side]||[]){
-      /* a template of your own remembers each room's bed count; the wizard's
-         number is only the default for rooms it says nothing about */
-      if(c.t==='room')out[side].push({t:'room',num:c.num,beds:c.beds||beds,orig:prev.get(c.num)||null});
-      else out[side].push({t:c.t,label:c.label||''});
-    }
-  }
-  LAY.cells=out; LAY.sel=null;
+  LAY.cells=tplPlan(t,nums,beds).map(c=>c.t==='room'
+    ?{...c,orig:prev.get(c.num)||null}:c);
+  LAY.sel=null;
   renderLay(); tplNote();
-  toast(`הפריסה נבנתה — ${count} חדרים`);
+  toast(`הפריסה נבנתה — ${count} חדרים. אפשר עכשיו לעקם, להזיז ולהוסיף בכלי הציור`);
 });
-function instantiate(sides,nums,defBeds){
-  let i=0; const out={a:[],b:[]};
-  for(const side of ['a','b']){
-    for(const c of (sides&&sides[side])||[]){
-      if(c.t==='room'){ if(i<nums.length)out[side].push({t:'room',num:nums[i++],beds:c.beds||defBeds}); }
-      else out[side].push({t:c.t,label:c.label||''});
-    }
-  }
-  while(i<nums.length)(out.a.length<=out.b.length?out.a:out.b).push({t:'room',num:nums[i++],beds:defBeds});
-  return out;
-}
 
-/* ================= the layout editor =================
+/* ================= the layout editor: a free canvas =================
    One editor, two users: the wing dialog (cells carry real room numbers) and the
-   template editor (cells are placeholders). LAY points at whichever draft is live. */
+   template editor (cells are placeholders). LAY points at whichever draft is live.
+   You pick a tool and paint: the corridor bends wherever you drag it, and rooms
+   or service cells go on ANY side of it — above, below, left, right. */
 let LAY=null,WLAY=null,TLAY=null;
 const layQ=sel=>LAY.root.querySelector(sel);
 const cellName=c=>c.t!=='room'
   ? (c.label||CELL_TYPES[c.t].he)
-  : (LAY&&LAY.numbered ? 'חדר '+(c.num||'?') : 'חדר');
+  : (LAY&&LAY.numbered ? (c.num||'?') : 'חדר');
+const layAt=(x,y)=>LAY.cells.find(c=>c.x===x&&c.y===y)||null;
+const layRooms=()=>LAY.cells.filter(c=>c.t==='room');
+
+/* the tools: paint each kind of cell, erase, or select-and-move */
+const LE_TOOLS=[
+  ['hall','👣 מסדרון'],['room','🚪 חדר'],['entrance','🚶 כניסה'],['exit','🆘 יציאת חירום'],
+  ['shower','🚿 מקלחות'],['toilet','🚻 שירותים'],['dead','⬛ שטח מת'],
+  ['more','▾ עוד'],['erase','🧽 מחיקה'],['move','🖐️ בחירה והזזה']
+];
+const LE_MORE=['sink','stairs','elevator','madrich','study','kitchen','laundry','store'];
 
 function renderLay(){
   if(!LAY)return;
-  const box=layQ('.lay'); box.innerHTML='';
-  const inn=el('div','lay-in');
-  const hall=el('div','lay-hall'); hall.appendChild(el('span',null,'מסדרון'));
-  inn.append(laySide('a'),hall,laySide('b'));
-  box.appendChild(inn);
+  const root=LAY.root;
+  let tools=root.querySelector('.le-tools');
+  if(!tools){
+    tools=el('div','le-tools');
+    root.insertBefore(tools,root.firstChild);
+  }
+  tools.innerHTML='';
+  for(const [k,lbl] of LE_TOOLS){
+    if(k==='more'){
+      const sel=document.createElement('select');
+      sel.className='le-more'+(LE_MORE.includes(LAY.tool)?' on':'');
+      const o0=document.createElement('option');
+      o0.value='';o0.textContent='▾ עוד…';
+      sel.appendChild(o0);
+      for(const t of LE_MORE){
+        const o=document.createElement('option');
+        o.value=t;o.textContent=CELL_TYPES[t].ico+' '+CELL_TYPES[t].he;
+        if(LAY.tool===t){o.selected=true;o0.textContent='▾ '+CELL_TYPES[t].he;}
+        sel.appendChild(o);
+      }
+      sel.addEventListener('change',()=>{if(sel.value){LAY.tool=sel.value;renderLay();}});
+      tools.appendChild(sel);
+      continue;
+    }
+    const b=el('button','le-tool'+(LAY.tool===k?' on':''),lbl);
+    b.addEventListener('click',()=>{LAY.tool=k;renderLay();});
+    tools.appendChild(b);
+  }
+
+  /* the grid node survives re-renders: destroying it mid-drag would drop the
+     pointer capture and cut the painting stroke short */
+  const box=layQ('.lay');
+  let grid=box.querySelector('.le-grid');
+  if(!grid){grid=el('div','le-grid');box.appendChild(grid);wireLeGrid(grid);}
+  grid.className='le-grid tool-'+(LAY.tool==='move'?'move':LAY.tool==='erase'?'erase':'paint');
+  grid.innerHTML='';
+  for(const c of LAY.cells)grid.appendChild(leCell(c));
   paintCellEd();
 }
-function laySide(side){
-  const row=el('div','lay-side');
-  row.appendChild(el('span','lay-tag',side==='a'?'צד א׳':'צד ב׳'));
-  LAY.cells[side].forEach((c,i)=>row.appendChild(layCell(c,side,i)));
-  const add=el('button','lay-add','+');
-  add.title='הוספת משבצת לצד הזה';
-  add.addEventListener('click',()=>{
-    LAY.cells[side].push({t:'dead',label:''});
-    LAY.sel={side,i:LAY.cells[side].length-1};
-    renderLay();
-  });
-  row.appendChild(add);
-  return row;
-}
-function layCell(c,side,i){
+function leCell(c){
   const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
-  const on=LAY.sel&&LAY.sel.side===side&&LAY.sel.i===i;
-  const d=el('div','lay-c'+(c.t==='room'?' is-room':'')+(on?' sel':''));
-  d.draggable=true;
-  d.append(el('span','ci',T.ico),el('span','cn',cellName(c)));
-  if(c.t==='room')d.appendChild(el('span','cb',(c.beds||1)+' מיטות'));
-  const x=el('button','cx','✕');
-  x.title='הסרת המשבצת';
-  x.addEventListener('click',e=>{
-    e.stopPropagation();
-    LAY.cells[side].splice(i,1); LAY.sel=null; renderLay();
-  });
-  d.appendChild(x);
-  d.addEventListener('click',()=>{LAY.sel={side,i};renderLay();});
-  d.addEventListener('dragstart',e=>{
-    e.dataTransfer.setData('text/plain','cell:'+side+':'+i);
-    e.dataTransfer.effectAllowed='move';
-    d.classList.add('dragging');
-  });
-  d.addEventListener('dragend',()=>d.classList.remove('dragging'));
-  d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('dropbefore');});
-  d.addEventListener('dragleave',()=>d.classList.remove('dropbefore'));
-  d.addEventListener('drop',e=>{
-    e.preventDefault(); e.stopPropagation(); d.classList.remove('dropbefore');
-    const raw=e.dataTransfer.getData('text/plain')||'';
-    if(!raw.startsWith('cell:'))return;          /* a boy chip is not a cell */
-    const p=raw.slice(5).split(':');
-    const fs=p[0],fi=parseInt(p[1],10);
-    if((fs!=='a'&&fs!=='b')||!Number.isInteger(fi)||!LAY.cells[fs][fi])return;
-    if(fs===side&&fi===i)return;
-    const [moved]=LAY.cells[fs].splice(fi,1);
-    let at=i; if(fs===side&&fi<i)at--;
-    LAY.cells[side].splice(at,0,moved);
-    LAY.sel={side,i:at};
-    renderLay();
-  });
+  const on=LAY.sel&&LAY.sel.x===c.x&&LAY.sel.y===c.y;
+  const d=el('div','le-c '+c.t+(on?' sel':''));
+  d.style.left=(c.x*LE_CELL+1)+'px';
+  d.style.top=(c.y*LE_CELL+1)+'px';
+  if(c.t==='room')d.appendChild(el('span','cn',cellName(c)));
+  else if(c.t!=='hall')d.appendChild(el('span','ci',T.ico));
+  d.title=c.t==='room'
+    ? `חדר ${c.num||'?'} · ${c.beds||4} מיטות`
+    : (c.label||T.he);
   return d;
 }
-const layRooms=()=>['a','b'].flatMap(s=>LAY.cells[s]).filter(c=>c.t==='room');
+const LE_CELL=26;
+function wireLeGrid(grid){
+  let down=null;
+  const cellXY=e=>{
+    const r=grid.getBoundingClientRect();
+    const x=Math.floor((e.clientX-r.left)/LE_CELL),y=Math.floor((e.clientY-r.top)/LE_CELL);
+    return (x<0||x>=PW||y<0||y>=PH)?null:{x,y};
+  };
+  const paintAt=p=>{
+    const hit=layAt(p.x,p.y);
+    if(LAY.tool==='erase'){
+      if(hit){LAY.cells=LAY.cells.filter(c=>c!==hit);if(LAY.sel&&LAY.sel.x===p.x&&LAY.sel.y===p.y)LAY.sel=null;return true;}
+      return false;
+    }
+    /* painting never overwrites a room by accident — erase it first */
+    if(hit&&hit.t==='room')return false;
+    if(hit&&hit.t===LAY.tool)return false;
+    LAY.cells=LAY.cells.filter(c=>c!==hit);
+    const c={t:LAY.tool,x:p.x,y:p.y};
+    if(LAY.tool==='room'){
+      c.beds=LAY.defBeds||4;
+      if(LAY.numbered){c.num=nextFreeNum();c.orig=null;}
+    }else if(LAY.tool!=='hall')c.label='';
+    LAY.cells.push(c);
+    LAY.sel={x:p.x,y:p.y};
+    return true;
+  };
+  grid.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    const p=cellXY(e); if(!p)return;
+    try{grid.setPointerCapture(e.pointerId);}catch(err){}
+    e.preventDefault();
+    if(LAY.tool==='move'){
+      const hit=layAt(p.x,p.y);
+      LAY.sel=hit?{x:hit.x,y:hit.y}:null;
+      down={mode:hit?'drag':'none',cell:hit,from:p};
+      renderLay();
+      return;
+    }
+    down={mode:'paint'};
+    if(paintAt(p))renderLay();
+  });
+  grid.addEventListener('pointermove',e=>{
+    if(!down)return;
+    const p=cellXY(e); if(!p)return;
+    if(down.mode==='paint'){if(paintAt(p))renderLay();return;}
+    if(down.mode==='drag'&&down.cell){
+      if(p.x===down.cell.x&&p.y===down.cell.y)return;
+      if(layAt(p.x,p.y))return;               /* only onto a free square */
+      down.cell.x=p.x;down.cell.y=p.y;
+      LAY.sel={x:p.x,y:p.y};
+      renderLay();
+    }
+  });
+  const up=e=>{
+    down=null;
+    try{grid.releasePointerCapture(e.pointerId);}catch(err){}
+  };
+  grid.addEventListener('pointerup',up);
+  grid.addEventListener('pointercancel',up);
+}
 function nextFreeNum(){
   const used=new Set(S.rooms.map(r=>String(r.num)));
   let max=0;
@@ -4918,7 +5289,7 @@ function nextFreeNum(){
 function paintCellEd(){
   const box=layQ('.cell-ed');
   if(!LAY.sel){box.hidden=true;return;}
-  const c=LAY.cells[LAY.sel.side][LAY.sel.i];
+  const c=layAt(LAY.sel.x,LAY.sel.y);
   if(!c){LAY.sel=null;box.hidden=true;return;}
   box.hidden=false;
   const types=layQ('.cell-type'); types.innerHTML='';
@@ -4964,19 +5335,26 @@ function paintCellEd(){
 }
 
 $('#wgAutoLay').addEventListener('click',()=>{
-  const rooms=[],svcA=[],svcB=[];
-  for(const c of LAY.cells.a)(c.t==='room'?rooms:svcA).push(c);
-  for(const c of LAY.cells.b)(c.t==='room'?rooms:svcB).push(c);
+  /* straighten whatever was drawn back into a classic corridor */
+  const rooms=layRooms().slice().sort((p,q)=>p.y-q.y||p.x-q.x);
+  const svc=LAY.cells.filter(c=>c.t!=='room'&&c.t!=='hall');
   const a=[],b=[];
   rooms.forEach((c,i)=>(i%2?b:a).push(c));
-  const head=svcA.filter(c=>c.t==='entrance'),tail=svcA.filter(c=>c.t!=='entrance');
-  LAY.cells={a:[...head,...a,...tail],b:[...b,...svcB]};
+  const head=svc.filter(c=>c.t==='entrance'),tail=svc.filter(c=>c.t!=='entrance');
+  const out=[];
+  let x=1;
+  for(const c of [...head,...a,...tail]){c.x=x++;c.y=1;out.push(c);}
+  const len=Math.max(x-1,b.length+1);
+  for(let i=1;i<=Math.min(len,PW-2);i++)out.push({t:'hall',x:i,y:2});
+  x=1;
+  for(const c of b){c.x=x++;c.y=3;out.push(c);}
+  LAY.cells=out;
   LAY.sel=null; renderLay();
-  toast('החדרים סודרו מחדש משני צידי המסדרון');
+  toast('הפריסה יושרה למסדרון קלאסי — אפשר לעקם אותה מחדש כרצונכם');
 });
 $('#wgSaveTpl').addEventListener('click',()=>{
-  if(!LAY.cells.a.length&&!LAY.cells.b.length){toast('אין מה לשמור — הפריסה ריקה');return;}
-  openTplEdit({name:$('#wgName').value.trim()||'',ico:'⭐',desc:'',sides:packSides(LAY.cells)},true);
+  if(!LAY.cells.length){toast('אין מה לשמור — הפריסה ריקה');return;}
+  openTplEdit({name:$('#wgName').value.trim()||'',ico:'⭐',desc:'',plan:packPlan(LAY.cells)},true);
 });
 $('#wgMgrTpl').addEventListener('click',openTplMgr);
 
@@ -4984,28 +5362,54 @@ $('#wgMgrTpl').addEventListener('click',openTplMgr);
    =========================  template library  ========================
    ===================================================================== */
 /* a template keeps the shape and the bed counts, never the room numbers */
-const packSides=cells=>({
-  a:cells.a.map(packCell), b:cells.b.map(packCell)
+const packPlan=cells=>cells.map(c=>{
+  const o={t:c.t,x:c.x,y:c.y};
+  if(c.t==='room')o.beds=Math.max(1,Math.min(12,+c.beds||4));
+  else if(c.label)o.label=c.label;
+  return o;
 });
-const packCell=c=>c.t==='room'
-  ? {t:'room',beds:Math.max(1,Math.min(12,+c.beds||4))}
-  : (c.label?{t:c.t,label:c.label}:{t:c.t});
-/* built-ins describe themselves through make(); user templates through sides */
-const tplSides=t=>t.make?t.make(roomNums('1',8)):t.sides;
-const tplRoomCount=t=>{const s=tplSides(t);return ['a','b'].flatMap(k=>s[k]||[]).filter(c=>c.t==='room').length;};
+/* built-ins describe themselves through make() (a straight corridor);
+   user templates carry a real drawn plan */
+const tplPlanOf=t=>t.make?sidesToPlan(t.make(roomNums('1',8))):t.plan;
+const tplRoomCount=t=>tplPlanOf(t).filter(c=>c.t==='room').length;
+/* instantiating a template: numbers flow along the plan in reading order */
+function tplPlan(t,nums,defBeds){
+  const src=tplPlanOf(t);
+  const out=[];
+  let i=0;
+  const sorted=[...src].sort((p,q)=>p.y-q.y||p.x-q.x);
+  for(const c of sorted){
+    if(c.t==='room'){
+      if(i<nums.length)out.push({t:'room',num:nums[i++],beds:c.beds||defBeds,x:c.x,y:c.y});
+    }else out.push({...c});
+  }
+  /* more rooms asked for than the template has: extra rows under the shape */
+  if(i<nums.length){
+    const bb=planBBox(out)||{x0:1,y0:1,x1:1,y1:1};
+    const used=new Set(out.map(c=>pk(c.x,c.y)));
+    let x=bb.x0,y=bb.y1+1;
+    while(i<nums.length&&y<PH){
+      if(!used.has(pk(x,y))){out.push({t:'room',num:nums[i++],beds:defBeds,x,y});used.add(pk(x,y));}
+      x++; if(x>=PW){x=bb.x0;y++;}
+    }
+  }
+  return out;
+}
 function tplPreview(t){
-  const s=tplSides(t);
-  const box=el('div','tpl-prev');
-  const row=side=>{
-    const r=el('div','tpl-prow');
-    const cells=(s[side]||[]).slice(0,22);
-    if(!cells.length)r.appendChild(el('span','tpl-pc empty'));
-    for(const c of cells)
-      r.appendChild(el('span','tpl-pc'+(c.t==='room'?' rm':''),
-                       c.t==='room'?'':(CELL_TYPES[c.t]||CELL_TYPES.dead).ico));
-    return r;
-  };
-  box.append(row('a'),el('div','mini-hall'),row('b'));
+  const plan=tplPlanOf(t);
+  const box=el('div','mini2');
+  const bb=planBBox(plan);
+  if(!bb){box.appendChild(el('span','mini2-empty','ריק'));return box;}
+  const cols=bb.x1-bb.x0+1;
+  box.style.setProperty('--mc',Math.min(8,Math.floor(196/cols))+'px');
+  box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
+  const map=new Map();
+  for(const c of plan)map.set(pk(c.x,c.y),c);
+  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
+    const c=map.get(pk(x,y));
+    box.appendChild(el('span','mini2-c'+(
+      !c?' void':c.t==='hall'?' hall':c.t==='room'?' r1':' svc')));
+  }
   return box;
 }
 function openTplMgr(){renderTplMgr();$('#dlgTplMgr').showModal();}
@@ -5042,19 +5446,20 @@ $('#tmClose').addEventListener('click',()=>$('#dlgTplMgr').close());
 $('#tmNew').addEventListener('click',()=>openTplEdit(null,false));
 
 function openTplEdit(src,dup){
-  const cells={a:[],b:[]};
+  let cells;
   if(src){
-    const s=tplSides(src);
-    for(const side of ['a','b'])
-      for(const c of (s[side]||[]))
-        cells[side].push(c.t==='room'?{t:'room',beds:c.beds||4}:{t:c.t,label:c.label||''});
+    cells=tplPlanOf(src).map(c=>c.t==='room'
+      ?{t:'room',beds:c.beds||4,x:c.x,y:c.y}
+      :{t:c.t,label:c.label||'',x:c.x,y:c.y});
   }else{
-    cells.a=[{t:'entrance'},{t:'room',beds:4},{t:'room',beds:4},{t:'room',beds:4},{t:'shower'}];
-    cells.b=[{t:'room',beds:4},{t:'room',beds:4},{t:'room',beds:4},{t:'toilet'}];
+    cells=sidesToPlan({
+      a:[{t:'entrance'},{t:'room',beds:4},{t:'room',beds:4},{t:'room',beds:4},{t:'shower'}],
+      b:[{t:'room',beds:4},{t:'room',beds:4},{t:'room',beds:4},{t:'toilet'}]
+    });
   }
   /* only a template of the user's own, opened for editing, keeps its id */
   const editId=(src&&!src.make&&src.id&&!dup)?src.id:null;
-  TLAY={root:$('#teLayEd'),cells,sel:null,numbered:false,editId};
+  TLAY={root:$('#teLayEd'),cells,sel:null,numbered:false,editId,tool:'move',defBeds:4};
   $('#teTtl').textContent=editId?'✏️ עריכת תבנית'
     :src?'⧉ תבנית חדשה על בסיס קיימת':'⭐ תבנית חדשה';
   $('#teName').value=editId?src.name:(src&&src.name?src.name+' — קומה נוספת':'');
@@ -5075,8 +5480,7 @@ $('#teX').addEventListener('click',closeTplEdit);
 $('#teSave').addEventListener('click',()=>{
   const nm=$('#teName').value.trim();
   if(!nm){toast('צריך שם לתבנית');return;}
-  const rooms=['a','b'].flatMap(s=>TLAY.cells[s]).filter(c=>c.t==='room').length;
-  if(!rooms){toast('בתבנית אין אף חדר');return;}
+  if(!TLAY.cells.some(c=>c.t==='room')){toast('בתבנית אין אף חדר');return;}
   const clash=S.templates.some(x=>x.id!==TLAY.editId&&x.name===nm);
   if(clash&&!confirm(`כבר יש תבנית בשם "${nm}". לשמור בכל זאת?`))return;
   const rec={
@@ -5084,7 +5488,7 @@ $('#teSave').addEventListener('click',()=>{
     name:nm.slice(0,40),
     ico:($('#teIco').value.trim()||'⭐').slice(0,4),
     desc:$('#teDesc').value.trim().slice(0,120),
-    sides:packSides(TLAY.cells)
+    plan:packPlan(TLAY.cells)
   };
   const i=S.templates.findIndex(x=>x.id===rec.id);
   if(i>=0)S.templates[i]=rec; else S.templates.push(rec);
@@ -5103,7 +5507,8 @@ $('#wgName').addEventListener('input',()=>{});
 $('#wgSave').addEventListener('click',()=>{
   const nm=$('#wgName').value.trim();
   if(!nm){toast('צריך שם לאגף');return;}
-  const rooms=layRooms();
+  /* reading order on the grid becomes the room order everywhere else */
+  const rooms=layRooms().slice().sort((p,q)=>p.y-q.y||p.x-q.x);
   const seen=new Set();
   for(const c of rooms){
     c.num=String(c.num==null?'':c.num).trim();
@@ -5121,7 +5526,7 @@ $('#wgSave').addEventListener('click',()=>{
   snapshot();
   const wid=EDW.id||('w'+uid());
   let w=wingBy(wid);
-  if(!w){w={id:wid,name:nm,building:EDW.building,layout:{a:[],b:[]}};S.wings.push(w);}
+  if(!w){w={id:wid,name:nm,building:EDW.building,plan:[]};S.wings.push(w);}
   w.name=nm; w.building=EDW.building;
 
   const ren={};
@@ -5147,17 +5552,19 @@ $('#wgSave').addEventListener('click',()=>{
   for(const c of rooms)if(want.has(c.num)){out.push(want.get(c.num));want.delete(c.num);}
   S.rooms=out;
 
-  const pack=side=>LAY.cells[side].map(c=>c.t==='room'
-    ? {t:'room',num:c.num}
-    : (c.label?{t:c.t,label:c.label}:{t:c.t}));
-  w.layout={a:pack('a'),b:pack('b')};
+  w.plan=LAY.cells.map(c=>{
+    const o={t:c.t,x:c.x,y:c.y};
+    if(c.t==='room')o.num=c.num;
+    else if(c.label)o.label=c.label;
+    return o;
+  });
 
   trimOverfull();
   S.rules=S.rules.filter(r=>{
     if(r.members)return r.members.filter(b=>S.boys.includes(b)).length>=2;
     return S.boys.includes(r.a)&&S.rooms.some(x=>x.num===r.room);
   });
-  S.wings.forEach(x=>{x.layout=normLayout(x.layout,S.rooms.filter(r=>r.wing===x.id));});
+  syncLayouts();
   S.activeSim=null;
   save(); closeWing(); initDynamic();
   V={level:'wing',bld:w.building,wing:w.id};
@@ -6268,7 +6675,7 @@ function runActions(acts){
         const nn=String(a.name||'').trim();
         if(!nn)throw new Error('חסר שם אגף');
         snapshot();
-        S.wings.push({id:'w'+uid(),name:nn,building:S.buildings[0].id,layout:{a:[],b:[]}});
+        S.wings.push({id:'w'+uid(),name:nn,building:S.buildings[0].id,plan:[]});
         save();initDynamic();render();
         done.push(`נוסף אגף "${nn}"`);
       }
