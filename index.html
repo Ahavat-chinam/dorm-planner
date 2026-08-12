@@ -462,6 +462,23 @@ label.row small{font-size:11.5px;color:var(--dim);font-weight:600}
 .wel-tbl th,.wel-tbl td{border:1px solid var(--line);padding:6px 11px;text-align:right}
 .wel-tbl th{background:var(--card2);color:var(--tx2);font-weight:800}
 .wel-tbl td{color:var(--muted)}
+.wel-foot{margin-top:14px;font-size:12.5px;color:var(--muted);line-height:1.9}
+
+/* ================= credits & download ================= */
+.linkbox{
+  margin-top:10px;font-size:11.5px;font-weight:700;color:var(--muted);
+  background:var(--sunk);border:1px solid var(--line);border-radius:9px;
+  padding:8px 11px;word-break:break-all;line-height:1.7;
+}
+.credits{background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 7%,transparent),transparent 70%)}
+.cred-row{display:flex;align-items:center;gap:11px;padding:7px 0}
+.cred-av{
+  width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;font-size:17px;
+  background:var(--card2);border:1px solid var(--line2);
+}
+.cred-txt{display:flex;flex-direction:column;gap:1px}
+.cred-txt b{font-size:13.5px;font-weight:800}
+.cred-txt small{font-size:11.5px;color:var(--muted);font-weight:600}
 
 .swatches{display:flex;gap:9px;flex-wrap:wrap}
 .sw-dot{
@@ -777,6 +794,10 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
       </table>
       עמודת האגף אינה חובה. אפשר גם קובץ עם שמות בלבד, ולהוסיף את החדרים ידנית.
     </div>
+    <p class="wel-foot" id="welFoot" hidden>
+      עובדים מהאינטרנט? <span class="lnk" id="welDownload">הורידו את התוכנה למחשב</span> —
+      היא תעבוד בדיוק אותו דבר גם בלי חיבור.
+    </p>
   </div>
 </section>
 
@@ -1064,6 +1085,30 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
           <code>Delete</code> החזרת הבחור המסומן לממתינים · <code>Esc</code> ביטול סימון<br><br>
           <b>טיפ:</b> נעלו 🔒 בחורים שכבר סגורים, ואז "שיבוץ אוטומטי" ישלים סביבם בלי לגעת בהם.
         </p>
+      </div>
+
+      <div class="ed-sec">
+        <h4>⬇️ הורדה ושיתוף</h4>
+        <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור אחד. אפשר להוריד את הקובץ ולהפעיל
+          אותו מקומית — הוא עובד בדיוק אותו דבר גם בלי אינטרנט.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn accent" id="btnDownloadApp">⬇️ הורדת התוכנה למחשב</button>
+          <button class="btn" id="btnCopyLink">🔗 העתקת הקישור</button>
+        </div>
+        <div class="linkbox" id="appLinkBox"></div>
+      </div>
+
+      <div class="ed-sec credits">
+        <h4>🙏 קרדיטים</h4>
+        <div class="cred-row">
+          <span class="cred-av">👤</span>
+          <span class="cred-txt"><b id="credUser">בנימין</b><small>רעיון, אפיון, ליווי ובדיקות</small></span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-av">🤖</span>
+          <span class="cred-txt"><b>Claude — Opus 5</b><small>תכנון ובנייה · Anthropic</small></span>
+        </div>
+        <p class="hint" style="margin:11px 0 0">נבנה בשיתוף, סבב אחר סבב, עד שהתאים בדיוק.</p>
       </div>
     </div>
 
@@ -3520,6 +3565,45 @@ wireSearch('#ruleSearch','#ruleSearchClr','rule',()=>{repopulateForm();});
 wireSearch('#rulesSearch','#rulesSearchClr','rules',()=>renderRules(evaluate(S.assign)));
 wireSearch('#edSearch','#edSearchClr','edit',()=>{if(ED)renderEdit();});
 
+/* ---------- download & share ---------- */
+const APP_HOME='https://ahavat-chinam.github.io/dorm-planner/';
+/* raw.githubusercontent sends CORS headers, so this works from file:// too */
+const APP_RAW='https://raw.githubusercontent.com/Ahavat-chinam/dorm-planner/main/index.html';
+function saveBlobAs(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$('#btnDownloadApp').addEventListener('click',async()=>{
+  const btn=$('#btnDownloadApp');
+  btn.disabled=true;btn.textContent='מוריד…';
+  try{
+    // same-origin first (works offline when the file was opened locally)
+    let html=null;
+    try{
+      const local=await fetch(location.href,{cache:'no-store'});
+      if(local.ok){const t=await local.text(); if(/<title>[^<]*שיבוץ/.test(t))html=t;}
+    }catch(e){}
+    if(!html){
+      const r=await fetch(APP_RAW,{cache:'no-store'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      html=await r.text();
+    }
+    saveBlobAs(new Blob([html],{type:'text/html;charset=utf-8'}),'שיבוץ-חדרים.html');
+    toast('הקובץ ירד — אפשר להפעיל אותו בלחיצה כפולה');
+  }catch(e){
+    window.open(APP_RAW,'_blank','noopener');
+    toast('נפתח בלשונית חדשה — שמרו עם Ctrl+S');
+  }
+  btn.disabled=false;btn.textContent='⬇️ הורדת התוכנה למחשב';
+});
+$('#btnCopyLink').addEventListener('click',async()=>{
+  try{ await navigator.clipboard.writeText(APP_HOME); toast('הקישור הועתק ✓'); }
+  catch(e){ toast('העתיקו ידנית: '+APP_HOME); }
+});
+
 /* ---------- first-run welcome ---------- */
 function renderWelcome(){
   const empty=!S.boys.length&&!S.rooms.length;
@@ -3534,6 +3618,9 @@ function renderWelcome(){
   $('#btnClear').disabled=empty;
   $('#btnXlsx').disabled=empty;
 }
+/* only meaningful when the app is being served over the web */
+$('#welFoot').hidden=location.protocol==='file:';
+$('#welDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
 $('#welImport').addEventListener('click',()=>$('#fileNames').click());
 $('#welTemplate').addEventListener('click',downloadTemplate);
 $('#welRestore').addEventListener('click',()=>$('#fileImport').click());
@@ -3737,6 +3824,7 @@ $('#zman').addEventListener('keydown',e=>{
 /* ---------- init ---------- */
 function initDynamic(){
   $('#verLbl').textContent='v'+APP_VERSION;
+  $('#appLinkBox').textContent=APP_HOME;
   $('#zman').textContent=S.zman||'הזמן הבא';
   repopulateForm();
   paintRuleForm();
