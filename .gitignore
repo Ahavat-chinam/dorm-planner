@@ -1,0 +1,4 @@
+# local scratch, never deployed
+*.local.*
+.deploycheck
+נתוני-*.xlsx
