@@ -595,6 +595,16 @@ label.row.compact small{font-size:11px}
 .ai-m.model{align-self:flex-end;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:4px}
 /* the model narrated an action that did not go through */
 .ai-m.model.stale{opacity:.55;border-style:dashed;text-decoration-color:var(--muted)}
+.actplan{margin-top:8px;border-top:1px dashed var(--line2);padding-top:7px}
+.actplan summary{
+  cursor:pointer;font-size:11.5px;font-weight:800;color:var(--acc);
+  user-select:none;list-style:none;
+}
+.actplan summary::-webkit-details-marker{display:none}
+.actplan summary::before{content:'▸ ';display:inline-block;transition:transform .15s}
+.actplan[open] summary::before{content:'▾ '}
+.actplan ul{margin:7px 12px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.actplan li{font-size:11.5px;color:var(--tx3);font-weight:600;line-height:1.65}
 .ai-m.model.stale::after{
   content:'⚠️ לא בוצע במלואו';display:block;margin-top:5px;
   font-size:11px;font-weight:800;color:var(--amber);
@@ -2834,7 +2844,9 @@ const ACT_LEVEL={
   addRoom:'full',editRoom:'full',removeRoom:'full',
   addWing:'full',renameWing:'full',removeWing:'full',
   // app
-  setZman:'act',display:'act',setting:'full',clearAll:'full',reset:'full'
+  setZman:'act',display:'act',setting:'full',clearAll:'full',reset:'full',
+  // itself
+  identity:'act',setLevel:'act'
 };
 const ACT_HE={move:'שיבוץ',swap:'החלפה',auto:'שיבוץ אוטומטי',clear:'ניקוי לוח',lock:'נעילה',unlock:'שחרור',
   addRule:'הוספה',editRule:'עריכה',toggleRule:'הפעלה/כיבוי',deleteRule:'מחיקה',deleteAllRules:'מחיקת הכול',
@@ -2842,7 +2854,8 @@ const ACT_HE={move:'שיבוץ',swap:'החלפה',auto:'שיבוץ אוטומט�
   renameBoy:'שינוי שם בחור',addBoy:'הוספת בחור',removeBoy:'הסרת בחור',
   addRoom:'הוספת חדר',editRoom:'עריכת חדר',removeRoom:'מחיקת חדר',
   addWing:'הוספת אגף',renameWing:'שינוי שם אגף',removeWing:'מחיקת אגף',
-  setZman:'שם הזמן',display:'שינוי תצוגה',setting:'הגדרות מערכת',clearAll:'ניקוי מלא',reset:'איפוס'};
+  setZman:'שם הזמן',display:'שינוי תצוגה',setting:'הגדרות מערכת',clearAll:'ניקוי מלא',reset:'איפוס',
+  identity:'שם ואימוג׳י',setLevel:'רמת הרשאה'};
 const DESTRUCTIVE=new Set(['deleteRule','deleteAllRules','deleteSim','clearAll','reset',
                            'removeBoy','removeRoom','removeWing']);
 const LEVEL_NOTE={
@@ -2871,6 +2884,8 @@ function aiProtocol(){
     +' {"type":"toggleRule","index":2,"on":false}         ← כיבוי/הפעלה של כלל\n'
     +' {"type":"renameSim","name":"ישן","newName":"חדש"}\n'
     +' {"type":"setZman","value":"זמן חורף תשפ״ז"}        ← שם התקופה בכותרת\n'
+    +' {"type":"identity","name":"שם חדש","emoji":"🧠"}    ← שינוי השם והאימוג׳י שלך עצמך\n'
+    +' {"type":"setLevel","level":"advise"}               ← שינוי רמת ההרשאה שלך (העלאה תדרוש אישור מהמשתמש)\n'
     +' {"type":"display","theme":"light"}                 ← תצוגה: theme dark/light/auto, accent, text 90-125,\n'
     +'                                                       density compact/regular/roomy, roomW, emptyBeds,\n'
     +'                                                       tilt, grid, motion (בוליאני)\n';
@@ -2909,6 +2924,9 @@ function aiSystem(){
     +'4. אם תקבל הודעת "[דיווח מערכת]" עם כישלון — תקן מיד בעצמך: הבן מהשגיאה מה חסם, '
     +'והצע/בצע פעולות מתוקנות. אל תחזור על אותה פעולה בדיוק.\n'
     +'5. אם אינך בטוח שהמהלך הוא מה שהמשתמש רצה (למשל מי לפנות מחדר מלא) — שאל אותו קודם, בלי בלוק פעולות.\n'
+    +'6. אתה יכול לשנות את השם והאימוג׳י של עצמך (identity) — אם מבקשים ממך "תשנה את שמך ל…", פשוט עשה זאת.\n'
+    +'7. בלוק ה־json חייב להיות עטוף ב-```json ולהיסגר ב-```. המשתמש לא רואה אותו, אז אל תתאר בטקסט מה כתוב בו.\n'
+    +'8. הרבה פעולות בבת אחת? שלח עד 40 בכל תשובה ואמור שתמשיך — עדיף על תשובה שנקטעת באמצע.\n'
     +'השתמש אך ורק בשמות ובמספרי חדרים המדויקים מהמצב הנוכחי. אל תמציא. אם רק שואלים — ענה בלי בלוק פעולות.';
 }
 function stateBrief(){
@@ -2959,6 +2977,8 @@ function actionLabel(a){
     renameWing:`שינוי שם האגף "${a.wing}" ל"${a.newName}"`,
     removeWing:`מחיקת האגף "${a.wing}" וכל חדריו`,
     setZman:`שינוי שם הזמן ל"${a.value}"`,
+    identity:`שינוי הזהות שלי${a.name?' לשם "'+a.name+'"':''}${a.emoji?' '+a.emoji:''}`,
+    setLevel:`שינוי רמת ההרשאה שלי ל"${LEVEL_SHORT[a.level]||a.level}"`,
     display:'שינוי הגדרות תצוגה',
     setting:`שינוי ההגדרה ${a.key}`,
     clearAll:'ניקוי הלוח כולל שחרור נעולים',
@@ -3256,6 +3276,37 @@ function runActions(acts){
         save();applyDisplay();paintDisplayUI();
         done.push('תצוגה — '+changed.join(', '));
       }
+      /* ---------- itself ---------- */
+      else if(a.type==='identity'){
+        const c=aiCfg(),ch=[];
+        if(a.name!=null&&String(a.name).trim()){
+          c.name=String(a.name).trim().slice(0,40);ch.push(`שם: ${c.name}`);
+        }
+        if(a.emoji!=null&&String(a.emoji).trim()){
+          c.emoji=[...String(a.emoji).trim()].slice(0,2).join('');ch.push(`אימוג׳י: ${c.emoji}`);
+        }
+        if(!ch.length)throw new Error('לא צוין שם או אימוג׳י');
+        save();applyAiIdentity();
+        if($('#dlgSettings').open){$('#setAiName').value=c.name;$('#setAiEmoji').value=c.emoji;renderSetStats();}
+        done.push('הזהות עודכנה — '+ch.join(', '));
+      }
+      else if(a.type==='setLevel'){
+        const order={advise:0,act:1,full:2};
+        const want=String(a.level||'');
+        if(!(want in order))throw new Error('רמה לא מוכרת: '+want);
+        const cur=aiCfg().level;
+        if(want===cur)throw new Error('כבר ברמה הזו');
+        // lowering is free; raising always needs a human yes, even at full level
+        if(order[want]>order[cur]&&
+           !confirm(`${aiCfg().name} מבקש להעלות את רמת ההרשאה של עצמו:\n\n`
+                   +`מ"${LEVEL_SHORT[cur]}" ל"${LEVEL_SHORT[want]}"\n\n${LEVEL_NOTE[want]}\n\nלאשר?`)){
+          declined.push(`העלאת ההרשאה ל"${LEVEL_SHORT[want]}"`);
+          continue;
+        }
+        aiCfg().level=want;save();applyAiIdentity();
+        if($('#dlgSettings').open){paintAiLevel();renderSetStats();}
+        done.push(`רמת ההרשאה: ${LEVEL_SHORT[cur]} ← ${LEVEL_SHORT[want]}`);
+      }
       else if(a.type==='setting'){
         const allowed=['sound','flash','pulse','suggest','confirm','aiFab'];
         if(!allowed.includes(a.key))throw new Error('הגדרה לא מוכרת: '+a.key);
@@ -3277,6 +3328,60 @@ function runActions(acts){
   }
   return parts.length?'🤖 '+parts.join(' | '):'🤖 לא בוצעו פעולות';
 }
+/* ---- pulling actions out of a reply, without ever showing raw JSON ---- */
+/* salvages whatever complete action objects exist, even if the reply was cut off */
+function parseActionsLoose(s){
+  try{
+    const o=JSON.parse(s);
+    if(Array.isArray(o.actions))return {acts:o.actions,truncated:false};
+    if(Array.isArray(o))return {acts:o,truncated:false};
+  }catch(e){}
+  const out=[];
+  let depth=0,start=-1,inStr=false,esc=false;
+  const from=Math.max(s.indexOf('['),0);
+  for(let i=from;i<s.length;i++){
+    const ch=s[i];
+    if(inStr){ if(esc)esc=false; else if(ch==='\\')esc=true; else if(ch==='"')inStr=false; continue; }
+    if(ch==='"'){inStr=true;continue;}
+    if(ch==='{'){ if(depth===0)start=i; depth++; }
+    else if(ch==='}'){
+      depth--;
+      if(depth===0&&start>=0){ try{out.push(JSON.parse(s.slice(start,i+1)));}catch(e){} start=-1; }
+    }
+  }
+  return {acts:out.length?out:null,truncated:true};
+}
+function extractActions(raw){
+  let body=null,rest=raw;
+  const fence=raw.match(/```[a-zA-Z]*\s*([\s\S]*?)(?:```|$)/);
+  if(fence&&/"?actions"?\s*:/.test(fence[1])){ body=fence[1]; rest=raw.replace(fence[0],''); }
+  else{
+    const m=raw.match(/\{\s*"actions"/);
+    if(m){ body=raw.slice(m.index); rest=raw.slice(0,m.index); }
+  }
+  let acts=null,truncated=false;
+  if(body!=null){ const p=parseActionsLoose(body); acts=p.acts; truncated=p.truncated; }
+  // strip any stray fences/braces so nothing technical ever reaches the bubble
+  rest=rest.replace(/```[a-zA-Z]*/g,'').replace(/^\s*[\{\}\[\]]+\s*$/gm,'').trim();
+  return {display:rest,acts,truncated};
+}
+/* a collapsed, human-readable plan instead of a wall of JSON */
+function showActionPlan(bubble,acts){
+  const d=document.createElement('details');
+  d.className='actplan';
+  const sum=document.createElement('summary');
+  sum.textContent=`🔧 ${acts.length} ${acts.length===1?'פעולה':'פעולות'}`;
+  d.appendChild(sum);
+  const ul=document.createElement('ul');
+  for(const a of acts){
+    const li=document.createElement('li');
+    li.textContent=actionLabel(a);
+    ul.appendChild(li);
+  }
+  d.appendChild(ul);
+  bubble.appendChild(d);
+}
+
 /* runActions reports what really happened; keep that flag so the chat can self-correct */
 let lastRunFailed=false;
 async function askModel(){
@@ -3285,7 +3390,7 @@ async function askModel(){
   const body={
     systemInstruction:{parts:[{text:aiSystem()+'\n\n===== המצב הנוכחי בתוכנה =====\n'+stateBrief()}]},
     contents:AIH.slice(-14).map(m=>({role:m.role,parts:[{text:m.text}]})),
-    generationConfig:{temperature:0.4,maxOutputTokens:4096}
+    generationConfig:{temperature:0.4,maxOutputTokens:16384}
   };
   const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
     {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -3300,16 +3405,15 @@ async function aiTurn(){
   let raw='';
   try{ raw=await askModel(); }
   catch(err){ typing.remove(); addMsg('sys','⚠️ '+(err.message||'שגיאת רשת — בדקו חיבור לאינטרנט')); return false; }
-  let display=raw||'(תשובה ריקה)', acts=null;
-  const m=raw.match(/```json\s*([\s\S]*?)```/);
-  if(m){
-    try{acts=JSON.parse(m[1]).actions;}catch(e){}
-    display=raw.replace(m[0],'').trim()||'מבצע…';
-  }
+  const {display:body,acts,truncated}=extractActions(raw);
+  const display=body||(acts?'מבצע…':'(תשובה ריקה)');
   AIH.push({role:'model',text:raw});
   typing.remove();
   const bubble=addMsg('model',display);
+  if(truncated&&acts)
+    addMsg('sys','✂️ התשובה נקטעה באמצע — משחזר את הפעולות השלמות שהספיק לשלוח');
   if(Array.isArray(acts)&&acts.length){
+    showActionPlan(bubble,acts);
     lastRunFailed=false;
     const rep=runActions(acts);
     addMsg('sys',rep);
@@ -3541,6 +3645,7 @@ function paintAiLevel(){
     ['כללים',['addRule','editRule','toggleRule','deleteRule','deleteAllRules']],
     ['סימולציות',['saveSim','loadSim','renameSim','deleteSim']],
     ['רשימות',['renameBoy','addBoy','removeBoy','addRoom','editRoom','removeRoom','addWing','renameWing','removeWing']],
+    ['עצמו',['identity','setLevel']],
     ['תוכנה',['setZman','display','setting','clearAll','reset']]
   ];
   for(const [title,keys] of groups){
