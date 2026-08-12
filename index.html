@@ -68,9 +68,19 @@
 :root[data-theme="light"] footer{color:var(--muted)}
 :root[data-theme="light"] .seg button.on[data-l="full"]{background:linear-gradient(135deg,#d97706,#dc2626);color:#fff}
 :root[data-theme="light"] dialog::backdrop{backdrop-filter:blur(3px)}
+/* dark-only colours that had no light counterpart and dropped below 4.5:1 on white */
+:root[data-theme="light"] .btn.danger-btn{color:#b91c1c}
+:root[data-theme="light"] .editbanner{color:#5b21b6}
+:root[data-theme="light"] .lnk:hover{color:#075566}
+:root[data-theme="light"] h1 .grad{background-image:linear-gradient(110deg,var(--tx) 10%,var(--acc) 45%,var(--acc2) 80%)}
+:root[data-theme="light"] .rule.viol-hard .rdetail{color:#b91c1c}
+:root[data-theme="light"] .rule.viol-soft .rdetail{color:#92400e}
 html{scroll-behavior:smooth}
 body{
-  font-family:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;
+  /* Segoe UI Variable has no Hebrew coverage — with it first, Hebrew letters fell back to a
+     different family than the digits and Latin beside them, inside the same word. Segoe UI
+     carries both scripts, so one family now draws the whole string. */
+  font-family:'Segoe UI','Noto Sans Hebrew','Arial Hebrew',Arial,system-ui,sans-serif;
   background:
     radial-gradient(1000px 520px at 90% -10%, color-mix(in srgb,var(--acc) 13%,transparent), transparent 55%),
     radial-gradient(850px 520px at -6% 112%, color-mix(in srgb,var(--acc2) 14%,transparent), transparent 55%),
@@ -89,6 +99,9 @@ body.nomotion *,body.nomotion *::before,body.nomotion *::after{
   animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;
 }
 body.notilt .chip,body.notilt .sim{transform:none!important}
+/* the alarm's keyframes end at opacity:0 with fill-mode forwards — under the blanket
+   reduced-motion override they would finish in one frame and never be seen at all */
+body.nomotion #alarm .vig,body.nomotion #alarm .banner{animation:none!important;opacity:1}
 body.nobeds .bed{display:none}
 
 /* ================= header ================= */
@@ -138,6 +151,8 @@ h1 .zman{
 }
 .btn.accent:hover{filter:brightness(1.1);box-shadow:0 8px 26px rgba(34,211,238,.35)}
 .btn.mini{padding:4px 10px;font-size:12px;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.7)}
+.btn:disabled:hover{transform:none;box-shadow:none;border-color:var(--line)}
 .btn.danger:hover{border-color:var(--red);color:var(--red2)}
 select,input[type=text]{
   background:var(--card2);border:1px solid var(--line);color:var(--tx);
@@ -510,7 +525,7 @@ label.row small{font-size:11.5px;color:var(--dim);font-weight:600}
 #aiFab:hover{transform:translateY(-3px) scale(1.06);box-shadow:0 12px 34px rgba(34,211,238,.5)}
 #aiPanel{
   position:fixed;left:22px;bottom:86px;z-index:70;
-  width:min(370px,92vw);height:min(520px,74vh);
+  width:min(370px,92vw);height:min(520px,calc(.74 * var(--vh,100vh)));
   display:flex;flex-direction:column;
   background:linear-gradient(180deg,var(--sheen),transparent 30%),var(--panel2);
   border:1px solid var(--line2);border-radius:18px;overflow:hidden;
@@ -636,7 +651,7 @@ label.row.compact small{font-size:11px}
 dialog{
   background:linear-gradient(180deg,var(--sheen),transparent 22%),var(--card);
   color:var(--tx);border:1px solid var(--line2);border-radius:20px;
-  padding:0;width:min(700px,94vw);max-height:min(86vh,880px);
+  padding:0;width:min(700px,94vw);max-height:min(calc(.86 * var(--vh,100vh)),880px);
   overflow:hidden;                      /* keeps the rounded corners over scrolling content */
   box-shadow:0 30px 80px var(--sh4);
   /* centred against the visual viewport, unaffected by the page scrollbar or RTL */
@@ -667,7 +682,7 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
   flex:none;background:var(--sunk);
 }
 /* fixed body height — the panel must not resize when switching tabs */
-#dlgSettings .dlg-body{height:min(500px,56vh)}
+#dlgSettings .dlg-body{height:min(500px,calc(.56 * var(--vh,100vh)))}
 .dlg-body::-webkit-scrollbar{width:10px}
 .dlg-body::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
 .dlg-body::-webkit-scrollbar-thumb:hover{background:var(--hover);background-clip:content-box}
@@ -760,6 +775,473 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
 }
 .room.hasHit{border-color:rgba(34,211,238,.6)}
 .chip.dim{opacity:.32}
+
+/* =====================================================================
+   ============  SHELL: top bar · breadcrumb · waiting rail  ============
+   ===================================================================== */
+:root{--railW:264px;--barH:60px}
+body{padding-inline-end:calc(var(--railW) + 48px)}
+body.rail-off{--railW:0px}
+
+/* ---- top bar ---- */
+/* the bar bleeds out to the screen edge on the right and stops exactly at the
+   rail on the left — margins cancel the body padding, nothing wider than the page */
+#topbar{
+  position:sticky;top:0;z-index:55;
+  margin:-26px calc(clamp(14px,3.5vw,46px) * -1) 18px -48px;
+  padding:9px clamp(14px,3.5vw,46px) 9px 16px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter:blur(14px) saturate(1.3);
+  border-bottom:1px solid var(--line);
+}
+#topbar .tb-home{
+  display:inline-flex;align-items:center;gap:8px;flex:none;
+  background:none;border:none;color:var(--tx);font:inherit;font-weight:900;font-size:15px;
+  cursor:pointer;padding:6px 10px;border-radius:11px;transition:.13s;
+}
+#topbar .tb-home:hover{background:var(--card2)}
+#topbar .tb-home .mark{
+  width:29px;height:29px;border-radius:9px;flex:none;display:grid;place-items:center;font-size:15px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 3px 11px var(--sh1);
+}
+.tb-spacer{flex:1;min-width:8px}
+#topbar .actions .btn{padding:7px 11px;font-size:12.5px}
+#topbar .stats{gap:6px}
+#topbar .stat{font-size:11.5px;padding:4px 10px;gap:6px}
+#topbar .stat::before{width:6px;height:6px}
+
+/* ---- breadcrumb ---- */
+#crumbs{display:flex;align-items:center;gap:3px;flex-wrap:wrap;font-size:13px;font-weight:800;min-width:0}
+#crumbs .cr{
+  background:none;border:none;font:inherit;color:var(--dim);cursor:pointer;
+  padding:5px 10px;border-radius:9px;transition:.13s;max-width:230px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#crumbs .cr:hover{color:var(--tx);background:var(--card2)}
+#crumbs .cr.here{color:var(--tx);cursor:default}
+#crumbs .cr.here:hover{background:none}
+#crumbs .sep{color:var(--muted);opacity:.5;font-size:11px;flex:none}
+/* dragging a boy over a crumb walks up the tree without dropping him */
+#crumbs .cr.dragover{background:color-mix(in srgb,var(--acc) 22%,transparent);color:var(--tx)}
+
+/* ---- waiting rail ---- */
+#rail{
+  position:fixed;top:0;bottom:0;inset-inline-end:0;z-index:50;width:var(--railW);
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,var(--sheen),transparent 22%),var(--card);
+  border-inline-start:1px solid var(--line);
+  transition:transform .22s ease;
+}
+/* the document is always dir="rtl", so inline-end is the physical left edge */
+body.rail-off #rail{transform:translateX(-100%)}
+#rail.over{background:color-mix(in srgb,var(--acc) 12%,var(--card));box-shadow:inset 0 0 0 2.5px var(--acc)}
+.rl-head{
+  display:flex;align-items:center;gap:8px;padding:13px 14px 10px;flex:none;
+  border-bottom:1px solid var(--line);
+}
+.rl-head h2{margin:0;font-size:13px;flex:none}
+.rl-head h2::before{width:18px;height:4px}
+.rl-count{
+  font-size:11.5px;font-weight:900;color:var(--onAcc);flex:none;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));padding:2px 9px;border-radius:999px;
+}
+.rl-count.done{background:none;color:var(--green);border:1px solid color-mix(in srgb,var(--green) 45%,transparent)}
+.rl-srch{padding:10px 12px 8px;flex:none}
+.rl-srch .search{width:100%}
+.rl-chips{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  padding:6px 12px 16px;display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start;
+}
+.rl-chips .chip{max-width:100%;font-size:13.5px;padding:6px 11px 6px 9px}
+.rl-chips .chip>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rl-chips::-webkit-scrollbar{width:9px}
+.rl-chips::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+.rl-foot{
+  flex:none;padding:9px 12px;border-top:1px solid var(--line);background:var(--sunk);
+  font-size:11px;color:var(--muted);font-weight:700;line-height:1.6;text-align:center;
+}
+.rl-toggle{
+  position:fixed;top:50%;transform:translateY(-50%);
+  inset-inline-end:calc(var(--railW) + 6px);z-index:51;
+  width:24px;height:64px;border-radius:10px;cursor:pointer;
+  background:var(--card2);border:1px solid var(--line);color:var(--dim);
+  font-size:12px;font-weight:900;transition:.15s;padding:0;
+}
+.rl-toggle:hover{color:var(--tx);border-color:var(--hover);background:var(--raise)}
+body.rail-off .rl-toggle{inset-inline-end:8px}
+
+/* =====================================================================
+   =====================  HOME · BUILDING views  =======================
+   ===================================================================== */
+.hero{
+  background:
+    radial-gradient(680px 240px at 88% -30%, color-mix(in srgb,var(--acc) 20%,transparent), transparent 70%),
+    linear-gradient(180deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:24px;padding:24px 26px;margin-bottom:22px;
+  display:flex;gap:26px;align-items:center;flex-wrap:wrap;
+}
+.hero-l{flex:1;min-width:250px;display:flex;flex-direction:column;gap:11px}
+.hero .overline{font-size:11px;letter-spacing:3px}
+.hero h1{font-size:clamp(23px,3vw,34px)}
+.ring{
+  --p:0;width:112px;height:112px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:conic-gradient(var(--acc) calc(var(--p) * 1%), var(--sunk2) 0);
+  position:relative;
+}
+.ring::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--card)}
+.ring .rv{position:relative;font-size:23px;font-weight:900;line-height:1}
+.ring .rk{position:relative;font-size:10.5px;font-weight:800;color:var(--dim);margin-top:2px}
+
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
+.card{
+  position:relative;text-align:start;width:100%;font:inherit;color:var(--tx);cursor:pointer;
+  background:linear-gradient(170deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:20px;padding:17px 18px;
+  display:flex;flex-direction:column;gap:11px;
+  transition:transform .15s,border-color .15s,box-shadow .15s;
+}
+.card:hover{transform:translateY(-3px);border-color:var(--hover2);box-shadow:0 14px 30px var(--sh2)}
+.card.dragover{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 40%,transparent)}
+.card-top{display:flex;align-items:center;gap:11px}
+.card-ico{
+  width:42px;height:42px;border-radius:13px;flex:none;display:grid;place-items:center;font-size:20px;
+  background:var(--card2);border:1px solid var(--line2);
+}
+.card-ttl{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.card-ttl b{font-size:16px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-ttl small{font-size:11.5px;color:var(--dim);font-weight:700}
+.card-go{color:var(--muted);font-size:16px;flex:none;transition:.15s}
+.card:hover .card-go{color:var(--acc);transform:translateX(3px)}
+.bar{height:7px;border-radius:99px;background:var(--sunk2);overflow:hidden;position:relative}
+.bar>i{
+  display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s;
+}
+.bar.full>i{background:linear-gradient(90deg,var(--green),#10b981)}
+.card-meta{display:flex;gap:7px;flex-wrap:wrap;font-size:11.5px;font-weight:800;color:var(--dim)}
+.card-meta .pill{background:var(--sunk2);border:1px solid var(--line);border-radius:999px;padding:2.5px 9px}
+.card-meta .pill.bad{color:var(--red2);border-color:color-mix(in srgb,var(--red) 45%,transparent);background:color-mix(in srgb,var(--red) 10%,transparent)}
+.card-meta .pill.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent)}
+.card-meta .pill.good{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent)}
+.card.add{
+  align-items:center;justify-content:center;text-align:center;gap:6px;min-height:132px;
+  border-style:dashed;border-color:var(--dash);background:none;color:var(--dim);
+}
+.card.add:hover{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 6%,transparent)}
+.card.add .plus{font-size:26px;font-weight:400;line-height:1}
+.card-edit{
+  position:absolute;inset-block-start:11px;inset-inline-start:11px;
+  background:var(--card2);border:1px solid var(--line);color:var(--dim);
+  cursor:pointer;font-size:12px;padding:4px 8px;border-radius:9px;opacity:0;transition:.13s;
+}
+.card:hover .card-edit{opacity:1}
+.card-edit:hover{color:var(--tx);border-color:var(--hover)}
+
+/* miniature corridor drawn on a wing card — the plan at a glance */
+.mini{display:flex;flex-direction:column;gap:2.5px;padding:8px 9px;border-radius:11px;background:var(--sunk2);border:1px solid var(--line)}
+.mini-row{display:flex;gap:2.5px;height:13px;align-items:stretch}
+.mini-hall{height:4px;border-radius:99px;background:repeating-linear-gradient(90deg,var(--line2) 0 7px,transparent 7px 12px)}
+.mini-c{flex:1;border-radius:3.5px;min-width:5px;background:var(--line2)}
+.mini-c.r0{background:color-mix(in srgb,var(--dim) 35%,transparent)}
+.mini-c.r1{background:color-mix(in srgb,var(--acc) 45%,transparent)}
+.mini-c.r2{background:var(--acc)}
+.mini-c.rf{background:var(--green)}
+.mini-c.rx{background:var(--red)}
+.mini-c.svc{background:none;border:1px dashed var(--line2);flex:0 0 9px}
+
+.sec-head{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:26px 0 13px;
+}
+.sec-head h2{margin:0}
+.sec-head .sh-sp{flex:1}
+
+/* =====================================================================
+   =========================  WING · floor plan  =======================
+   ===================================================================== */
+.wg-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 14px;
+}
+.wg-bar .wg-t{font-size:16px;font-weight:900;display:flex;align-items:center;gap:9px}
+.wg-bar .wg-sp{flex:1;min-width:6px}
+.wg-modes{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
+.wg-modes button{
+  background:none;border:none;color:var(--dim);cursor:pointer;font:inherit;
+  font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;transition:.13s;
+}
+.wg-modes button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc)}
+
+.plan{
+  background:
+    linear-gradient(180deg,var(--sheen),transparent 30%),var(--card);
+  border:1px solid var(--line2);border-radius:22px;padding:20px 18px;
+  overflow-x:auto;overscroll-behavior-x:contain;
+}
+.plan::-webkit-scrollbar{height:11px}
+.plan::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+.plan-in{display:flex;flex-direction:column;gap:0;min-width:min-content}
+.fp-row{display:flex;gap:11px;align-items:stretch;min-height:34px}
+.fp-row.a{align-items:flex-end}
+.fp-row.b{align-items:flex-start}
+/* the corridor itself */
+.fp-hall{
+  display:flex;align-items:center;gap:12px;margin:11px 0;padding:0 4px;
+  border-radius:12px;min-height:34px;
+  background:
+    linear-gradient(180deg,transparent 42%,var(--sunk2) 42% 58%,transparent 58%),
+    repeating-linear-gradient(90deg,transparent 0 22px,var(--line2) 22px 44px);
+  background-blend-mode:normal;
+  border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);
+}
+.fp-hall .hl{
+  font-size:10.5px;font-weight:900;letter-spacing:3px;color:var(--muted);
+  background:var(--card);padding:3px 12px;border-radius:999px;border:1px solid var(--line);
+  white-space:nowrap;position:sticky;inset-inline-start:6px;
+}
+.fp-hall .hgrow{flex:1}
+
+/* a service cell — showers, stairs, dead space… */
+.fp-svc{
+  flex:0 0 76px;border-radius:14px;padding:9px 6px;
+  border:1.5px dashed var(--dash);background:var(--sunk);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  text-align:center;color:var(--muted);min-height:76px;
+}
+.fp-svc .si{font-size:19px;line-height:1;opacity:.9}
+.fp-svc .sn{font-size:10.5px;font-weight:800;line-height:1.35}
+.fp-svc.dead{background:repeating-linear-gradient(45deg,var(--sunk) 0 6px,transparent 6px 12px);opacity:.65}
+.fp-svc.entrance{border-style:solid;border-color:color-mix(in srgb,var(--green) 45%,transparent);color:var(--green);background:color-mix(in srgb,var(--green) 7%,transparent)}
+.fp-gap{flex:0 0 22px}
+
+/* a room in the plan */
+.fp-room{
+  flex:0 0 var(--fpW,178px);display:flex;flex-direction:column;
+  border:1px solid var(--line2);border-radius:16px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(168deg,var(--roomA),var(--roomB));
+  transition:border-color .15s,box-shadow .15s,transform .15s;position:relative;
+}
+.fp-room::after{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:4px;background:var(--ac);opacity:.85}
+.fp-row.a .fp-room{border-end-start-radius:5px;border-end-end-radius:5px}
+.fp-row.b .fp-room{border-start-start-radius:5px;border-start-end-radius:5px}
+.fp-room.over{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 40%,transparent);transform:translateY(-3px)}
+.fp-room.full-over{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.35)}
+.fp-room.warn-hard{border-color:var(--red);animation:roomAlarm 1.1s infinite}
+.fp-room.warn-soft{border-color:rgba(251,191,36,.55)}
+.fp-room.hasHit{border-color:rgba(34,211,238,.6)}
+.fp-room.shake{animation:shake .4s}
+.fp-room.target{
+  border-color:var(--acc);box-shadow:0 0 0 2.5px color-mix(in srgb,var(--acc) 45%,transparent);
+}
+body.nopulse .fp-room.warn-hard{animation:none}
+/* the door: a little notch facing the corridor */
+.fp-door{
+  position:absolute;inset-inline:0;height:5px;display:flex;justify-content:center;pointer-events:none;
+}
+.fp-row.a .fp-door{bottom:0}
+.fp-row.b .fp-door{top:0}
+.fp-door i{display:block;width:34px;height:100%;background:var(--ac);opacity:.85;border-radius:99px}
+.fp-head{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;padding:9px 12px 8px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 15%,transparent),transparent 78%);
+  border-bottom:1px solid var(--line);
+}
+.fp-head .no{font-size:19px;font-weight:900;color:var(--ac);letter-spacing:.4px}
+.fp-slots{display:flex;flex-direction:column;gap:6px;padding:9px 10px 11px;flex:1}
+.fp-slots .chip{font-size:13px;padding:5px 9px}
+.fp-slots .chip .av{width:20px;height:20px;font-size:11px;border-radius:6px}
+.fp-slots .bed{padding:5px 8px;font-size:11.5px;border-radius:10px}
+.fp-slots .bed svg{width:21px;height:13px}
+
+/* plain grid mode — same rooms, no corridor */
+.wg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--roomMin,220px),1fr));gap:15px}
+.wg-grid .fp-room{flex:auto;border-radius:18px}
+.wg-grid .fp-door{display:none}
+
+/* =====================================================================
+   ====================  ASSIGN DRAWER (no scrolling)  =================
+   ===================================================================== */
+#assignBar{
+  position:fixed;inset-inline:0;bottom:0;z-index:65;
+  inset-inline-end:var(--railW);
+  background:linear-gradient(180deg,var(--sheen),transparent 30%),var(--panel2);
+  border-top:1px solid var(--acc);
+  box-shadow:0 -14px 44px var(--sh3);
+  display:flex;flex-direction:column;max-height:min(calc(.52 * var(--vh,100vh)),430px);
+  animation:abIn .18s ease-out;
+}
+#assignBar[hidden]{display:none!important}
+@keyframes abIn{from{transform:translateY(100%)}to{transform:none}}
+.ab-head{display:flex;align-items:center;gap:11px;padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;flex:none}
+.ab-who{display:inline-flex;align-items:center;gap:9px;font-size:14.5px;font-weight:900;flex:none}
+.ab-av{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px}
+.ab-hint{font-size:12px;color:var(--dim);font-weight:700}
+.ab-head .search{flex:0 1 230px;min-width:130px}
+.ab-sp{flex:1;min-width:4px}
+.ab-x{background:none;border:1px solid transparent;color:var(--dim);cursor:pointer;font-size:14px;padding:5px 10px;border-radius:9px;flex:none}
+.ab-x:hover{color:var(--tx);background:var(--card2);border-color:var(--line)}
+.ab-body{overflow-y:auto;overscroll-behavior:contain;padding:12px 18px 16px;flex:1;min-height:0}
+.ab-body::-webkit-scrollbar{width:10px}
+.ab-body::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+.ab-grp{margin-bottom:13px}
+.ab-grp-t{
+  font-size:11px;font-weight:900;letter-spacing:1.6px;color:var(--muted);
+  margin-bottom:7px;display:flex;align-items:center;gap:8px;
+}
+.ab-grp-t::after{content:'';flex:1;height:1px;background:var(--line)}
+.ab-pills{display:flex;flex-wrap:wrap;gap:7px}
+.rp{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:inherit;
+  background:var(--card2);border:1px solid var(--line2);color:var(--tx);
+  border-radius:12px;padding:7px 12px;font-size:13.5px;font-weight:800;transition:.13s;
+}
+.rp:hover{transform:translateY(-2px);border-color:var(--acc);box-shadow:0 7px 16px var(--sh2)}
+.rp .rp-n{font-weight:900}
+.rp .rp-o{font-size:11.5px;font-weight:800;color:var(--dim);background:var(--sunk2);border-radius:999px;padding:1.5px 8px}
+.rp .rp-f{font-size:12px}
+.rp.best{border-color:color-mix(in srgb,var(--green) 55%,transparent);background:color-mix(in srgb,var(--green) 9%,transparent)}
+.rp.best .rp-o{color:var(--green)}
+.rp.soft{border-color:color-mix(in srgb,var(--amber) 50%,transparent)}
+.rp.hard{border-color:color-mix(in srgb,var(--red) 55%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent)}
+.rp.hard .rp-n{color:var(--red2)}
+.rp.here{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent)}
+.rp.fullr{opacity:.42;cursor:not-allowed}
+.rp.fullr:hover{transform:none;border-color:var(--line2);box-shadow:none}
+.ab-legend{font-size:11px;color:var(--muted);font-weight:700;line-height:1.7;padding-top:4px}
+.ab-legend b{font-weight:900}
+
+/* =====================================================================
+   ===============  TEMPLATE GALLERY · LAYOUT EDITOR  ==================
+   ===================================================================== */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(216px,1fr));gap:12px}
+.tpl{
+  text-align:start;font:inherit;color:var(--tx);cursor:pointer;
+  background:var(--card2);border:1.5px solid var(--line2);border-radius:16px;padding:13px 14px;
+  display:flex;flex-direction:column;gap:8px;transition:.14s;position:relative;
+}
+.tpl:hover{border-color:var(--hover2);transform:translateY(-2px);box-shadow:0 10px 22px var(--sh2)}
+.tpl.on{border-color:var(--acc);box-shadow:0 0 0 2.5px color-mix(in srgb,var(--acc) 32%,transparent)}
+.tpl-t{display:flex;align-items:center;gap:9px}
+.tpl-t .ti{font-size:19px;flex:none}
+.tpl-t b{font-size:14px;font-weight:900}
+.tpl-d{font-size:11.5px;color:var(--dim);font-weight:600;line-height:1.65}
+.tpl-x{
+  position:absolute;inset-block-start:8px;inset-inline-start:8px;
+  background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;
+  padding:3px 6px;border-radius:7px;opacity:0;transition:.13s;
+}
+.tpl:hover .tpl-x{opacity:1}
+.tpl-x:hover{color:var(--red2);background:rgba(239,68,68,.12)}
+
+.wiz-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:4px}
+.wiz-f{display:flex;flex-direction:column;gap:5px}
+.wiz-f label{font-size:11.5px;font-weight:800;color:var(--dim)}
+.wiz-f input{width:104px;text-align:center;font-weight:900}
+
+/* the editor: two tracks either side of a corridor */
+.lay{
+  background:var(--sunk);border:1px solid var(--line);border-radius:16px;
+  padding:13px 12px;overflow-x:auto;
+}
+.lay-in{display:flex;flex-direction:column;gap:7px;min-width:min-content}
+.lay-side{display:flex;align-items:center;gap:6px;min-height:62px}
+.lay-tag{
+  flex:none;font-size:10.5px;font-weight:900;color:var(--muted);
+  background:var(--card2);border:1px solid var(--line);border-radius:8px;
+  padding:4px 7px;align-self:center;white-space:nowrap;
+}
+.lay-hall{
+  height:16px;border-radius:99px;margin:1px 22px;
+  background:repeating-linear-gradient(90deg,var(--line2) 0 9px,transparent 9px 17px);
+  display:flex;align-items:center;justify-content:center;
+}
+.lay-hall span{font-size:9.5px;font-weight:900;letter-spacing:2.5px;color:var(--muted);background:var(--sunk);padding:0 9px}
+.lay-c{
+  flex:0 0 auto;min-width:70px;border-radius:11px;padding:6px 8px;cursor:grab;
+  border:1.5px solid var(--line2);background:var(--card2);
+  display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;transition:.12s;
+}
+.lay-c:hover{border-color:var(--hover2)}
+.lay-c.sel{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 32%,transparent)}
+.lay-c.dragging{opacity:.35}
+.lay-c.dropbefore{box-shadow:inset 3px 0 0 var(--acc)}
+.lay-c .ci{font-size:16px;line-height:1.2}
+.lay-c .cn{font-size:10.5px;font-weight:900;line-height:1.3;text-align:center}
+.lay-c .cb{font-size:9.5px;color:var(--dim);font-weight:800}
+.lay-c.is-room{background:linear-gradient(168deg,var(--roomA),var(--roomB));min-width:78px}
+.lay-c .cx{
+  position:absolute;inset-block-start:-6px;inset-inline-start:-6px;
+  width:18px;height:18px;border-radius:50%;line-height:1;
+  background:var(--card);border:1px solid var(--line2);color:var(--muted);
+  cursor:pointer;font-size:10px;opacity:0;transition:.12s;
+}
+.lay-c:hover .cx{opacity:1}
+.lay-c .cx:hover{color:#fff;background:var(--red);border-color:var(--red)}
+.lay-add{
+  flex:0 0 auto;min-width:44px;min-height:52px;border-radius:11px;cursor:pointer;
+  border:1.5px dashed var(--dash);background:none;color:var(--dim);font-size:17px;transition:.12s;
+}
+.lay-add:hover{border-color:var(--acc);color:var(--acc)}
+.pal{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pal button{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:inherit;
+  background:var(--card2);border:1px solid var(--line);color:var(--tx3);
+  border-radius:10px;padding:6px 11px;font-size:12px;font-weight:800;transition:.12s;
+}
+.pal button:hover{border-color:var(--acc);color:var(--tx);transform:translateY(-1px)}
+
+/* =====================================================================
+   ==============================  misc  ===============================
+   ===================================================================== */
+.blank{
+  text-align:center;padding:38px 20px;color:var(--dim);
+  border:1.5px dashed var(--line2);border-radius:20px;background:var(--sunk);
+}
+.blank .bi{font-size:38px;margin-bottom:9px;opacity:.75}
+.blank b{display:block;font-size:15.5px;color:var(--tx2);margin-bottom:5px}
+.blank p{font-size:13px;line-height:1.8;max-width:430px;margin:0 auto 14px}
+.vpane{display:none}
+.vpane.on{display:block;animation:fadeIn .2s}
+/* the UA's [hidden] rule loses to .vpane.on / .tabbar on specificity — on the
+   first run the whole board would otherwise show through under the welcome panel */
+.vpane[hidden],.tabbar[hidden],footer[hidden],.stats[hidden]{display:none!important}
+.tabbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.tabbar button{
+  background:none;border:none;border-bottom:2.5px solid transparent;
+  color:var(--dim);font:inherit;font-size:13.5px;font-weight:800;
+  padding:9px 15px;cursor:pointer;margin-bottom:-1px;transition:.14s;
+}
+.tabbar button:hover{color:var(--tx)}
+.tabbar button.on{color:var(--acc);border-bottom-color:var(--acc)}
+.tabbar button .bdg{
+  font-size:10.5px;font-weight:900;background:var(--red);color:#fff;
+  border-radius:999px;padding:0 6px;margin-inline-start:5px;
+}
+#aiFab{left:calc(var(--railW) + 22px)}
+#aiPanel{left:calc(var(--railW) + 22px)}
+body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
+
+/* =====================================================================
+   ==========================  narrow screens  =========================
+   ===================================================================== */
+@media (max-width:980px){
+  body{padding-inline-end:clamp(14px,3.5vw,46px);padding-bottom:96px}
+  #topbar{margin-left:calc(clamp(14px,3.5vw,46px) * -1);padding-left:clamp(14px,3.5vw,46px)}
+  #rail{
+    top:auto;inset-inline:0;bottom:0;width:auto;height:min(calc(.46 * var(--vh,100vh)),320px);
+    border-inline-start:none;border-top:1px solid var(--line2);
+    border-radius:20px 20px 0 0;box-shadow:0 -12px 36px var(--sh3);
+  }
+  body.rail-off #rail{transform:translateY(calc(100% - 46px))}
+  .rl-toggle{
+    inset-inline-end:14px;top:auto;transform:none;
+    bottom:calc(min(calc(.46 * var(--vh,100vh)),320px) + 10px);width:54px;height:28px;
+  }
+  body.rail-off .rl-toggle{bottom:54px;inset-inline-end:14px}
+  #assignBar{inset-inline-end:0;max-height:min(calc(.62 * var(--vh,100vh)),420px)}
+  #aiFab,#aiPanel{left:16px}
+  body:not(.rail-off) #aiFab,body:not(.rail-off) #aiPanel{display:none}
+}
 </style>
 </head>
 <body>
@@ -769,12 +1251,13 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
   <div class="banner"><span class="big">⛔</span><span><b>אסור!</b> <span id="alarmText"></span></span></div>
 </div>
 
-<header>
-  <div class="hleft">
-    <div class="overline" id="overline">🏢 פנימייה</div>
-    <h1><span class="grad">שיבוץ חדרים</span> <span class="zman" id="zman" contenteditable="true" spellcheck="false"></span></h1>
-    <div class="stats" id="stats"></div>
-  </div>
+<div id="topbar">
+  <button class="tb-home" id="tbHome" title="חזרה למסך הפתיחה">
+    <span class="mark">🛏️</span><span>שיבוץ חדרים</span>
+  </button>
+  <nav id="crumbs"></nav>
+  <span class="tb-spacer"></span>
+  <div class="stats" id="stats"></div>
   <div class="actions">
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
     <button class="btn" id="btnClear">🧹 נקה לוח</button>
@@ -782,7 +1265,11 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
     <button class="btn" id="btnXlsx">📊 אקסל</button>
     <button class="btn" id="btnSettings">⚙️ הגדרות</button>
   </div>
-</header>
+</div>
+
+<!-- lives in the hero on the home screen; kept as one persistent node so its
+     listeners survive the view being re-rendered -->
+<span class="zman" id="zman" contenteditable="true" spellcheck="false" hidden></span>
 
 <section id="welcome" class="panel" hidden>
   <div class="wel">
@@ -791,6 +1278,7 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
     <p>כדי להתחיל צריך להזין את רשימת הבחורים ואת החדרים. הדרך המהירה: קובץ אקסל.</p>
     <div class="wel-btns">
       <button class="btn accent" id="welImport">📥 ייבוא מקובץ</button>
+      <button class="btn" id="welWing">🧱 בניית אגף מתבנית</button>
       <button class="btn" id="welTemplate">📄 הורדת קובץ תבנית</button>
       <button class="btn" id="welManual">✏️ הזנה ידנית</button>
       <button class="btn" id="welRestore">📂 שחזור מגיבוי</button>
@@ -811,20 +1299,15 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
   </div>
 </section>
 
-<section id="pool" class="panel">
-  <h2>👥 ממתינים לשיבוץ <span id="poolCount" class="stat"></span></h2>
-  <div class="searchrow">
-    <span class="search"><input type="text" id="boardSearch" placeholder="חיפוש בחור — גם בממתינים וגם בחדרים…">
-      <button class="clr" id="boardSearchClr" hidden title="ניקוי">✕</button></span>
-    <span class="hitcount" id="boardHits"></span>
-  </div>
-  <div class="chips" id="poolChips"></div>
-</section>
+<div class="tabbar" id="mainTabs">
+  <button data-v="board" class="on">🏠 הלוח</button>
+  <button data-v="rules">⚖️ תנאים וכללים <span class="bdg" id="tabRulesBdg" hidden></span></button>
+  <button data-v="sims">🗂️ סימולציות</button>
+</div>
 
-<section id="roomsWrap">
-  <div id="rooms"></div>
-</section>
+<div class="vpane on" data-v="board"><div id="view"></div></div>
 
+<div class="vpane" data-v="rules">
 <section class="panel">
   <h2>⚖️ תנאים וכללים</h2>
   <div class="ruleform" id="ruleForm">
@@ -858,7 +1341,9 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
     <div class="suggs" id="suggList"></div>
   </div>
 </section>
+</div>
 
+<div class="vpane" data-v="sims">
 <section class="panel">
   <h2>🗂️ סימולציות שמורות</h2>
   <div class="savebar">
@@ -867,11 +1352,28 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
   </div>
   <div id="simsBar"></div>
 </section>
+</div>
 
 <footer>
-  גררו בחור לחדר (או: לחיצה על בחור ואז על חדר) · לחיצה כפולה מחזירה לממתינים · לחיצה על 🔓 שעל בחור משובץ נועלת אותו במקומו<br>
-  <kbd>/</kbd> חיפוש · <kbd>Ctrl+Z</kbd> ביטול · <kbd>Ctrl+S</kbd> שמירת סימולציה · <kbd>Delete</kbd> הוצאת המסומן · גיבוי, איפוס והגדרות — בכפתור ⚙️
+  לחיצה על בחור פותחת למטה את כל החדרים — לחיצה על חדר משבצת אותו, בלי גלילה ובלי גרירה.<br>
+  אפשר כמובן גם לגרור · לחיצה כפולה מחזירה לממתינים · 🔓 על בחור משובץ נועל אותו במקומו<br>
+  <kbd>/</kbd> חיפוש · <kbd>Ctrl+Z</kbd> ביטול · <kbd>Ctrl+S</kbd> שמירת סימולציה · <kbd>Esc</kbd> ביטול סימון · <kbd>Backspace</kbd> חזרה אחורה
 </footer>
+
+<aside id="rail">
+  <div class="rl-head">
+    <h2>👥 ממתינים</h2>
+    <span class="rl-count" id="poolCount"></span>
+  </div>
+  <div class="rl-srch">
+    <span class="search"><input type="text" id="boardSearch" placeholder="חיפוש בחור…">
+      <button class="clr" id="boardSearchClr" hidden title="ניקוי">✕</button></span>
+    <span class="hitcount" id="boardHits"></span>
+  </div>
+  <div class="rl-chips" id="poolChips"></div>
+  <div class="rl-foot">לחיצה על שם ← בחירת חדר למטה<br>גרירה לכאן מחזירה בחור לרשימה</div>
+</aside>
+<button class="rl-toggle" id="railToggle" title="הצגה והסתרה של רשימת הממתינים">←</button>
 
 <button id="aiFab" title="יועץ AI">✨</button>
 <div id="aiPanel" hidden>
@@ -899,6 +1401,107 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
     <button id="aiSend" class="btn accent">שלח</button>
   </div>
 </div>
+
+<div id="assignBar" hidden>
+  <div class="ab-head">
+    <span class="ab-who"><span class="ab-av" id="abAv"></span><b id="abName"></b></span>
+    <span class="ab-hint">בחרו חדר — כל החדרים כאן, בלי לגלול</span>
+    <span class="search"><input type="text" id="abSearch" placeholder="מספר חדר או שם אגף…">
+      <button class="clr" id="abSearchClr" hidden title="ניקוי">✕</button></span>
+    <span class="ab-sp"></span>
+    <button class="btn mini" id="abPool">↩️ להחזיר לממתינים</button>
+    <button class="ab-x" id="abClose" title="ביטול (Esc)">✕</button>
+  </div>
+  <div class="ab-body" id="abRooms"></div>
+</div>
+
+<dialog id="dlgBld">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3 id="bldTtl">🏢 בניין</h3>
+      <button class="dlg-x" id="bldX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <div class="ed-sec">
+        <h4>🏷️ שם</h4>
+        <input type="text" id="bldName" placeholder="למשל: בניין הפנימייה / בניין צפוני" style="width:100%">
+      </div>
+      <div class="ed-sec">
+        <h4>🎨 סמל</h4>
+        <div class="pal" id="bldIcons"></div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="bldSave">שמירה</button>
+      <button class="btn" id="bldCancel">ביטול</button>
+      <span class="ab-sp"></span>
+      <button class="btn danger-btn" id="bldDel" hidden>🗑️ מחיקה</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgWing">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3 id="wgTtl">🏗️ אגף</h3>
+      <button class="dlg-x" id="wgX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+
+      <div class="ed-sec">
+        <h4>🏷️ פרטים</h4>
+        <div class="wiz-row">
+          <div class="wiz-f" style="flex:1;min-width:170px">
+            <label>שם האגף</label>
+            <input type="text" id="wgName" placeholder="למשל: אגף 400 / קומה ב׳" style="width:100%">
+          </div>
+          <div class="wiz-f">
+            <label>בניין</label>
+            <select id="wgBld"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ed-sec">
+        <h4>📐 תבנית <span class="cnt">בוחרים פריסה — והאגף נבנה לבד</span></h4>
+        <p class="hint">רוב הפנימיות בנויות אותו דבר: מסדרון, חדרים לצדדים, ובנקודות מסוימות מקלחות,
+          שירותים, מדרגות או שטח מת. בחרו את התבנית הקרובה ביותר, ואחר כך תזיזו מה שצריך.</p>
+        <div class="tpl-grid" id="wgTpls"></div>
+        <div class="wiz-row">
+          <div class="wiz-f"><label>כמה חדרים</label><input type="text" id="wgCount" value="10"></div>
+          <div class="wiz-f"><label>מיטות בחדר</label><input type="text" id="wgBeds" value="4"></div>
+          <div class="wiz-f"><label>מספר החדר הראשון</label><input type="text" id="wgStart" value="401"></div>
+          <button class="btn accent" id="wgApplyTpl">🧱 בניית הפריסה</button>
+        </div>
+        <p class="hint" id="wgTplNote" style="margin:9px 0 0"></p>
+      </div>
+
+      <div class="ed-sec">
+        <h4>🧱 הפריסה <span class="cnt">גררו לסידור · לחצו על משבצת לעריכה</span></h4>
+        <div class="lay" id="wgLay"></div>
+        <div id="wgCellEd" hidden style="margin-top:12px">
+          <label class="fl">מה יש במשבצת שנבחרה</label>
+          <div class="pal" id="wgCellType"></div>
+          <div class="wiz-row" id="wgCellRoom" hidden>
+            <div class="wiz-f"><label>מספר החדר</label><input type="text" id="wgCellNum"></div>
+            <div class="wiz-f"><label>מיטות</label><span class="step" id="wgCellBeds"></span></div>
+          </div>
+          <div class="wiz-row" id="wgCellFree" hidden>
+            <div class="wiz-f" style="flex:1"><label>כיתוב (לא חובה)</label>
+              <input type="text" id="wgCellLbl" placeholder="למשל: מקלחות בנים" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="dlgbtns wrap">
+          <button class="btn mini" id="wgAutoLay">🔄 סידור אוטומטי של החדרים</button>
+          <button class="btn mini" id="wgSaveTpl">⭐ שמירת הפריסה כתבנית שלי</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="wgSave">שמירה</button>
+      <button class="btn" id="wgCancel">ביטול</button>
+      <span class="ab-sp"></span>
+      <button class="btn danger-btn" id="wgDel" hidden>🗑️ מחיקת האגף</button>
+    </div>
+  </div>
+</dialog>
 
 <div id="toast"></div>
 <input type="file" id="fileImport" accept=".json" hidden>
@@ -974,7 +1577,7 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
         <label class="row"><span class="sw"><input type="checkbox" id="setMotion"><i></i></span>
           <span><b>אנימציות</b><small>כיבוי גם מבטל את ההבהוב האדום</small></span></label>
       </div>
-      <div class="dlgbtns"><button class="btn" id="setDispReset">↺ החזרת ברירות המחדל לתצוגה</button></div>
+      <div class="dlgbtns"><button class="btn" id="setDispReset">🔄 החזרת ברירות המחדל לתצוגה</button></div>
     </div>
 
     <div class="tabpane" data-p="general">
@@ -1058,7 +1661,7 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
         <label class="fl">מפתח API</label>
         <input type="password" id="setAiKey" placeholder="הדביקו כאן את המפתח…" autocomplete="off" spellcheck="false" style="width:100%">
         <div class="keystat" id="keyStatus" hidden></div>
-        <label class="fl" style="margin-top:10px">מודל <span class="lnk" id="setAiFetch">↻ טעינת הרשימה מהחשבון</span></label>
+        <label class="fl" style="margin-top:10px">מודל <span class="lnk" id="setAiFetch">🔄 טעינת הרשימה מהחשבון</span></label>
         <select id="setAiModel" style="width:100%"></select>
         <div class="dlgbtns wrap">
           <button class="btn" id="setAiTest">🔌 בדיקת חיבור</button>
@@ -1194,16 +1797,138 @@ const ACCENTS={
   violet:{a:'#a855f7',b:'#6366f1',la:'#7e22ce',lb:'#4338ca',he:'סגול'}
 };
 const DEFAULT_DISPLAY={theme:'dark',accent:'cyan',text:100,density:'regular',
-  roomW:'220px',emptyBeds:true,tilt:true,grid:true,motion:true};
+  roomW:'220px',emptyBeds:true,tilt:true,grid:true,motion:true,
+  planMode:'plan',rail:true};
 const DEFAULT_SETTINGS={sound:true,flash:true,pulse:true,suggest:true,confirm:true,aiFab:true,
   ai:{name:'יועץ שיבוץ',emoji:'✨',level:'act',askFirst:true},
   display:Object.assign({},DEFAULT_DISPLAY)};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
+/* ================= corridor vocabulary =================
+   A wing is a corridor with two sides. Every side is an ordered list of cells,
+   and a cell is either a room or one of the fixed things a dorm corridor has. */
+const CELL_TYPES={
+  room:    {he:'חדר',       ico:'🚪'},
+  entrance:{he:'כניסה',     ico:'🚶'},
+  shower:  {he:'מקלחות',    ico:'🚿'},
+  toilet:  {he:'שירותים',   ico:'🚻'},
+  sink:    {he:'כיורים',    ico:'🧼'},
+  stairs:  {he:'מדרגות',    ico:'🪜'},
+  elevator:{he:'מעלית',     ico:'🛗'},
+  madrich: {he:'חדר מדריך', ico:'🧑‍🏫'},
+  study:   {he:'חדר לימוד', ico:'📚'},
+  kitchen: {he:'מטבחון',    ico:'🍽️'},
+  laundry: {he:'כביסה',     ico:'🧺'},
+  store:   {he:'מחסן',      ico:'📦'},
+  dead:    {he:'שטח מת',    ico:'⬛'}
+};
+const BLD_ICONS=['🏢','🏠','🏫','🏬','🏰','⛪','🕍','🏘️','🛖','🗼','🧱','🌄'];
+
+/* room numbers that follow a start value: 401 → 401,402,403…  ג-1 → ג-1,ג-2… */
+function roomNums(start,count){
+  const m=String(start==null?'':start).trim().match(/^(.*?)(\d+)(\D*)$/);
+  const out=[];
+  if(m){
+    const pre=m[1],pad=m[2].length,suf=m[3];
+    let n=+m[2];
+    for(let i=0;i<count;i++,n++)out.push(pre+String(n).padStart(pad,'0')+suf);
+  }else{
+    const base=String(start||'חדר').trim()||'חדר';
+    for(let i=0;i<count;i++)out.push(base+' '+(i+1));
+  }
+  return out;
+}
+/* no layout yet (or a legacy save): lay the rooms out alternately, both sides of the hall */
+function autoLayout(nums){
+  const a=[],b=[];
+  nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:String(n)}));
+  return {a,b};
+}
+/* the layout is a view of S.rooms, never a second source of truth:
+   cells naming a room that is gone are dropped, rooms missing from it are appended */
+function normLayout(lay,rooms){
+  const want=rooms.map(r=>String(r.num));
+  const wantSet=new Set(want),seen=new Set();
+  const clean=arr=>(Array.isArray(arr)?arr:[]).map(c=>{
+    if(!c||typeof c!=='object')return null;
+    const t=CELL_TYPES[c.t]?c.t:'dead';
+    if(t==='room'){
+      const num=String(c.num==null?'':c.num);
+      if(!wantSet.has(num)||seen.has(num))return null;
+      seen.add(num);
+      return {t:'room',num};
+    }
+    const o={t};
+    if(c.label)o.label=String(c.label).slice(0,24);
+    return o;
+  }).filter(Boolean);
+  const out={a:clean(lay&&lay.a),b:clean(lay&&lay.b)};
+  if(!lay||(!out.a.length&&!out.b.length&&want.length))return autoLayout(want);
+  for(const n of want){
+    if(seen.has(n))continue;
+    (out.a.length<=out.b.length?out.a:out.b).push({t:'room',num:n});
+  }
+  return out;
+}
+const layoutRoomNums=lay=>[...(lay&&lay.a||[]),...(lay&&lay.b||[])]
+  .filter(c=>c.t==='room').map(c=>c.num);
+
+/* ================= ready-made wing shapes =================
+   make() receives the room numbers and returns the two sides. */
+const WING_TEMPLATES=[
+  {id:'classic',ico:'🏛️',name:'מסדרון קלאסי',
+   desc:'כניסה בקצה אחד · חדרים משני צידי המסדרון · מקלחות ושירותים בקצה השני.',
+   make(nums){
+     const a=[],b=[];
+     nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:n}));
+     a.unshift({t:'entrance'});
+     a.push({t:'shower'}); b.push({t:'toilet'});
+     return {a,b};
+   }},
+  {id:'midservice',ico:'🚿',name:'שירותים באמצע',
+   desc:'המקלחות והשירותים באמצע המסדרון, חדרים משני צדדיו.',
+   make(nums){
+     const a=[],b=[];
+     nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:n}));
+     a.unshift({t:'entrance'});
+     b.splice(Math.ceil(b.length/2),0,{t:'shower'},{t:'toilet'});
+     return {a,b};
+   }},
+  {id:'oneside',ico:'📏',name:'חדרים בצד אחד',
+   desc:'כל החדרים על צד אחד של המסדרון, מולם קיר או חלונות.',
+   make(nums){
+     const a=[{t:'entrance'},...nums.map(n=>({t:'room',num:n})),{t:'shower'},{t:'toilet'}];
+     return {a,b:[]};
+   }},
+  {id:'madrich',ico:'🧑‍🏫',name:'אגף עם חדר מדריך',
+   desc:'חדר מדריך צמוד לכניסה, מדרגות בקצה, שירותים ומקלחות מופרדים.',
+   make(nums){
+     const a=[],b=[];
+     nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:n}));
+     a.unshift({t:'entrance'},{t:'madrich'});
+     a.push({t:'shower'}); b.push({t:'toilet'},{t:'stairs'});
+     return {a,b};
+   }},
+  {id:'full',ico:'🏨',name:'אגף מלא',
+   desc:'הכול בפנים: כניסה, מדרגות, מטבחון, כביסה, מחסן, מקלחות ושירותים.',
+   make(nums){
+     const a=[],b=[];
+     nums.forEach((n,i)=>(i%2?b:a).push({t:'room',num:n}));
+     a.unshift({t:'entrance'},{t:'stairs'});
+     a.push({t:'kitchen'},{t:'shower'});
+     b.unshift({t:'store'});
+     b.push({t:'laundry'},{t:'toilet'});
+     return {a,b};
+   }},
+  {id:'blank',ico:'⬜',name:'ריק',
+   desc:'מסדרון חשוף. מוסיפים משבצות אחת־אחת ובונים בדיוק לפי המציאות.',
+   make(nums){return {a:nums.map(n=>({t:'room',num:n})),b:[]};}}
+];
+
 let S=loadState();
 let selected=null;
 let formMembers=new Set();
-const Q={board:'',rule:'',rules:'',edit:''};
+const Q={board:'',rule:'',rules:'',edit:'',ab:''};
 
 /* Hebrew-friendly matching: ignores geresh/quotes, hyphens and double spaces */
 const norm=s=>String(s||'').toLowerCase()
@@ -1212,23 +1937,28 @@ const hits=(text,q)=>!q||norm(text).includes(norm(q));
 function clearSearches(){
   for(const k of Object.keys(Q))Q[k]='';
   for(const [inp,clr] of [['#boardSearch','#boardSearchClr'],['#ruleSearch','#ruleSearchClr'],
-                          ['#rulesSearch','#rulesSearchClr'],['#edSearch','#edSearchClr']]){
+                          ['#rulesSearch','#rulesSearchClr'],['#edSearch','#edSearchClr'],
+                          ['#abSearch','#abSearchClr']]){
     const i=$(inp); if(i)i.value='';
     const c=$(clr); if(c)c.hidden=true;
   }
 }
-function wireSearch(inputSel,clrSel,key,after){
+/* typing must not pay for a full repaint per character — the redraw trails the
+   keystrokes by a beat, while clearing the box is immediate */
+function wireSearch(inputSel,clrSel,key,after,delay){
   const inp=$(inputSel),clr=$(clrSel);
-  const sync=()=>{
+  let t=null;
+  const sync=now=>{
     Q[key]=inp.value;
     clr.hidden=!inp.value;
-    after();
+    clearTimeout(t);
+    if(now||!delay)after(); else t=setTimeout(after,delay);
   };
-  inp.addEventListener('input',sync);
+  inp.addEventListener('input',()=>sync(false));
   inp.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();inp.value='';sync();}
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();inp.value='';sync(true);}
   });
-  clr.addEventListener('click',()=>{inp.value='';sync();inp.focus();});
+  clr.addEventListener('click',()=>{inp.value='';sync(true);inp.focus();});
 }
 
 function migrate(s){
@@ -1256,11 +1986,37 @@ function migrate(s){
   s.settings.ai=Object.assign({},DEFAULT_SETTINGS.ai,s.settings.ai||{});
   s.settings.display=Object.assign({},DEFAULT_DISPLAY,s.settings.display||{});
   if(!ACCENTS[s.settings.display.accent])s.settings.display.accent='cyan';
-  if(!Array.isArray(s.wings)||!s.wings.length){
-    s.wings=[{id:'w1',name:'אגף ראשי'}];
-    (s.rooms||[]).forEach(r=>r.wing='w1');
-  }
-  (s.rooms||[]).forEach(r=>{if(!r.wing)r.wing=s.wings[0].id;});
+  if(!Array.isArray(s.wings))s.wings=[];
+  s.wings=s.wings.filter(w=>w&&w.id!=null).map(w=>({
+    id:String(w.id),
+    name:String(w.name==null?'':w.name).trim()||'אגף',
+    building:w.building,layout:w.layout
+  }));
+  if(!s.wings.length)s.wings=[{id:'w1',name:'אגף ראשי'}];
+  /* a room pointing at a wing that no longer exists would never be drawn anywhere —
+     adopt it into the first wing rather than letting it vanish */
+  const wingIds=new Set(s.wings.map(w=>w.id));
+  s.rooms.forEach(r=>{if(!wingIds.has(r.wing))r.wing=s.wings[0].id;});
+
+  /* ---- v2: buildings above the wings ---- */
+  if(!Array.isArray(s.buildings))s.buildings=[];
+  s.buildings=s.buildings.filter(b=>b&&b.id!=null).map(b=>({
+    id:String(b.id),
+    name:String(b.name==null?'':b.name).trim()||'בניין',
+    icon:String(b.icon||'🏢').slice(0,4)
+  }));
+  if(!s.buildings.length)s.buildings=[{id:'bld1',name:'הבניין',icon:'🏢'}];
+  const bldIds=new Set(s.buildings.map(b=>b.id));
+  s.wings.forEach(w=>{if(!bldIds.has(w.building))w.building=s.buildings[0].id;});
+
+  /* ---- v2: corridor layout per wing, plus the user's own saved templates ---- */
+  if(!Array.isArray(s.templates))s.templates=[];
+  s.templates=s.templates.filter(t=>t&&t.id&&t.sides&&typeof t.sides==='object')
+    .map(t=>({id:String(t.id),name:String(t.name||'תבנית').slice(0,40),
+              ico:String(t.ico||'⭐').slice(0,4),desc:String(t.desc||'').slice(0,120),
+              sides:{a:Array.isArray(t.sides.a)?t.sides.a:[],b:Array.isArray(t.sides.b)?t.sides.b:[]}}));
+  s.wings.forEach(w=>{w.layout=normLayout(w.layout,s.rooms.filter(r=>r.wing===w.id));});
+
   if(!Array.isArray(s.locks))s.locks=[];
   s.rules.forEach(r=>{
     if((r.type==='separate'||r.type==='together')&&!Array.isArray(r.members))
@@ -1289,7 +2045,19 @@ function loadState(){
   }catch(e){}
   return migrate({boys:[...DEFAULT_BOYS],rooms:DEFAULT_ROOMS.map(r=>({...r})),assign:{},rules:[],sims:[],zman:'הזמן הבא',activeSim:null});
 }
-function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+/* while a batch is open, save() and render() only mark the work as pending —
+   the batch flushes once at the end */
+let batchDepth=0,batchDirty=false;
+function save(){
+  if(batchDepth){batchDirty=true;return;}
+  try{localStorage.setItem(KEY,JSON.stringify(S));}
+  catch(e){
+    /* quota, or a browser in private mode — the user must hear about it, silently
+       losing the write is how a whole evening of work disappears on refresh */
+    save._warned||toast('⚠️ הדפדפן לא מאפשר לשמור — שמרו גיבוי לקובץ מיד! (⚙️ ← נתונים)');
+    save._warned=true;
+  }
+}
 
 /* ---------- helpers ---------- */
 const occupants=num=>S.boys.filter(b=>S.assign[b]===num);
@@ -1342,7 +2110,7 @@ function alarm(txt){
 
 /* ---------- undo ---------- */
 const UNDO=[];
-const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','sims','zman'];
+const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','buildings','templates','sims','zman'];
 function snapshot(){
   const o={};
   for(const k of UNDO_KEYS)o[k]=S[k];
@@ -1353,7 +2121,7 @@ function undo(){
   if(!UNDO.length){toast('אין מה לבטל');return;}
   const p=JSON.parse(UNDO.pop());
   for(const k of UNDO_KEYS)if(p[k]!==undefined)S[k]=p[k];
-  S.activeSim=null;selected=null;formMembers.clear();editingRule=null;
+  S.activeSim=null;clearSel();formMembers.clear();editingRule=null;paintRuleForm();
   save();initDynamic();render();
   toast('↩️ הפעולה האחרונה בוטלה');
 }
@@ -1373,26 +2141,39 @@ function toggleLock(name){
 }
 
 /* ---------- assignment ---------- */
+/* a room number may contain quotes, so never build a CSS selector out of it */
+function roomNode(num){
+  return [...document.querySelectorAll('.fp-room')].find(n=>n.dataset.num===String(num))||null;
+}
 function assignBoy(name,num){
   if(!S.boys.includes(name)) return;
+  /* asking for a change that is already true must not burn an undo step */
+  if(!num&&!S.assign[name]){clearSel();render();return;}
   if(isLocked(name)&&S.assign[name]){
     toast(`🔒 ${name} נעול בחדר ${S.assign[name]} — לחצו על המנעול לשחרור`);
-    selected=null;render();return;
+    clearSel();render();return;
   }
   if(num){
     const room=roomBy(num); if(!room) return;
-    if(S.assign[name]===num){selected=null;render();return;}
+    if(S.assign[name]===num){clearSel();render();return;}
     if(occupants(num).length>=room.beds){
       toast(`חדר ${num} מלא — ${room.beds} מיטות בלבד`);
-      const el=document.querySelector(`.room[data-num="${num}"]`);
-      if(el){el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),450);}
-      selected=null;render();return;
+      const node=roomNode(num);
+      if(node){node.classList.add('shake');setTimeout(()=>node.classList.remove('shake'),450);}
+      clearSel();render();return;
     }
   }
   const before=evaluate(S.assign);
   snapshot();
   if(num) S.assign[name]=num; else delete S.assign[name];
-  S.activeSim=null; selected=null; save(); render();
+  S.activeSim=null; clearSel(); save();
+  /* if he landed in a wing you are not looking at, follow him there */
+  if(num){
+    const w=wingBy((roomBy(num)||{}).wing);
+    if(V.level==='wing'&&w&&V.wing!==w.id)V={level:'wing',bld:w.building,wing:w.id};
+    if(w)toast(`✓ ${name} → חדר ${num} · ${w.name}`);
+  }
+  render();
   const after=evaluate(S.assign);
   const fresh=after.list.filter(x=>x.st==='violated'&&x.rule.level==='hard'
     &&!before.list.some(y=>y.rule.id===x.rule.id&&y.st==='violated'));
@@ -1403,7 +2184,9 @@ function assignBoy(name,num){
 function ruleStatus(rule,asg){
   if(rule.enabled===false) return {st:'off',detail:'',bad:[],rooms:[]};
   if(rule.type==='separate'||rule.type==='together'){
-    const mem=rule.members||[];
+    const mem=[...new Set(rule.members||[])];
+    /* fewer than two names is not a satisfiable rule — reporting 'ok' would hide it */
+    if(mem.length<2)return {st:'violated',detail:'הכלל פגום — פחות משני בחורים',bad:[],rooms:[]};
     const asgd=mem.filter(m=>asg[m]);
     if(rule.type==='separate'){
       const byRoom={};
@@ -1462,8 +2245,9 @@ function evaluate(asg){
 const scoreOf=asg=>{const ev=evaluate(asg);return ev.hard*1000+ev.soft;};
 function ruleText(r){
   const ico={separate:'🚫',together:'🤝',inRoom:'📍',notInRoom:'🚷'}[r.type]||'';
-  if(r.type==='separate')  return `${ico} ${r.members.join(' · ')} — לא באותו חדר`;
-  if(r.type==='together')  return `${ico} ${r.members.join(' · ')} — ביחד באותו חדר`;
+  /* a malformed rule must never be able to throw here — this runs inside render() */
+  if(r.type==='separate')  return `${ico} ${(r.members||[]).join(' · ')} — לא באותו חדר`;
+  if(r.type==='together')  return `${ico} ${(r.members||[]).join(' · ')} — ביחד באותו חדר`;
   if(r.type==='inRoom')    return `${ico} ${r.a} — בחדר ${r.room}`;
   if(r.type==='notInRoom') return `${ico} ${r.a} — לא בחדר ${r.room}`;
   return '';
@@ -1480,17 +2264,27 @@ function computeSuggestions(){
     const sc=ev.hard*1000+ev.soft;
     if(sc<baseScore) found.push({score:sc,text,asg,gain:gainTxt(base,ev)});
   };
-  const movable=S.boys.filter(b=>S.assign[b]&&!isLocked(b));
+  /* occupancy once, instead of a full boy scan per candidate room */
+  const cnt=new Map();
+  for(const b of S.boys){const r=S.assign[b]; if(r)cnt.set(r,(cnt.get(r)||0)+1);}
+  /* only a boy who appears in a violated rule can lower the score — everyone else
+     is noise, and at 300 boys the difference is seconds per click */
+  const suspects=new Set([...base.badHard,...base.badSoft]);
+  const placed=S.boys.filter(b=>S.assign[b]&&!isLocked(b));
+  const movable=placed.filter(b=>suspects.has(b));
   for(const b of movable){
     for(const r of S.rooms){
       if(r.num===S.assign[b]) continue;
-      if(occupants(r.num).length<r.beds)
+      if((cnt.get(r.num)||0)<r.beds)
         consider({...S.assign,[b]:r.num},`להעביר את ${b} לחדר ${r.num}`);
     }
   }
-  for(let i=0;i<movable.length;i++)for(let j=i+1;j<movable.length;j++){
-    const a=movable[i],b=movable[j];
-    if(S.assign[a]===S.assign[b]) continue;
+  const pairSeen=new Set();
+  for(const a of movable)for(const b of placed){
+    if(a===b||S.assign[a]===S.assign[b]) continue;
+    const key=a<b?a+'|'+b:b+'|'+a;
+    if(pairSeen.has(key))continue;
+    pairSeen.add(key);
     const asg={...S.assign};
     [asg[a],asg[b]]=[asg[b],asg[a]];
     consider(asg,`להחליף בין ${a} (${S.assign[a]}) ל־${b} (${S.assign[b]})`);
@@ -1506,9 +2300,22 @@ function gainTxt(base,ev){
   if(ds<0)out.push(`+${-ds} קלות`);
   return out.join(' · ')||'שיפור';
 }
+/* the search behind the suggestions is the single most expensive thing the app does.
+   It never runs on the click path: only when the rules tab is actually open, and
+   only after the board has been still for a moment. */
+let suggTimer=null;
 function renderSuggestions(ev){
+  clearTimeout(suggTimer);
+  const box=$('#suggBox');
+  const paneOn=document.querySelector('.vpane[data-v="rules"]');
+  if(!S.settings.suggest||ev.hard+ev.soft===0||!paneOn||!paneOn.classList.contains('on')){
+    box.hidden=true;return;
+  }
+  suggTimer=setTimeout(paintSuggestions,320);
+}
+function paintSuggestions(){
   const box=$('#suggBox'),list=$('#suggList');
-  const suggs=(S.settings.suggest&&ev.hard+ev.soft>0)?computeSuggestions():[];
+  const suggs=computeSuggestions();
   if(!suggs.length){box.hidden=true;return;}
   box.hidden=false; list.innerHTML='';
   for(const sg of suggs){
@@ -1546,8 +2353,8 @@ function chipEl(name,ev,inRoom){
     el.appendChild(lk);
   }
   el.title=locked?'נעול בחדר — לחצו על המנעול לשחרור'
-    :inRoom?'גרירה לחדר אחר · לחיצה כפולה מחזירה לממתינים'
-    :'גרירה לחדר, או לחיצה ואז לחיצה על חדר';
+    :inRoom?'לחיצה פותחת את רשימת החדרים · גרירה מזיזה ישירות · לחיצה כפולה מחזירה לממתינים'
+    :'לחיצה פותחת למטה את כל החדרים · אפשר גם לגרור';
   el.addEventListener('dragstart',e=>{
     if(locked){e.preventDefault();return;}
     e.dataTransfer.setData('text/plain',name);
@@ -1558,8 +2365,8 @@ function chipEl(name,ev,inRoom){
   el.addEventListener('click',e=>{
     e.stopPropagation();
     if(locked){toast(`🔒 ${name} נעול — לחצו על המנעול לשחרור`);return;}
-    selected=(selected===name)?null:name;
-    render();
+    if(selected===name){clearSel();render();}
+    else openAssign(name);
   });
   el.addEventListener('dblclick',e=>{
     e.stopPropagation();
@@ -1569,17 +2376,36 @@ function chipEl(name,ev,inRoom){
   return el;
 }
 
+/* the tree has several editors and an AI that can all reshape it. Rather than
+   trusting each of them to keep the layouts in step, the board repairs itself. */
+function syncLayouts(){
+  const bld=new Set(S.buildings.map(b=>b.id));
+  const byWing=new Map();
+  for(const w of S.wings){
+    if(!bld.has(w.building))w.building=S.buildings[0].id;
+    byWing.set(w.id,[]);
+  }
+  for(const r of S.rooms){
+    if(!byWing.has(r.wing))r.wing=S.wings[0].id;
+    byWing.get(r.wing).push(r);
+  }
+  for(const w of S.wings)w.layout=normLayout(w.layout,byWing.get(w.id));
+}
 function render(){
+  if(batchDepth){batchDirty=true;return;}
+  syncLayouts();
   const ev=evaluate(S.assign);
-  renderStats(ev); renderPool(ev); renderRooms(ev); renderRules(ev);
+  paintIndex();
+  renderStats(ev); renderPool(ev); renderView(ev); renderRules(ev);
   renderSuggestions(ev); renderSims(); renderWelcome();
+  if(selected)renderAssign(ev);
 }
 
 function renderStats(ev){
   const placed=S.boys.filter(b=>S.assign[b]).length;
-  const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
-  const wingsTxt=S.wings.length>1?`${S.wings.length} אגפים`:S.wings[0].name;
-  $('#overline').textContent=`🏢 פנימייה · ${wingsTxt} · ${S.rooms.length} חדרים · ${beds} מיטות`;
+  const bdg=$('#tabRulesBdg');
+  bdg.hidden=!(ev.hard+ev.soft);
+  bdg.textContent=ev.hard+ev.soft;
   const st=$('#stats'); st.innerHTML='';
   const add=(txt,cls='')=>{const d=document.createElement('span');d.className='stat '+cls;d.textContent=txt;st.appendChild(d);};
   add(`משובצים ${placed} מתוך ${S.boys.length}`, placed===S.boys.length?'good':'');
@@ -1593,7 +2419,9 @@ function renderStats(ev){
 function renderPool(ev){
   const box=$('#poolChips'); box.innerHTML='';
   const waiting=S.boys.filter(b=>!S.assign[b]);
-  $('#poolCount').textContent=waiting.length;
+  const cnt=$('#poolCount');
+  cnt.textContent=waiting.length?waiting.length:'✓';
+  cnt.classList.toggle('done',!waiting.length);
   const shown=waiting.filter(b=>hits(b,Q.board));
   if(!waiting.length){
     const d=document.createElement('div');d.className='empty-note';d.textContent='כולם משובצים 🎉';
@@ -1618,69 +2446,498 @@ function renderPool(ev){
   }
 }
 
-function renderRooms(ev){
-  const wrap=$('#rooms'); wrap.innerHTML='';
-  let ci=0;
-  for(const w of S.wings){
-    const rooms=S.rooms.filter(r=>r.wing===w.id);
-    const head=document.createElement('div'); head.className='wing-head';
-    head.innerHTML=`<span>${w.name}</span><span class="whcnt">${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות</span>`;
-    wrap.appendChild(head);
-    const grid=document.createElement('div'); grid.className='wing-grid';
-    for(const room of rooms){
-      grid.appendChild(roomCard(room,ev,ROOM_COLORS[ci%ROOM_COLORS.length]));
-      ci++;
-    }
-    if(!rooms.length){
-      const d=document.createElement('div'); d.className='empty-note'; d.textContent='אין חדרים באגף הזה — הוסיפו דרך ✏️ עריכה';
-      grid.appendChild(d);
-    }
-    wrap.appendChild(grid);
+/* =====================================================================
+   ============  the board: project › building › wing › rooms  =========
+   ===================================================================== */
+const el=(tag,cls,txt)=>{
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(txt!=null)e.textContent=txt;
+  return e;
+};
+const bldBy=id=>S.buildings.find(b=>b.id===id);
+const wingBy=id=>S.wings.find(w=>w.id===id);
+const wingsOf=bid=>S.wings.filter(w=>w.building===bid);
+const roomsOf=wid=>S.rooms.filter(r=>r.wing===wid);
+
+/* rebuilt once per render, so a card never has to scan every boy for itself */
+let RC=new Map(),OCC=new Map();
+function paintIndex(){
+  RC=new Map(); OCC=new Map();
+  S.rooms.forEach((r,i)=>{RC.set(r.num,ROOM_COLORS[i%ROOM_COLORS.length]);OCC.set(r.num,[]);});
+  for(const b of S.boys){const n=S.assign[b]; if(OCC.has(n))OCC.get(n).push(b);}
+}
+const occIn=num=>OCC.get(num)||[];
+function tally(rooms){
+  let beds=0,taken=0;
+  for(const r of rooms){beds+=r.beds;taken+=occIn(r.num).length;}
+  return {n:rooms.length,beds,taken};
+}
+
+let V={level:'home',bld:null,wing:null};
+function go(level,bld,wing){
+  V={level,bld:bld||null,wing:wing||null};
+  clearSel();
+  render();
+  window.scrollTo({top:0,behavior:S.settings.display.motion?'smooth':'auto'});
+}
+function goBack(){
+  if(V.level==='wing'){
+    const w=wingBy(V.wing);
+    if(w&&S.buildings.length>1)go('building',w.building); else go('home');
+  }else if(V.level==='building')go('home');
+}
+/* hovering a drop target while dragging walks into it, so a boy can be carried
+   across the whole tree without ever letting go */
+function dwellNav(node,fn){
+  let t=null;
+  const off=()=>{node.classList.remove('dragover');if(t){clearTimeout(t);t=null;}};
+  node.addEventListener('dragover',e=>{
+    e.preventDefault();
+    node.classList.add('dragover');
+    if(!t)t=setTimeout(()=>{t=null;fn();},620);
+  });
+  node.addEventListener('dragleave',off);
+  node.addEventListener('drop',e=>{e.preventDefault();off();fn();});
+}
+
+function renderView(ev){
+  const host=$('#view'); host.innerHTML='';
+  if(V.level==='wing'&&!wingBy(V.wing))V={level:'home',bld:null,wing:null};
+  if(V.level==='building'&&!bldBy(V.bld))V={level:'home',bld:null,wing:null};
+  if(V.level==='wing')renderWing(host,ev);
+  else if(V.level==='building')renderBuilding(host,ev);
+  else renderHome(host,ev);
+  renderCrumbs();
+}
+function renderCrumbs(){
+  const box=$('#crumbs'); box.innerHTML='';
+  if(V.level==='home')return;
+  const w=V.level==='wing'?wingBy(V.wing):null;
+  const b=bldBy(V.level==='building'?V.bld:(w?w.building:null));
+  const parts=[{t:'🏠 פתיחה',fn:()=>go('home')}];
+  if(b&&(S.buildings.length>1||V.level==='building'))
+    parts.push({t:(b.icon||'🏢')+' '+b.name,
+                fn:V.level==='building'?null:()=>go('building',b.id)});
+  if(w)parts.push({t:'🏗️ '+w.name,fn:null});
+  parts.forEach((p,i)=>{
+    if(i)box.appendChild(el('span','sep','·'));
+    const btn=el('button','cr'+(p.fn?'':' here'),p.t);
+    if(p.fn){btn.addEventListener('click',p.fn);dwellNav(btn,p.fn);}
+    box.appendChild(btn);
+  });
+}
+
+function secHead(title,btns){
+  const h=el('div','sec-head');
+  h.appendChild(el('h2',null,title));
+  h.appendChild(el('span','sh-sp'));
+  (btns||[]).forEach(b=>h.appendChild(b));
+  return h;
+}
+function mini(txt,fn,cls){
+  const b=el('button','btn mini'+(cls?' '+cls:''),txt);
+  b.addEventListener('click',fn);
+  return b;
+}
+function addCard(txt,ico,fn){
+  const c=el('button','card add');
+  c.append(el('span','plus','+'),el('b',null,txt));
+  c.addEventListener('click',fn);
+  return c;
+}
+function bar(taken,beds){
+  const b=el('div','bar'+(beds&&taken>=beds?' full':''));
+  const i=el('i'); i.style.width=(beds?Math.min(100,taken/beds*100):0)+'%';
+  b.appendChild(i);
+  return b;
+}
+function pills(list){
+  const box=el('div','card-meta');
+  list.filter(Boolean).forEach(([t,c])=>box.appendChild(el('span','pill'+(c?' '+c:''),t)));
+  return box;
+}
+/* violations that land inside a given set of rooms */
+function warnCount(ev,nums){
+  let hard=0,soft=0;
+  for(const n of nums){
+    const v=ev.badRooms.get(n);
+    if(v==='hard')hard++; else if(v==='soft')soft++;
+  }
+  return {hard,soft};
+}
+
+/* ---------- home ---------- */
+function renderHome(host,ev){
+  host.appendChild(heroEl(ev));
+  if(S.buildings.length>1){
+    host.appendChild(secHead('🏢 בניינים',[mini('+ בניין חדש',()=>openBld(null))]));
+    const g=el('div','grid-cards');
+    S.buildings.forEach(b=>g.appendChild(bldCard(b,ev)));
+    g.appendChild(addCard('בניין נוסף','🏢',()=>openBld(null)));
+    host.appendChild(g);
+  }else{
+    const b=S.buildings[0];
+    host.appendChild(secHead('🏗️ אגפים',[
+      mini('✏️ שם הבניין',()=>openBld(b.id)),
+      mini('+ בניין נפרד',()=>openBld(null))
+    ]));
+    host.appendChild(wingsGrid(b.id,ev));
   }
 }
-function roomCard(room,ev,color){
-  const occ=occupants(room.num);
-  const card=document.createElement('div');
+function heroEl(ev){
+  const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const hero=el('div','hero');
+  const L=el('div','hero-l');
+  const bits=[];
+  if(S.buildings.length>1)bits.push(S.buildings.length+' בניינים');
+  bits.push(S.wings.length+(S.wings.length===1?' אגף':' אגפים'));
+  bits.push(S.rooms.length+' חדרים');
+  bits.push(beds+' מיטות');
+  L.appendChild(el('div','overline',bits.join(' · ')));
+  const h1=el('h1');
+  h1.appendChild(el('span','grad','שיבוץ'));
+  zmanEl.hidden=false;
+  h1.appendChild(zmanEl);
+  L.appendChild(h1);
+  L.appendChild(el('div','empty-note','לחיצה על שם הזמן משנה אותו · הכול נשמר מקומית במחשב הזה'));
+  hero.appendChild(L);
+
+  const ring=el('div','ring');
+  const pct=S.boys.length?Math.round(placed/S.boys.length*100):0;
+  ring.style.setProperty('--p',pct);
+  ring.append(el('div','rv',pct+'%'),el('div','rk',`${placed} מתוך ${S.boys.length}`));
+  hero.appendChild(ring);
+  return hero;
+}
+function bldCard(b,ev){
+  const ws=wingsOf(b.id);
+  const wid=new Set(ws.map(w=>w.id));
+  const rooms=S.rooms.filter(r=>wid.has(r.wing));
+  const t=tally(rooms);
+  const wc=warnCount(ev,rooms.map(r=>r.num));
+  const card=el('div','card');
+  const top=el('div','card-top');
+  top.appendChild(el('span','card-ico',b.icon||'🏢'));
+  const ttl=el('div','card-ttl');
+  ttl.append(el('b',null,b.name),
+             el('small',null,`${ws.length} ${ws.length===1?'אגף':'אגפים'} · ${t.n} חדרים`));
+  top.append(ttl,el('span','card-go','←'));
+  card.appendChild(top);
+  card.appendChild(bar(t.taken,t.beds));
+  card.appendChild(pills([
+    [`${t.taken}/${t.beds} מיטות`,t.beds&&t.taken>=t.beds?'good':''],
+    wc.hard?[`⛔ ${wc.hard}`,'bad']:null,
+    wc.soft?[`⚠️ ${wc.soft}`,'warn']:null
+  ]));
+  const edit=el('button','card-edit','✏️');
+  edit.title='שינוי שם וסמל';
+  edit.addEventListener('click',e=>{e.stopPropagation();openBld(b.id);});
+  card.appendChild(edit);
+  card.addEventListener('click',()=>go('building',b.id));
+  dwellNav(card,()=>go('building',b.id));
+  return card;
+}
+
+/* ---------- one building: its wings ---------- */
+function renderBuilding(host,ev){
+  const b=bldBy(V.bld);
+  host.appendChild(secHead((b.icon||'🏢')+' '+b.name,[
+    mini('✏️ עריכת הבניין',()=>openBld(b.id)),
+    mini('+ אגף חדש',()=>openWing(null,b.id))
+  ]));
+  host.appendChild(wingsGrid(b.id,ev));
+}
+function wingsGrid(bid,ev){
+  const ws=wingsOf(bid);
+  if(!ws.length){
+    const box=el('div','blank');
+    box.appendChild(el('div','bi','🏗️'));
+    box.appendChild(el('b',null,'אין עדיין אגפים בבניין הזה'));
+    box.appendChild(el('p',null,'אגף הוא מסדרון עם חדרים. בוחרים תבנית מוכנה — מסדרון קלאסי, שירותים באמצע, חדרים בצד אחד — ומקבלים את כל החדרים בבת אחת.'));
+    const b=el('button','btn accent','🧱 בניית האגף הראשון');
+    b.addEventListener('click',()=>openWing(null,bid));
+    box.appendChild(b);
+    return box;
+  }
+  const g=el('div','grid-cards');
+  ws.forEach(w=>g.appendChild(wingCard(w,ev)));
+  g.appendChild(addCard('אגף נוסף','🏗️',()=>openWing(null,bid)));
+  return g;
+}
+function wingCard(w,ev){
+  const rooms=roomsOf(w.id);
+  const t=tally(rooms);
+  const wc=warnCount(ev,rooms.map(r=>r.num));
+  const card=el('div','card');
+  const top=el('div','card-top');
+  top.appendChild(el('span','card-ico','🏗️'));
+  const ttl=el('div','card-ttl');
+  ttl.append(el('b',null,w.name),el('small',null,`${t.n} חדרים · ${t.beds} מיטות`));
+  top.append(ttl,el('span','card-go','←'));
+  card.appendChild(top);
+  card.appendChild(miniPlan(w,ev));
+  card.appendChild(bar(t.taken,t.beds));
+  card.appendChild(pills([
+    [`${t.taken}/${t.beds} מיטות`,t.beds&&t.taken>=t.beds?'good':''],
+    wc.hard?[`⛔ ${wc.hard}`,'bad']:null,
+    wc.soft?[`⚠️ ${wc.soft}`,'warn']:null
+  ]));
+  const edit=el('button','card-edit','⚙️');
+  edit.title='פריסה, תבנית וחדרים';
+  edit.addEventListener('click',e=>{e.stopPropagation();openWing(w.id);});
+  card.appendChild(edit);
+  card.addEventListener('click',()=>go('wing',w.building,w.id));
+  /* carrying a boy onto a wing card drops him into its first free bed */
+  let t2=null;
+  const off=()=>{card.classList.remove('dragover');if(t2){clearTimeout(t2);t2=null;}};
+  card.addEventListener('dragover',e=>{
+    e.preventDefault();card.classList.add('dragover');
+    if(!t2)t2=setTimeout(()=>{t2=null;go('wing',w.building,w.id);},900);
+  });
+  card.addEventListener('dragleave',off);
+  card.addEventListener('drop',e=>{
+    e.preventDefault();off();
+    const name=e.dataTransfer.getData('text/plain'); if(!name)return;
+    const free=roomsOf(w.id).find(r=>occupants(r.num).length<r.beds);
+    if(!free){toast(`אין מיטה פנויה ב${w.name}`);return;}
+    assignBoy(name,free.num);
+    if(S.assign[name]===free.num)toast(`${name} → חדר ${free.num} · המיטה הפנויה הראשונה ב${w.name}`);
+  });
+  return card;
+}
+function miniPlan(w,ev){
+  const lay=w.layout||{a:[],b:[]};
+  const box=el('div','mini');
+  const rowOf=side=>{
+    const row=el('div','mini-row');
+    const cells=(lay[side]||[]).slice(0,28);
+    if(!cells.length)row.appendChild(el('div','mini-c svc'));
+    for(const c of cells){
+      if(c.t!=='room'){row.appendChild(el('div','mini-c svc'));continue;}
+      const room=roomBy(c.num); if(!room)continue;
+      const n=occIn(c.num).length;
+      const cls=ev.badRooms.get(c.num)==='hard'?'rx'
+        :n===0?'r0':n>=room.beds?'rf':(n/room.beds>=.5?'r2':'r1');
+      row.appendChild(el('div','mini-c '+cls));
+    }
+    return row;
+  };
+  box.append(rowOf('a'),el('div','mini-hall'),rowOf('b'));
+  return box;
+}
+
+/* ---------- one wing: the floor plan ---------- */
+function renderWing(host,ev){
+  const w=wingBy(V.wing);
+  const rooms=roomsOf(w.id);
+  const t=tally(rooms);
+
+  const barRow=el('div','wg-bar');
+  const ttl=el('div','wg-t');
+  ttl.append(el('span',null,'🏗️'),el('span',null,w.name));
+  barRow.appendChild(ttl);
+  barRow.appendChild(el('span','wg-sp'));
+  const st=el('div','card-meta');
+  st.appendChild(el('span','pill'+(t.beds&&t.taken>=t.beds?' good':''),`${t.taken}/${t.beds} מיטות`));
+  st.appendChild(el('span','pill',`${t.n} חדרים`));
+  barRow.appendChild(st);
+  const modes=el('div','wg-modes');
+  [['plan','🏗️ תוכנית'],['grid','▦ רשת']].forEach(([v,lbl])=>{
+    const b=el('button',S.settings.display.planMode===v?'on':'',lbl);
+    b.addEventListener('click',()=>{
+      S.settings.display.planMode=v;save();render();
+    });
+    modes.appendChild(b);
+  });
+  barRow.appendChild(modes);
+  barRow.appendChild(mini('⚙️ פריסה וחדרים',()=>openWing(w.id)));
+  host.appendChild(barRow);
+
+  if(!rooms.length){
+    const box=el('div','blank');
+    box.appendChild(el('div','bi','🚪'));
+    box.appendChild(el('b',null,'האגף הזה עדיין בלי חדרים'));
+    box.appendChild(el('p',null,'בחרו תבנית מוכנה וקבעו כמה חדרים וכמה מיטות — הפריסה כולה תיבנה בבת אחת.'));
+    const b=el('button','btn accent','🧱 בניית הפריסה');
+    b.addEventListener('click',()=>openWing(w.id));
+    box.appendChild(b);
+    host.appendChild(box);
+    return;
+  }
+  host.appendChild(S.settings.display.planMode==='grid'?gridEl(w,ev):planEl(w,ev));
+}
+function planEl(w,ev){
+  const wrap=el('div','plan');
+  const inn=el('div','plan-in');
+  inn.append(sideRow(w,'a',ev),hallEl(),sideRow(w,'b',ev));
+  wrap.appendChild(inn);
+  return wrap;
+}
+function hallEl(){
+  const h=el('div','fp-hall');
+  h.append(el('span','hl','מסדרון'),el('span','hgrow'));
+  return h;
+}
+function sideRow(w,side,ev){
+  const row=el('div','fp-row '+side);
+  const cells=(w.layout&&w.layout[side])||[];
+  if(!cells.length){row.appendChild(el('div','fp-gap'));return row;}
+  for(const c of cells){
+    if(c.t==='room'){
+      const room=roomBy(c.num);
+      if(room)row.appendChild(roomEl(room,ev));
+    }else row.appendChild(svcEl(c));
+  }
+  return row;
+}
+function svcEl(c){
+  const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
+  const d=el('div','fp-svc '+c.t);
+  d.append(el('span','si',T.ico),el('span','sn',c.label||T.he));
+  return d;
+}
+function gridEl(w,ev){
+  const g=el('div','wg-grid');
+  const order=layoutRoomNums(w.layout);
+  const seen=new Set(order);
+  for(const n of order){const r=roomBy(n); if(r)g.appendChild(roomEl(r,ev));}
+  for(const r of roomsOf(w.id))if(!seen.has(r.num))g.appendChild(roomEl(r,ev));
+  return g;
+}
+function roomEl(room,ev){
+  const occ=occIn(room.num);
   const warn=ev.badRooms.get(room.num);
   const hasHit=Q.board&&occ.some(b=>hits(b,Q.board));
-  card.className='room'+(warn==='hard'?' warn-hard':warn==='soft'?' warn-soft':'')+(hasHit?' hasHit':'');
+  const free=occ.length<room.beds;
+  const card=el('div','fp-room'
+    +(warn==='hard'?' warn-hard':warn==='soft'?' warn-soft':'')
+    +(hasHit?' hasHit':'')
+    +(selected&&free&&S.assign[selected]!==room.num?' target':''));
   card.dataset.num=room.num;
-  card.style.setProperty('--ac',color);
+  card.style.setProperty('--ac',RC.get(room.num)||ROOM_COLORS[0]);
 
-  const head=document.createElement('div'); head.className='rhead';
-  const plate=document.createElement('div'); plate.className='plate';
-  const no=document.createElement('span'); no.className='no'; no.textContent=room.num;
-  const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent='חדר';
-  plate.append(no,lbl);
-  const oc=document.createElement('span'); oc.className='occ'+(occ.length>=room.beds?' fullr':'');
-  oc.textContent=`${occ.length}/${room.beds}`;
-  head.append(plate,oc);
+  const door=el('div','fp-door'); door.appendChild(el('i'));
+  const head=el('div','fp-head');
+  head.appendChild(el('span','no',room.num));
+  head.appendChild(el('span','occ'+(free?'':' fullr'),`${occ.length}/${room.beds}`));
 
-  const slots=document.createElement('div'); slots.className='slots';
-  for(const b of occ) slots.appendChild(chipEl(b,ev,true));
+  const slots=el('div','fp-slots');
+  for(const b of occ)slots.appendChild(chipEl(b,ev,true));
   for(let k=occ.length;k<room.beds;k++){
-    const bed=document.createElement('div'); bed.className='bed';
-    bed.innerHTML=BED_SVG+'<span>פנוי</span>';
+    const bed=el('div','bed');
+    bed.innerHTML=BED_SVG;
+    bed.appendChild(el('span',null,'פנוי'));
     slots.appendChild(bed);
   }
-  card.append(head,slots);
+  card.append(door,head,slots);
 
   card.addEventListener('dragover',e=>{
     e.preventDefault();
-    const full=occupants(room.num).length>=room.beds;
-    card.classList.add(full?'full-over':'over');
+    card.classList.add(occupants(room.num).length>=room.beds?'full-over':'over');
   });
-  card.addEventListener('dragleave',()=>card.classList.remove('over','full-over'));
+  card.addEventListener('dragleave',e=>{
+    if(card.contains(e.relatedTarget))return;   /* crossing a child is not leaving */
+    card.classList.remove('over','full-over');
+  });
   card.addEventListener('drop',e=>{
     e.preventDefault(); card.classList.remove('over','full-over');
     const name=e.dataTransfer.getData('text/plain');
-    if(name) assignBoy(name,room.num);
+    if(name)assignBoy(name,room.num);
   });
   card.addEventListener('click',e=>{
     e.stopPropagation();
-    if(selected) assignBoy(selected,room.num);
+    if(selected)assignBoy(selected,room.num);
   });
   return card;
+}
+
+/* =====================================================================
+   ==========  the assign drawer — every room, one click, no scroll  ===
+   ===================================================================== */
+function clearSel(){
+  selected=null;
+  document.body.classList.remove('ab-open');
+  $('#assignBar').hidden=true;
+}
+function openAssign(name){
+  selected=name;
+  document.body.classList.add('ab-open');
+  $('#assignBar').hidden=false;
+  Q.ab='';$('#abSearch').value='';$('#abSearchClr').hidden=true;
+  render();
+  $('#abSearch').focus();
+}
+function renderAssign(ev){
+  const name=selected; if(!name)return;
+  const av=$('#abAv'),p=avPaint(name);
+  av.style.background=p.bg; av.style.color=p.fg; av.textContent=name[0];
+  $('#abName').textContent=name;
+  const cur=S.assign[name];
+  $('#assignBar').querySelector('.ab-hint').textContent=
+    cur?`נמצא עכשיו בחדר ${cur} — בחרו חדר אחר`:'בחרו חדר — כל החדרים כאן, בלי לגלול';
+  $('#abPool').hidden=!cur;
+
+  const body=$('#abRooms'); body.innerHTML='';
+  const base=ev||evaluate(S.assign);
+  const baseScore=base.hard*1000+base.soft;
+  const manyRooms=S.rooms.length>320;   /* skip the per-room trial when it would be slow */
+  let shown=0;
+
+  for(const b of S.buildings){
+    const ws=wingsOf(b.id);
+    for(const w of ws){
+      const rooms=roomsOf(w.id).filter(r=>{
+        if(!Q.ab)return true;
+        return hits(r.num,Q.ab)||hits(w.name,Q.ab)||hits(b.name,Q.ab);
+      });
+      if(!rooms.length)continue;
+      const grp=el('div','ab-grp');
+      grp.appendChild(el('div','ab-grp-t',
+        (S.buildings.length>1?(b.icon||'🏢')+' '+b.name+' · ':'')+w.name));
+      const box=el('div','ab-pills');
+      for(const r of rooms){
+        const occ=occIn(r.num);
+        const here=cur===r.num;
+        const full=!here&&occ.length>=r.beds;
+        let cls='rp',mark='';
+        if(here)cls+=' here';
+        else if(full)cls+=' fullr';
+        else if(!manyRooms){
+          const trial={...S.assign,[name]:r.num};
+          const tv=evaluate(trial);
+          const ts=tv.hard*1000+tv.soft;
+          if(tv.hard>base.hard){cls+=' hard';mark='⛔';}
+          else if(tv.soft>base.soft){cls+=' soft';mark='⚠️';}
+          else if(ts<baseScore){cls+=' best';mark='✨';}
+        }
+        const pill=el('button',cls);
+        pill.append(el('span','rp-n','חדר '+r.num),
+                    el('span','rp-o',`${occ.length}/${r.beds}`));
+        if(mark)pill.appendChild(el('span','rp-f',mark));
+        pill.title=here?'כאן הוא נמצא עכשיו'
+          :full?`חדר ${r.num} מלא — ${r.beds} מיטות`
+          :mark==='⛔'?'שיבוץ לכאן יפר כלל בלתי־מתפשר'
+          :mark==='⚠️'?'שיבוץ לכאן יפר כלל "עדיף"'
+          :mark==='✨'?'שיבוץ לכאן דווקא מתקן הפרה קיימת'
+          :`שיבוץ ${name} לחדר ${r.num}`;
+        if(!full&&!here)pill.addEventListener('click',e=>{e.stopPropagation();assignBoy(name,r.num);});
+        else pill.addEventListener('click',e=>e.stopPropagation());
+        box.appendChild(pill);
+        shown++;
+      }
+      grp.appendChild(box);
+      body.appendChild(grp);
+    }
+  }
+  if(!shown){
+    body.appendChild(el('div','empty-note',
+      Q.ab?`אין חדר שתואם ל"${Q.ab}"`:'אין עדיין חדרים — הוסיפו אגף מהמסך הראשי'));
+  }else if(!manyRooms){
+    body.appendChild(el('div','ab-legend',
+      '✨ מתקן הפרה קיימת · ⚠️ יפר כלל "עדיף" · ⛔ יפר כלל בלתי־מתפשר · חדר דהוי = מלא'));
+  }
 }
 
 function renderRules(ev){
@@ -1789,16 +3046,19 @@ function renderSims(){
     const bUpd=document.createElement('button'); bUpd.className='btn mini'; bUpd.textContent='עדכון'; bUpd.title='דריסת הסימולציה במצב הנוכחי';
     bUpd.addEventListener('click',e=>{
       e.stopPropagation();
+      if(!askConfirm(`לדרוס את "${sim.name}" במצב שעל הלוח עכשיו?`))return;
+      snapshot();
       sim.assign={...S.assign}; sim.ts=Date.now(); S.activeSim=sim.id;
-      save();render();toast(`"${sim.name}" עודכנה למצב הנוכחי`);
+      save();render();toast(`"${sim.name}" עודכנה למצב הנוכחי — Ctrl+Z מחזיר`);
     });
     const bDel=document.createElement('button'); bDel.className='btn mini danger'; bDel.textContent='✕';
     bDel.addEventListener('click',e=>{
       e.stopPropagation();
       if(confirm(`למחוק את הסימולציה "${sim.name}"?`)){
+        snapshot();
         S.sims=S.sims.filter(x=>x.id!==sim.id);
         if(S.activeSim===sim.id)S.activeSim=null;
-        save();render();
+        save();render();toast('נמחקה — Ctrl+Z מחזיר');
       }
     });
     btns.append(bLoad,bUpd,bDel);
@@ -1926,9 +3186,14 @@ $('#btnAddRule').addEventListener('click',()=>{
     if(r){
       delete r.members;delete r.a;delete r.room;
       Object.assign(r,draft);
+      toast('הכלל עודכן ✓');
+    }else{
+      /* the rule was deleted from under the open form — keep the user's work
+         instead of reporting a success that never happened */
+      S.rules.push(Object.assign({id:uid(),enabled:true},draft));
+      toast('הכלל שנערך כבר לא קיים — נוסף ככלל חדש');
     }
     editingRule=null;
-    toast('הכלל עודכן ✓');
   }else{
     S.rules.push(Object.assign({id:uid(),enabled:true},draft));
     toast('הכלל נוסף ✓');
@@ -1939,20 +3204,72 @@ $('#btnAddRule').addEventListener('click',()=>{
 });
 $('#btnCancelRule').addEventListener('click',cancelRuleEdit);
 
-/* ---------- pool as drop target / click ---------- */
-const poolSec=$('#pool');
-poolSec.addEventListener('dragover',e=>{e.preventDefault();poolSec.classList.add('over');});
-poolSec.addEventListener('dragleave',()=>poolSec.classList.remove('over'));
-poolSec.addEventListener('drop',e=>{
-  e.preventDefault();poolSec.classList.remove('over');
+/* ---------- the waiting rail: drop target, and where a boy goes back to ---------- */
+const zmanEl=$('#zman');
+const railSec=$('#rail');
+railSec.addEventListener('dragover',e=>{e.preventDefault();railSec.classList.add('over');});
+railSec.addEventListener('dragleave',e=>{
+  if(!railSec.contains(e.relatedTarget))railSec.classList.remove('over');
+});
+railSec.addEventListener('drop',e=>{
+  e.preventDefault();railSec.classList.remove('over');
   const name=e.dataTransfer.getData('text/plain');
   if(name)assignBoy(name,null);
 });
-poolSec.addEventListener('click',e=>{
+railSec.addEventListener('click',e=>{
   e.stopPropagation();
-  if(selected)assignBoy(selected,null);
+  if(selected&&S.assign[selected])assignBoy(selected,null);
 });
-document.body.addEventListener('click',()=>{if(selected){selected=null;render();}});
+/* clicking anywhere that is not part of the picking flow puts the boy down */
+document.body.addEventListener('click',e=>{
+  if(!selected)return;
+  if(e.target.closest('#assignBar,.chip,.fp-room,#rail'))return;
+  clearSel();render();
+});
+
+/* ---------- shell wiring ---------- */
+$('#tbHome').addEventListener('click',()=>{setTab('board');go('home');});
+function setTab(v){
+  document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('.vpane').forEach(p=>p.classList.toggle('on',p.dataset.v===v));
+  if(v==='rules')renderSuggestions(evaluate(S.assign));
+}
+$('#mainTabs').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  setTab(b.dataset.v);
+});
+$('#railToggle').addEventListener('click',()=>{
+  S.settings.display.rail=!S.settings.display.rail;
+  save();applyDisplay();
+});
+
+/* ---------- assign drawer ---------- */
+$('#abClose').addEventListener('click',e=>{e.stopPropagation();clearSel();render();});
+$('#abPool').addEventListener('click',e=>{e.stopPropagation();if(selected)assignBoy(selected,null);});
+$('#assignBar').addEventListener('click',e=>e.stopPropagation());
+$('#abSearch').addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  e.preventDefault();
+  const only=$('#abRooms').querySelectorAll('.rp:not(.fullr):not(.here)');
+  if(only.length===1)only[0].click();
+});
+
+/* ---------- carrying a boy past the edge of the screen scrolls for you ---------- */
+document.addEventListener('dragover',e=>{
+  const M=95,SP=20,h=window.innerHeight,y=e.clientY;
+  let dy=0;
+  if(y<M)dy=-SP*(1-y/M);
+  else if(y>h-M)dy=SP*(1-(h-y)/M);
+  if(dy)window.scrollBy(0,dy);
+  const plan=e.target&&e.target.closest?e.target.closest('.plan'):null;
+  if(plan){
+    const r=plan.getBoundingClientRect(),x=e.clientX;
+    let dx=0;
+    if(x<r.left+M)dx=-SP*(1-(x-r.left)/M);
+    else if(x>r.right-M)dx=SP*(1-(r.right-x)/M);
+    if(dx)plan.scrollLeft+=dx;
+  }
+},true);
 
 /* ---------- clear board ---------- */
 function doClear(mode){
@@ -2002,7 +3319,11 @@ function optimize(locked){
   for(const b of locked) if(S.assign[b]) lockedAsg[b]=S.assign[b];
   const hardIn=S.rules.filter(r=>r.enabled!==false&&r.type==='inRoom'&&r.level==='hard');
   let best=null,bestScore=Infinity;
+  /* when the rules cannot all be met the perfect-score escape never fires, so the
+     search needs a clock of its own — a frozen tab is worse than a good-enough board */
+  const t0=Date.now(),BUDGET=2000;
   for(let t=0;t<40;t++){
+    if(t&&Date.now()-t0>BUDGET)break;
     const asg={...lockedAsg},cap={};
     S.rooms.forEach(r=>{
       cap[r.num]=r.beds-Object.values(lockedAsg).filter(v=>v===r.num).length;
@@ -2018,25 +3339,29 @@ function optimize(locked){
       asg[b]=pick.num;cap[pick.num]--;
     }
     if(!ok)continue;
-    let sc=scoreOf(asg),improved=true;
-    while(improved&&sc>0){
+    let sc=scoreOf(asg),improved=true,rounds=0;
+    while(improved&&sc>0&&rounds++<12&&Date.now()-t0<=BUDGET){
       improved=false;
       const free=S.boys.filter(b=>!locked.has(b)&&asg[b]);
-      for(let i=0;i<free.length;i++)for(let j=i+1;j<free.length;j++){
-        const a=free[i],b=free[j];
-        if(asg[a]===asg[b])continue;
+      /* a boy who is in no violated rule cannot improve the score by moving —
+         searching only the boys actually involved turns C(300,2) into a few dozen */
+      const now=evaluate(asg);
+      const hot=free.filter(b=>now.badHard.has(b)||now.badSoft.has(b));
+      for(const a of hot)for(const b of free){
+        if(a===b||asg[a]===asg[b])continue;
         [asg[a],asg[b]]=[asg[b],asg[a]];
         const s2=scoreOf(asg);
         if(s2<sc){sc=s2;improved=true;}
         else [asg[a],asg[b]]=[asg[b],asg[a]];
       }
-      const capNow={};
-      S.rooms.forEach(r=>capNow[r.num]=r.beds-S.boys.filter(x=>asg[x]===r.num).length);
-      for(const b of free)for(const r of S.rooms){
-        if(capNow[r.num]>0&&asg[b]!==r.num){
+      const capNow=new Map();
+      S.rooms.forEach(r=>capNow.set(r.num,r.beds));
+      for(const b of S.boys){const rm=asg[b]; if(capNow.has(rm))capNow.set(rm,capNow.get(rm)-1);}
+      for(const b of hot)for(const r of S.rooms){
+        if(capNow.get(r.num)>0&&asg[b]!==r.num){
           const old=asg[b];asg[b]=r.num;
           const s2=scoreOf(asg);
-          if(s2<sc){sc=s2;improved=true;capNow[r.num]--;capNow[old]++;}
+          if(s2<sc){sc=s2;improved=true;capNow.set(r.num,capNow.get(r.num)-1);capNow.set(old,capNow.get(old)+1);}
           else asg[b]=old;
         }
       }
@@ -2054,9 +3379,13 @@ $('#btnAuto').addEventListener('click',()=>{
     if(confirm(`לשמור על הבחורים שכבר משובצים ולהשלים רק את החסרים?${note}\n\nאישור — להשלים סביב הקיימים\nביטול — לשבץ מחדש מאפס`))
       locked=new Set([...locked,...unlockedPlaced]);
   }
+  const btn=$('#btnAuto');
+  btn.disabled=true;btn.textContent='⏳ מחשב…';
   const res=optimize(locked);
+  btn.disabled=false;btn.textContent='🤖 שיבוץ אוטומטי';
   if(!res){toast('אין מספיק מיטות לכולם');return;}
-  S.assign=res.asg;S.activeSim=null;selected=null;save();render();
+  snapshot();                                   /* the most destructive click in the app */
+  S.assign=res.asg;S.activeSim=null;clearSel();save();render();
   if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
   else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
 });
@@ -2091,7 +3420,17 @@ $('#fileImport').addEventListener('change',e=>{
     try{
       const s=JSON.parse(rd.result);
       if(!s||!Array.isArray(s.boys)||!Array.isArray(s.rooms))throw 0;
-      S=migrate(s);save();initDynamic();render();toast('הגיבוי שוחזר ✓');
+      /* this replaces everything — boys, rooms, rules, every saved simulation */
+      if(S.boys.length&&!confirm(
+        `שחזור גיבוי ידרוס את כל מה שעל הלוח עכשיו:\n`
+        +`${S.boys.length} בחורים · ${S.rooms.length} חדרים · ${S.rules.length} כללים · ${S.sims.length} סימולציות.\n\n`
+        +`הקובץ שנבחר מכיל ${s.boys.length} בחורים ו־${s.rooms.length} חדרים.\n\nלהמשיך?`))
+        {toast('השחזור בוטל');return;}
+      snapshot();
+      S=migrate(s);save();initDynamic();
+      applySettings();applyAiIdentity();paintDisplayUI();
+      V={level:'home',bld:null,wing:null};
+      render();toast('הגיבוי שוחזר ✓ — Ctrl+Z מחזיר');
     }catch(err){toast('הקובץ לא תקין');}
   };
   rd.readAsText(f);
@@ -2202,6 +3541,9 @@ $('#edAddWing').addEventListener('click',()=>{
 });
 $('#btnEditApply').addEventListener('click',()=>{
   // validate boys
+  /* a blanked field used to be dropped silently, taking the boy's room, locks,
+     rules and every saved simulation with him */
+  if(ED.boys.some(b=>!b.name.trim())){toast('יש בחור בלי שם — השלימו או הסירו את השורה');return;}
   const names=ED.boys.map(b=>b.name.trim()).filter(Boolean);
   if(names.length!==new Set(names).size){toast('יש שמות כפולים ברשימת הבחורים');return;}
   // validate wings/rooms
@@ -2222,7 +3564,13 @@ $('#btnEditApply').addEventListener('click',()=>{
   const mapB=n=>renB[n]||n, mapR=n=>renR[n]||n;
   // commit
   S.boys=names;
-  S.wings=ED.wings.map(w=>({id:w.id,name:w.name.trim()||'אגף'}));
+  /* a wing carries a building and a corridor layout — the list editor must not drop them */
+  S.wings=ED.wings.map(w=>{
+    const old=wingBy(w.id);
+    return {id:w.id,name:w.name.trim()||'אגף',
+            building:(old&&old.building)||S.buildings[0].id,
+            layout:old?old.layout:{a:[],b:[]}};
+  });
   S.rooms=ED.rooms.map(r=>({num:r.num,beds:r.beds,wing:r.wing}));
   const remapAsg=old=>{
     const out={};
@@ -2251,6 +3599,425 @@ $('#btnEditApply').addEventListener('click',()=>{
   });
   save();initDynamic();render();
   $('#dlgEdit').close();toast('העריכה נשמרה ✓');
+});
+
+/* =====================================================================
+   =====================  buildings & wings editors  ===================
+   ===================================================================== */
+/* removing rooms must not leave a boy assigned to a room that is gone, nor a
+   rule pointing at one — every caller goes through here */
+function dropRooms(nums){
+  const set=new Set(nums.map(String));
+  if(!set.size)return;
+  S.rooms=S.rooms.filter(r=>!set.has(r.num));
+  for(const b of Object.keys(S.assign))if(set.has(S.assign[b]))delete S.assign[b];
+  S.locks=S.locks.filter(b=>S.assign[b]);
+  S.rules=S.rules.filter(r=>!(r.room&&set.has(r.room)));
+  S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(set.has(s.assign[b]))delete s.assign[b];});
+}
+/* beds can shrink; whoever no longer fits goes back to the waiting list */
+function trimOverfull(){
+  for(const r of S.rooms){
+    const occ=S.boys.filter(b=>S.assign[b]===r.num);
+    occ.slice(r.beds).forEach(b=>delete S.assign[b]);
+    S.sims.forEach(s=>{
+      const o=S.boys.filter(b=>s.assign[b]===r.num);
+      o.slice(r.beds).forEach(b=>delete s.assign[b]);
+    });
+  }
+  S.locks=S.locks.filter(b=>S.assign[b]);
+}
+
+/* ---------------- building ---------------- */
+let EDB=null;
+function openBld(id){
+  const b=id?bldBy(id):null;
+  EDB={id:id||null,icon:b?b.icon:'🏢'};
+  $('#bldTtl').textContent=b?'🏢 עריכת בניין':'🏢 בניין חדש';
+  $('#bldName').value=b?b.name:'';
+  paintBldIcons();
+  $('#bldDel').hidden=!b||S.buildings.length<2;
+  $('#dlgBld').showModal();
+  $('#bldName').focus();
+}
+function paintBldIcons(){
+  const box=$('#bldIcons'); box.innerHTML='';
+  for(const ic of BLD_ICONS){
+    const b=el('button',null,ic);
+    b.style.fontSize='17px';
+    if(ic===EDB.icon){b.style.borderColor='var(--acc)';b.style.color='var(--tx)';}
+    b.addEventListener('click',()=>{EDB.icon=ic;paintBldIcons();});
+    box.appendChild(b);
+  }
+}
+$('#bldCancel').addEventListener('click',()=>$('#dlgBld').close());
+$('#bldX').addEventListener('click',()=>$('#dlgBld').close());
+$('#bldSave').addEventListener('click',()=>{
+  const nm=$('#bldName').value.trim();
+  if(!nm){toast('צריך שם לבניין');return;}
+  snapshot();
+  if(EDB.id){
+    const b=bldBy(EDB.id);
+    if(b){b.name=nm;b.icon=EDB.icon;}
+  }else{
+    const b={id:'bld'+uid(),name:nm,icon:EDB.icon};
+    S.buildings.push(b);
+    V={level:'building',bld:b.id,wing:null};
+  }
+  save();$('#dlgBld').close();render();toast('נשמר ✓');
+});
+$('#bldDel').addEventListener('click',()=>{
+  const b=bldBy(EDB.id); if(!b)return;
+  if(S.buildings.length<2){toast('חייב להישאר לפחות בניין אחד');return;}
+  const ws=wingsOf(b.id),wid=new Set(ws.map(w=>w.id));
+  const rooms=S.rooms.filter(r=>wid.has(r.wing));
+  const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
+  if(!confirm(`למחוק את "${b.name}"?\n\nיימחקו גם ${ws.length} אגפים ו־${rooms.length} חדרים`
+    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
+  snapshot();
+  dropRooms(rooms.map(r=>r.num));
+  S.wings=S.wings.filter(w=>!wid.has(w.id));
+  S.buildings=S.buildings.filter(x=>x.id!==b.id);
+  if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,layout:{a:[],b:[]}}];
+  save();$('#dlgBld').close();
+  V={level:'home',bld:null,wing:null};
+  render();toast('הבניין נמחק — Ctrl+Z מחזיר');
+});
+
+/* ---------------- wing: details, template, layout ---------------- */
+let EDW=null;
+const edwRooms=()=>['a','b'].flatMap(s=>EDW.cells[s]).filter(c=>c.t==='room');
+function openWing(id,bldId){
+  const w=id?wingBy(id):null;
+  const cells={a:[],b:[]};
+  if(w){
+    for(const side of ['a','b']){
+      for(const c of (w.layout&&w.layout[side])||[]){
+        if(c.t==='room'){
+          const r=roomBy(c.num);
+          if(r)cells[side].push({t:'room',num:r.num,beds:r.beds,orig:r.num});
+        }else cells[side].push({t:c.t,label:c.label||''});
+      }
+    }
+  }
+  EDW={id:id||null,building:w?w.building:(bldId||S.buildings[0].id),cells,sel:null,tpl:null};
+  $('#wgTtl').textContent=w?'🏗️ '+w.name:'🏗️ אגף חדש';
+  $('#wgName').value=w?w.name:'';
+  const sel=$('#wgBld'); sel.innerHTML='';
+  for(const b of S.buildings){
+    const o=document.createElement('option');
+    o.value=b.id; o.textContent=(b.icon||'🏢')+' '+b.name;
+    sel.appendChild(o);
+  }
+  sel.value=EDW.building;
+  sel.parentElement.style.display=S.buildings.length>1?'':'none';
+  $('#wgDel').hidden=!w;
+  $('#wgStart').value=suggestStart();
+  $('#wgCount').value=String(Math.max(1,edwRooms().length||10));
+  $('#wgBeds').value=String(edwRooms()[0]?edwRooms()[0].beds:4);
+  renderTpls(); renderLay(); tplNote();
+  $('#dlgWing').showModal();
+  if(!w)$('#wgName').focus();
+}
+function suggestStart(){
+  let max=0;
+  for(const r of S.rooms){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
+  return String(max?max+1:101);
+}
+function renderTpls(){
+  const box=$('#wgTpls'); box.innerHTML='';
+  const all=[...WING_TEMPLATES,...S.templates];
+  for(const t of all){
+    const c=el('button','tpl'+(EDW.tpl===t.id?' on':''));
+    const top=el('div','tpl-t');
+    top.append(el('span','ti',t.ico||'⭐'),el('b',null,t.name));
+    c.append(top,el('div','tpl-d',t.desc||''));
+    c.addEventListener('click',()=>{EDW.tpl=t.id;renderTpls();tplNote();});
+    if(!t.make){          /* only the user's own templates can be deleted */
+      const x=el('button','tpl-x','🗑');
+      x.title='מחיקת התבנית';
+      x.addEventListener('click',e=>{
+        e.stopPropagation();
+        S.templates=S.templates.filter(z=>z.id!==t.id);
+        if(EDW.tpl===t.id)EDW.tpl=null;
+        save();renderTpls();tplNote();
+      });
+      c.appendChild(x);
+    }
+    box.appendChild(c);
+  }
+}
+function tplNote(){
+  const n=$('#wgTplNote');
+  if(!EDW.tpl){n.textContent='בחרו תבנית כדי לבנות את הפריסה בבת אחת — או סדרו ידנית למטה.';return;}
+  const count=Math.max(1,Math.min(200,parseInt($('#wgCount').value,10)||1));
+  const nums=roomNums($('#wgStart').value,count);
+  const have=new Set(edwRooms().map(c=>c.num));
+  const gone=[...have].filter(x=>!nums.includes(x));
+  let boys=0; for(const g of gone)boys+=occIn(g).length;
+  n.textContent=`ייבנו ${count} חדרים: ${nums[0]} עד ${nums[nums.length-1]}.`
+    +(gone.length?` ${gone.length} חדרים קיימים שאינם ברשימה יוסרו`+(boys?` ו־${boys} בחורים יחזרו לממתינים`:'')+'.':'');
+}
+['#wgCount','#wgBeds','#wgStart'].forEach(s=>$(s).addEventListener('input',tplNote));
+$('#wgApplyTpl').addEventListener('click',()=>{
+  if(!EDW.tpl){toast('בחרו קודם תבנית');return;}
+  const t=[...WING_TEMPLATES,...S.templates].find(x=>x.id===EDW.tpl);
+  if(!t)return;
+  const count=Math.max(1,Math.min(200,parseInt($('#wgCount').value,10)||1));
+  const beds=Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4));
+  const nums=roomNums($('#wgStart').value,count);
+  /* a number that already lives in this wing keeps its identity, so whoever
+     sits there stays put when the template is re-applied */
+  const prev=new Map();
+  for(const c of edwRooms())if(c.orig)prev.set(c.num,c.orig);
+  const raw=t.make?t.make(nums):instantiate(t.sides,nums);
+  const out={a:[],b:[]};
+  for(const side of ['a','b']){
+    for(const c of raw[side]||[]){
+      if(c.t==='room')out[side].push({t:'room',num:c.num,beds,orig:prev.get(c.num)||null});
+      else out[side].push({t:c.t,label:c.label||''});
+    }
+  }
+  EDW.cells=out; EDW.sel=null;
+  renderLay(); tplNote();
+  toast(`הפריסה נבנתה — ${count} חדרים`);
+});
+function instantiate(sides,nums){
+  let i=0; const out={a:[],b:[]};
+  for(const side of ['a','b']){
+    for(const c of (sides&&sides[side])||[]){
+      if(c.t==='room'){ if(i<nums.length)out[side].push({t:'room',num:nums[i++]}); }
+      else out[side].push({t:c.t,label:c.label||''});
+    }
+  }
+  while(i<nums.length)(out.a.length<=out.b.length?out.a:out.b).push({t:'room',num:nums[i++]});
+  return out;
+}
+
+function renderLay(){
+  const box=$('#wgLay'); box.innerHTML='';
+  const inn=el('div','lay-in');
+  const hall=el('div','lay-hall'); hall.appendChild(el('span',null,'מסדרון'));
+  inn.append(laySide('a'),hall,laySide('b'));
+  box.appendChild(inn);
+  paintCellEd();
+}
+function laySide(side){
+  const row=el('div','lay-side');
+  row.appendChild(el('span','lay-tag',side==='a'?'צד א׳':'צד ב׳'));
+  EDW.cells[side].forEach((c,i)=>row.appendChild(layCell(c,side,i)));
+  const add=el('button','lay-add','+');
+  add.title='הוספת משבצת לצד הזה';
+  add.addEventListener('click',()=>{
+    EDW.cells[side].push({t:'dead',label:''});
+    EDW.sel={side,i:EDW.cells[side].length-1};
+    renderLay();
+  });
+  row.appendChild(add);
+  return row;
+}
+function layCell(c,side,i){
+  const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
+  const on=EDW.sel&&EDW.sel.side===side&&EDW.sel.i===i;
+  const d=el('div','lay-c'+(c.t==='room'?' is-room':'')+(on?' sel':''));
+  d.draggable=true;
+  d.append(el('span','ci',T.ico),
+           el('span','cn',c.t==='room'?('חדר '+(c.num||'?')):(c.label||T.he)));
+  if(c.t==='room')d.appendChild(el('span','cb',(c.beds||1)+' מיטות'));
+  const x=el('button','cx','✕');
+  x.title='הסרת המשבצת';
+  x.addEventListener('click',e=>{
+    e.stopPropagation();
+    EDW.cells[side].splice(i,1); EDW.sel=null; renderLay();
+  });
+  d.appendChild(x);
+  d.addEventListener('click',()=>{EDW.sel={side,i};renderLay();});
+  d.addEventListener('dragstart',e=>{
+    e.dataTransfer.setData('text/plain','cell:'+side+':'+i);
+    e.dataTransfer.effectAllowed='move';
+    d.classList.add('dragging');
+  });
+  d.addEventListener('dragend',()=>d.classList.remove('dragging'));
+  d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('dropbefore');});
+  d.addEventListener('dragleave',()=>d.classList.remove('dropbefore'));
+  d.addEventListener('drop',e=>{
+    e.preventDefault(); e.stopPropagation(); d.classList.remove('dropbefore');
+    const raw=e.dataTransfer.getData('text/plain')||'';
+    if(!raw.startsWith('cell:'))return;          /* a boy chip is not a cell */
+    const p=raw.slice(5).split(':');
+    const fs=p[0],fi=parseInt(p[1],10);
+    if((fs!=='a'&&fs!=='b')||!Number.isInteger(fi)||!EDW.cells[fs][fi])return;
+    if(fs===side&&fi===i)return;
+    const [moved]=EDW.cells[fs].splice(fi,1);
+    let at=i; if(fs===side&&fi<i)at--;
+    EDW.cells[side].splice(at,0,moved);
+    EDW.sel={side,i:at};
+    renderLay();
+  });
+  return d;
+}
+function nextFreeNum(){
+  const used=new Set(S.rooms.map(r=>String(r.num)));
+  let max=0;
+  for(const c of edwRooms()){
+    used.add(String(c.num));
+    const m=String(c.num).match(/\d+/); if(m)max=Math.max(max,+m[0]);
+  }
+  let n=max?max+1:1;
+  while(used.has(String(n)))n++;
+  return String(n);
+}
+function paintCellEd(){
+  const box=$('#wgCellEd');
+  if(!EDW.sel){box.hidden=true;return;}
+  const c=EDW.cells[EDW.sel.side][EDW.sel.i];
+  if(!c){EDW.sel=null;box.hidden=true;return;}
+  box.hidden=false;
+  const types=$('#wgCellType'); types.innerHTML='';
+  for(const [k,T] of Object.entries(CELL_TYPES)){
+    const b=el('button',null,T.ico+' '+T.he);
+    if(k===c.t){b.style.borderColor='var(--acc)';b.style.color='var(--tx)';}
+    b.addEventListener('click',()=>{
+      if(k===c.t)return;
+      if(k==='room'){c.t='room';c.num=c.num||nextFreeNum();c.beds=c.beds||4;if(!('orig' in c))c.orig=null;delete c.label;}
+      else{c.t=k;delete c.num;delete c.beds;delete c.orig;c.label='';}
+      renderLay();
+    });
+    types.appendChild(b);
+  }
+  $('#wgCellRoom').hidden=c.t!=='room';
+  $('#wgCellFree').hidden=c.t==='room';
+  if(c.t==='room'){
+    $('#wgCellNum').value=c.num||'';
+    const st=$('#wgCellBeds'); st.innerHTML='';
+    const minus=el('button',null,'−'),val=el('span','val',String(c.beds||1)),plus=el('button',null,'+');
+    minus.addEventListener('click',()=>{c.beds=Math.max(1,(+c.beds||1)-1);renderLay();});
+    plus.addEventListener('click',()=>{c.beds=Math.min(12,(+c.beds||1)+1);renderLay();});
+    st.append(minus,val,plus);
+  }else $('#wgCellLbl').value=c.label||'';
+}
+/* typing must not trigger a full repaint — that would steal the caret */
+function liveCell(inputSel,apply){
+  const inp=$(inputSel);
+  inp.addEventListener('input',()=>{
+    if(!EDW||!EDW.sel)return;
+    const c=EDW.cells[EDW.sel.side][EDW.sel.i]; if(!c)return;
+    apply(c,inp.value);
+    const node=$('#wgLay').querySelector('.lay-c.sel .cn');
+    if(node)node.textContent=c.t==='room'?('חדר '+(c.num||'?')):(c.label||CELL_TYPES[c.t].he);
+  });
+  inp.addEventListener('blur',()=>{if(EDW)renderLay();});
+}
+liveCell('#wgCellNum',(c,v)=>{c.num=v;});
+liveCell('#wgCellLbl',(c,v)=>{c.label=v.slice(0,24);});
+
+$('#wgAutoLay').addEventListener('click',()=>{
+  const rooms=[],svcA=[],svcB=[];
+  for(const c of EDW.cells.a)(c.t==='room'?rooms:svcA).push(c);
+  for(const c of EDW.cells.b)(c.t==='room'?rooms:svcB).push(c);
+  const a=[],b=[];
+  rooms.forEach((c,i)=>(i%2?b:a).push(c));
+  const head=svcA.filter(c=>c.t==='entrance'),tail=svcA.filter(c=>c.t!=='entrance');
+  EDW.cells={a:[...head,...a,...tail],b:[...b,...svcB]};
+  EDW.sel=null; renderLay();
+  toast('החדרים סודרו מחדש משני צידי המסדרון');
+});
+$('#wgSaveTpl').addEventListener('click',()=>{
+  const rooms=edwRooms().length;
+  if(!EDW.cells.a.length&&!EDW.cells.b.length){toast('אין מה לשמור — הפריסה ריקה');return;}
+  const nm=prompt('שם לתבנית שלכם:',$('#wgName').value.trim()||'התבנית שלי');
+  if(!nm||!nm.trim())return;
+  const strip=side=>EDW.cells[side].map(c=>c.t==='room'?{t:'room'}:{t:c.t,label:c.label||''});
+  S.templates.push({
+    id:'tpl'+uid(),name:nm.trim().slice(0,40),ico:'⭐',
+    desc:`תבנית שלכם · ${rooms} חדרים · ${EDW.cells.a.length+EDW.cells.b.length-rooms} שטחי שירות`,
+    sides:{a:strip('a'),b:strip('b')}
+  });
+  save(); renderTpls();
+  toast('התבנית נשמרה ⭐ — תופיע מעכשיו בכל אגף');
+});
+const closeWing=()=>{$('#dlgWing').close();EDW=null;};
+$('#wgCancel').addEventListener('click',closeWing);
+$('#wgX').addEventListener('click',closeWing);
+$('#wgBld').addEventListener('change',()=>{EDW.building=$('#wgBld').value;});
+$('#wgName').addEventListener('input',()=>{});
+
+$('#wgSave').addEventListener('click',()=>{
+  const nm=$('#wgName').value.trim();
+  if(!nm){toast('צריך שם לאגף');return;}
+  const rooms=edwRooms();
+  const seen=new Set();
+  for(const c of rooms){
+    c.num=String(c.num==null?'':c.num).trim();
+    if(!c.num){toast('יש חדר בלי מספר — לחצו עליו והשלימו');return;}
+    if(seen.has(c.num)){toast(`מספר החדר ${c.num} מופיע פעמיים באגף`);return;}
+    seen.add(c.num);
+    c.beds=Math.max(1,Math.min(12,+c.beds||1));
+  }
+  const mine=new Set(EDW.id?roomsOf(EDW.id).map(r=>r.num):[]);
+  for(const c of rooms){
+    if(S.rooms.some(r=>r.num===c.num&&!mine.has(r.num))){
+      toast(`מספר החדר ${c.num} כבר קיים באגף אחר`);return;
+    }
+  }
+  snapshot();
+  const wid=EDW.id||('w'+uid());
+  let w=wingBy(wid);
+  if(!w){w={id:wid,name:nm,building:EDW.building,layout:{a:[],b:[]}};S.wings.push(w);}
+  w.name=nm; w.building=EDW.building;
+
+  const ren={};
+  rooms.forEach(c=>{if(c.orig&&c.orig!==c.num)ren[c.orig]=c.num;});
+  const mapR=n=>(Object.prototype.hasOwnProperty.call(ren,n)?ren[n]:n);
+  const kept=new Set(rooms.map(c=>c.orig).filter(Boolean));
+  const gone=(EDW.id?roomsOf(EDW.id):[]).filter(r=>!kept.has(r.num)).map(r=>r.num);
+
+  S.rooms=S.rooms.map(r=>r.wing===wid?{...r,num:mapR(r.num)}:r);
+  const remap=asg=>{const o={};for(const [b,rm] of Object.entries(asg))o[b]=mapR(rm);return o;};
+  S.assign=remap(S.assign);
+  S.sims.forEach(s=>{s.assign=remap(s.assign);});
+  S.rules.forEach(r=>{if(r.room)r.room=mapR(r.room);});
+  dropRooms(gone);
+
+  /* rebuild this wing's rooms in place, so the rest of S.rooms keeps its order */
+  const want=new Map(rooms.map(c=>[c.num,{num:c.num,beds:c.beds,wing:wid}]));
+  const out=[];
+  for(const r of S.rooms){
+    if(r.wing!==wid){out.push(r);continue;}
+    if(want.has(r.num)){out.push(want.get(r.num));want.delete(r.num);}
+  }
+  for(const c of rooms)if(want.has(c.num)){out.push(want.get(c.num));want.delete(c.num);}
+  S.rooms=out;
+
+  const pack=side=>EDW.cells[side].map(c=>c.t==='room'
+    ? {t:'room',num:c.num}
+    : (c.label?{t:c.t,label:c.label}:{t:c.t}));
+  w.layout={a:pack('a'),b:pack('b')};
+
+  trimOverfull();
+  S.rules=S.rules.filter(r=>{
+    if(r.members)return r.members.filter(b=>S.boys.includes(b)).length>=2;
+    return S.boys.includes(r.a)&&S.rooms.some(x=>x.num===r.room);
+  });
+  S.wings.forEach(x=>{x.layout=normLayout(x.layout,S.rooms.filter(r=>r.wing===x.id));});
+  S.activeSim=null;
+  save(); closeWing(); initDynamic();
+  V={level:'wing',bld:w.building,wing:w.id};
+  render(); toast('האגף נשמר ✓');
+});
+$('#wgDel').addEventListener('click',()=>{
+  const w=wingBy(EDW.id); if(!w)return;
+  if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
+  const rooms=roomsOf(w.id);
+  const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
+  if(!confirm(`למחוק את "${w.name}"?\n\nיימחקו ${rooms.length} חדרים`
+    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
+  snapshot();
+  dropRooms(rooms.map(r=>r.num));
+  S.wings=S.wings.filter(x=>x.id!==w.id);
+  save(); closeWing(); initDynamic();
+  V={level:S.buildings.length>1?'building':'home',bld:w.building,wing:null};
+  render(); toast('האגף נמחק — Ctrl+Z מחזיר');
 });
 
 /* ---------- Excel export (.xlsx built from scratch, zero deps) ---------- */
@@ -2290,8 +4057,15 @@ function makeZip(files){
   for(const c of chunks){out.set(c,p);p+=c.length;}
   return out;
 }
-const xmlEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* XML 1.0 has no escape for the C0 controls — one of them anywhere in a name makes
+   the whole workbook unopenable, so they are replaced before anything else runs */
+const xmlEsc=s=>String(s)
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,' ')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const colL=i=>{let s='',n=i+1;while(n){n--;s=String.fromCharCode(65+n%26)+s;n=(n/26)|0;}return s;};
+/* index of the first room-colour cellXf; xlsxStyles() sets it, and it always runs
+   before xlsxSheet() in buildXlsxBytes */
+let XF_ROOM=20;
 function xlsxStyles(){
   const tint=(hex,f)=>{
     const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
@@ -2347,9 +4121,13 @@ function xlsxStyles(){
     xf(4,0,1,'center'),  // 18 occupancy empty
     xf(0,3,1,'right')    // 19 waiting-list name
   ];
+  /* the colour pairs are appended after the fixed styles, so where they land depends
+     on how long the fixed part happens to be — derive it instead of hard-coding.
+     Fills 0-4 are the fixed ones, so colour i sits at 5+2i (dark) and 6+2i (light). */
+  XF_ROOM=xfs.length;
   ROOM_COLORS.forEach((c,i)=>{
-    xfs.push(xf(1,4+2*i,1,'center')); // 13+2i room number
-    xfs.push(xf(0,5+2*i,1,'right'));  // 14+2i occupant
+    xfs.push(xf(1,5+2*i,1,'center')); // room number — bold on the darker tint
+    xfs.push(xf(0,6+2*i,1,'right'));  // occupant    — plain on the lighter tint
   });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs></styleSheet>`;
 }
@@ -2388,11 +4166,11 @@ function xlsxSheet(){
     for(const room of wr){
       const color=ci%ROOM_COLORS.length;ci++;
       const occ=occupants(room.num);
-      const cells=[{c:0,v:room.num,s:13+2*color}];
+      const cells=[{c:0,v:room.num,s:XF_ROOM+2*color}];
       for(let b=0;b<maxBeds;b++){
         if(b<room.beds)
           cells.push(occ[b]
-            ?{c:1+b,v:occ[b]+(isLocked(occ[b])?'  🔒':''),s:14+2*color}
+            ?{c:1+b,v:occ[b]+(isLocked(occ[b])?'  🔒':''),s:XF_ROOM+1+2*color}
             :{c:1+b,v:'פנוי',s:4});
         else
           cells.push({c:1+b,v:'',s:15});          // room has fewer beds — greyed out
@@ -2506,8 +4284,10 @@ $('#btnXlsx').addEventListener('click',()=>{
 
 /* ---------- paste-import of name lists ---------- */
 function parseNameList(txt){
+  /* Word's Shift+Enter arrives as U+000B, and PDFs paste U+2028/U+2029 — without
+     these separators a whole pasted list becomes one impossibly long "name" */
   return [...new Set(
-    txt.split(/[\n,;]+/)
+    String(txt).split(/[\n\r\u000B\u000C\u2028\u2029,;]+/)
       .map(s=>s.replace(/^[\s\d.\-)(*•·–—]+/,'').trim())
       .filter(Boolean)
   )];
@@ -2605,8 +4385,14 @@ async function namesFromDocx(buf){
   const xml=files['word/document.xml'];
   if(!xml)throw new Error('לא נמצא תוכן במסמך');
   const doc=new DOMParser().parseFromString(xml,'application/xml');
-  return [...doc.getElementsByTagName('w:p')].map(p=>
-    [...p.getElementsByTagName('w:t')].map(t=>t.textContent).join('').trim());
+  /* a soft line break inside a paragraph is <w:br/>, not a <w:t> — ignoring it welds
+     the names on either side into one string that then fails the length check */
+  return [...doc.getElementsByTagName('w:p')].flatMap(p=>
+    [...p.getElementsByTagName('*')]
+      .map(n=>n.nodeName==='w:t'?n.textContent
+             :(n.nodeName==='w:br'||n.nodeName==='w:tab'||n.nodeName==='w:cr')?'\n':'')
+      .join('').split('\n')
+  ).map(s=>s.trim());
 }
 function namesFromJson(txt){
   const data=JSON.parse(txt);
@@ -2647,11 +4433,29 @@ function pickNameColumn(rows){
   }
   return rows.map(r=>r[best]);
 }
+/* a real CSV scanner: Excel writes "כהן, ישראל" for a name containing the separator,
+   and a plain split() turns that into two columns and shifts every later field */
 function parseDelimited(txt){
-  const rows=txt.split(/\r?\n/).filter(l=>l.trim());
   const delim=(txt.match(/\t/g)||[]).length>(txt.match(/,/g)||[]).length?'\t'
              :(txt.match(/;/g)||[]).length>(txt.match(/,/g)||[]).length?';':',';
-  return rows.map(l=>l.split(delim).map(c=>c.replace(/^"(.*)"$/,'$1')));
+  const rows=[];
+  let row=[],cell='',q=false;
+  const s=String(txt).replace(/\r\n?/g,'\n');
+  for(let i=0;i<s.length;i++){
+    const ch=s[i];
+    if(q){
+      if(ch!=='"'){cell+=ch;continue;}
+      if(s[i+1]==='"'){cell+='"';i++;}     /* "" inside quotes is one literal quote */
+      else q=false;
+      continue;
+    }
+    if(ch==='"'){q=true;continue;}
+    if(ch===delim){row.push(cell);cell='';continue;}
+    if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';continue;}
+    cell+=ch;
+  }
+  row.push(cell); rows.push(row);
+  return rows.filter(r=>r.some(c=>String(c).trim()));
 }
 /* ---- structured setup import: boys + rooms + beds + wings in one table ---- */
 const COL_ALIASES={
@@ -2674,7 +4478,9 @@ function detectColumns(row){
 function parseSetupTable(rows){
   for(let h=0;h<Math.min(rows.length,8);h++){
     const map=detectColumns(rows[h]);
-    if(map.boy===undefined&&map.room===undefined)continue;
+    /* a lone "חדר" header is not enough — the app's own xlsx export starts each wing
+       block with exactly that, and every caption below it would become a "room" */
+    if(map.boy===undefined&&(map.room===undefined||(map.beds===undefined&&map.wing===undefined)))continue;
     const boys=[],rooms=[],seenR=new Set();
     for(let i=h+1;i<rows.length;i++){
       const row=rows[i]||[];
@@ -2684,7 +4490,8 @@ function parseSetupTable(rows){
       }
       if(map.room!==undefined){
         const rn=String(row[map.room]||'').trim();
-        if(rn&&!seenR.has(rn)){
+        /* a room number is short and has no sentence punctuation — captions are not rooms */
+        if(rn&&rn.length<=12&&!/[.:·—]/.test(rn)&&!seenR.has(rn)){
           seenR.add(rn);
           rooms.push({num:rn,
             beds:Math.max(1,Math.min(12,parseInt(row[map.beds],10)||2)),
@@ -2751,8 +4558,12 @@ async function handleNamesFile(file){
       if(setup.boys.length)parts.push(`${setup.boys.length} בחורים`);
       if(setup.rooms.length)parts.push(`${setup.rooms.length} חדרים`);
       const empty=!S.boys.length&&!S.rooms.length;
+      /* "replace" clears the board and the locks too, not only the lists */
+      const placed=Object.keys(S.assign).length;
       const msg=`נמצאו בקובץ: ${parts.join(' ו־')}.\n\n`
-        +(empty?'לייבא הכול?':'אישור — להחליף את הרשימות הקיימות\nביטול — להוסיף למה שכבר קיים');
+        +(empty?'לייבא הכול?'
+          :'אישור — להחליף את הרשימות הקיימות\nביטול — להוסיף למה שכבר קיים'
+            +(placed?`\n\n⚠️ החלפה תמחק גם את השיבוץ הנוכחי (${placed} משובצים) ואת כל הנעילות.`:''));
       const replace=empty?true:confirm(msg);
       if(!empty&&!replace&&!confirm('להוסיף את הנתונים לרשימות הקיימות?'))return;
       applySetup(setup,replace);
@@ -2815,7 +4626,7 @@ $('#fileNames').addEventListener('change',e=>{
 /* ---------- Gemini AI advisor ---------- */
 const GKEY='dorm-gemini-key', GMODEL='dorm-gemini-model', GLIST='dorm-gemini-models';
 /* "-latest" aliases are hot-swapped by Google on every release, so this list
-   never goes stale; the ↻ button replaces it with whatever the account really has. */
+   never goes stale; the 🔄 button replaces it with whatever the account really has. */
 /* deliberately short: three roles, not a catalogue. "-latest" aliases are
    hot-swapped by Google, so these stay current without edits. */
 const FALLBACK_MODELS=[
@@ -2856,7 +4667,7 @@ const ACT_HE={move:'שיבוץ',swap:'החלפה',auto:'שיבוץ אוטומט�
   addWing:'הוספת אגף',renameWing:'שינוי שם אגף',removeWing:'מחיקת אגף',
   setZman:'שם הזמן',display:'שינוי תצוגה',setting:'הגדרות מערכת',clearAll:'ניקוי מלא',reset:'איפוס',
   identity:'שם ואימוג׳י',setLevel:'רמת הרשאה'};
-const DESTRUCTIVE=new Set(['deleteRule','deleteAllRules','deleteSim','clearAll','reset',
+const DESTRUCTIVE=new Set(['deleteRule','deleteAllRules','deleteSim','clear','clearAll','reset',
                            'removeBoy','removeRoom','removeWing']);
 const LEVEL_NOTE={
   advise:'היועץ ייעץ וימליץ בלבד — הוא לא נוגע בלוח. כל שינוי תבצעו בעצמכם.',
@@ -2988,6 +4799,11 @@ function actionLabel(a){
 function runActions(acts){
   const done=[],fail=[],blocked=[],declined=[];
   const cfg=aiCfg();
+  /* a reply may carry 40 actions; each branch ends with save()+render(). Without
+     batching that is 40 full repaints and 40 localStorage writes for one message,
+     and the browser never paints any of the intermediate frames anyway. */
+  batchDepth++;
+  try{
   for(const a of acts){
     // ----- permission gate -----
     if(cfg.level==='advise'){blocked.push(actionLabel(a));continue;}
@@ -3036,10 +4852,11 @@ function runActions(acts){
       }
       else if(a.type==='auto'){
         const res=optimize(new Set(S.locks.filter(b=>S.assign[b])));
-        if(res){S.assign=res.asg;S.activeSim=null;save();render();done.push(`שיבוץ אוטומטי (${res.ev.hard} חמורות, ${res.ev.soft} קלות)`);}
+        if(res){snapshot();S.assign=res.asg;S.activeSim=null;save();render();done.push(`שיבוץ אוטומטי (${res.ev.hard} חמורות, ${res.ev.soft} קלות)`);}
         else fail.push('שיבוץ אוטומטי נכשל — אין מספיק מיטות');
       }
       else if(a.type==='clear'){
+        snapshot();
         const keep={};for(const b of S.locks)if(S.assign[b])keep[b]=S.assign[b];
         S.assign=keep;S.activeSim=null;save();render();done.push('הלוח נוקה');
       }
@@ -3047,7 +4864,8 @@ function runActions(acts){
         const level=a.level==='soft'?'soft':'hard';
         let rule;
         if(a.ruleType==='separate'||a.ruleType==='together'){
-          const mem=(a.members||[]).filter(b=>S.boys.includes(b));
+          /* the same name twice would make the rule permanently, unfixably violated */
+          const mem=[...new Set((a.members||[]).filter(b=>S.boys.includes(b)))];
           if(mem.length<2)throw new Error('כלל עם פחות משני שמות תקינים');
           rule={id:uid(),type:a.ruleType,members:mem,level,enabled:true};
         }else if(a.ruleType==='inRoom'||a.ruleType==='notInRoom'){
@@ -3055,15 +4873,23 @@ function runActions(acts){
           if(!roomBy(String(a.room)))throw new Error('חדר לא קיים: '+a.room);
           rule={id:uid(),type:a.ruleType,a:a.boy,room:String(a.room),level,enabled:true};
         }else throw new Error('סוג כלל לא מוכר: '+a.ruleType);
+        snapshot();
         S.rules.push(rule);save();render();done.push('נוסף כלל: '+ruleText(rule));
       }
       else if(a.type==='lock'){
-        if(S.assign[a.boy]){if(!isLocked(a.boy))S.locks.push(a.boy);save();render();done.push(`🔒 ${a.boy}`);}
+        if(S.assign[a.boy]){snapshot();if(!isLocked(a.boy))S.locks.push(a.boy);save();render();done.push(`🔒 ${a.boy}`);}
         else fail.push(`נעילה: ${a.boy} לא משובץ`);
       }
-      else if(a.type==='unlock'){S.locks=S.locks.filter(x=>x!==a.boy);save();render();done.push(`🔓 ${a.boy}`);}
+      else if(a.type==='unlock'){snapshot();S.locks=S.locks.filter(x=>x!==a.boy);save();render();done.push(`🔓 ${a.boy}`);}
       else if(a.type==='saveSim'){
-        const sim={id:uid(),name:a.name||`סימולציה ${S.sims.length+1}`,ts:Date.now(),assign:{...S.assign}};
+        /* every other sim action resolves by name, so two sims may not share one */
+        let nm=String(a.name||'').trim()||`סימולציה ${S.sims.length+1}`;
+        if(S.sims.some(s=>s.name===nm)){
+          let k=2; while(S.sims.some(s=>s.name===nm+' '+k))k++;
+          nm=nm+' '+k;
+        }
+        snapshot();
+        const sim={id:uid(),name:nm,ts:Date.now(),assign:{...S.assign}};
         S.sims.push(sim);S.activeSim=sim.id;save();render();done.push(`נשמרה סימולציה "${sim.name}"`);
       }
       else if(a.type==='loadSim'){
@@ -3087,6 +4913,7 @@ function runActions(acts){
       else if(a.type==='deleteSim'){
         const sim=S.sims.find(s=>s.name===a.name);
         if(!sim)throw new Error('אין סימולציה בשם '+a.name);
+        snapshot();
         S.sims=S.sims.filter(s=>s.id!==sim.id);
         if(S.activeSim===sim.id)S.activeSim=null;
         save();render();done.push(`נמחקה הסימולציה "${sim.name}"`);
@@ -3098,7 +4925,9 @@ function runActions(acts){
       }
       else if(a.type==='reset'){
         localStorage.removeItem(KEY);
-        S=loadState();selected=null;formMembers.clear();UNDO.length=0;ED=null;
+        S=loadState();clearSel();formMembers.clear();UNDO.length=0;ED=null;EDW=null;
+        editingRule=null;paintRuleForm();
+        V={level:'home',bld:null,wing:null};
         clearSearches();save();initDynamic();applySettings();render();
         done.push('התוכנה אופסה למצב התחלתי');
       }
@@ -3112,21 +4941,38 @@ function runActions(acts){
           r.enabled=a.on!==false;
           done.push(`${r.enabled?'הופעל':'כובה'} כלל: ${ruleText(r)}`);
         }else{
-          if(a.ruleType)r.type=a.ruleType;
-          if(a.level)r.level=a.level==='soft'?'soft':'hard';
-          if(Array.isArray(a.members)){
-            const m=a.members.filter(b=>S.boys.includes(b));
-            if(m.length<2)throw new Error('כלל קבוצתי דורש שני שמות תקינים לפחות');
-            r.members=m;delete r.a;delete r.room;
+          /* build the whole edit on a copy and only commit a shape that is valid.
+             Editing the live rule field-by-field let a mid-way throw leave behind a
+             rule with a type but no members — which then broke every later render. */
+          const n={...r};
+          if(a.ruleType){
+            if(!['separate','together','inRoom','notInRoom'].includes(a.ruleType))
+              throw new Error('סוג כלל לא מוכר: '+a.ruleType);
+            n.type=a.ruleType;
           }
+          if(a.level)n.level=a.level==='soft'?'soft':'hard';
+          if(Array.isArray(a.members))
+            n.members=[...new Set(a.members.filter(b=>S.boys.includes(b)))];
           if(a.boy){
             if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
-            r.a=a.boy;delete r.members;
+            n.a=a.boy;
           }
           if(a.room){
             if(!roomBy(String(a.room)))throw new Error('חדר לא קיים: '+a.room);
-            r.room=String(a.room);delete r.members;
+            n.room=String(a.room);
           }
+          const group=n.type==='separate'||n.type==='together';
+          if(group){
+            if(!(Array.isArray(n.members)&&n.members.length>=2))
+              throw new Error('כלל קבוצתי דורש שני שמות תקינים לפחות — העריכה לא בוצעה');
+            delete n.a;delete n.room;
+          }else{
+            if(!(n.a&&n.room))
+              throw new Error('כלל של בחור וחדר דורש גם שם וגם חדר — העריכה לא בוצעה');
+            delete n.members;
+          }
+          delete r.members;delete r.a;delete r.room;
+          Object.assign(r,n);
           done.push('עודכן כלל: '+ruleText(r));
         }
         save();render();
@@ -3135,8 +4981,11 @@ function runActions(acts){
       else if(a.type==='renameSim'){
         const sim=S.sims.find(s=>s.name===a.name);
         if(!sim)throw new Error('אין סימולציה בשם '+a.name);
-        if(!a.newName)throw new Error('חסר שם חדש');
-        sim.name=String(a.newName);save();render();
+        const nn=String(a.newName||'').trim();
+        if(!nn)throw new Error('חסר שם חדש');
+        if(S.sims.some(s=>s.id!==sim.id&&s.name===nn))throw new Error('כבר יש סימולציה בשם '+nn);
+        snapshot();
+        sim.name=nn;save();render();
         done.push(`הסימולציה שונתה ל"${sim.name}"`);
       }
       /* ---------- boys ---------- */
@@ -3196,8 +5045,9 @@ function runActions(acts){
         if(!r)throw new Error('חדר לא קיים: '+a.room);
         snapshot();
         const old=r.num;
-        if(a.newRoom){
+        if(a.newRoom!=null){
           const nn=String(a.newRoom).trim();
+          if(!nn)throw new Error('מספר החדר החדש ריק');
           if(nn!==old&&roomBy(nn))throw new Error('חדר '+nn+' כבר קיים');
           r.num=nn;
           for(const b of Object.keys(S.assign))if(S.assign[b]===old)S.assign[b]=nn;
@@ -3230,7 +5080,9 @@ function runActions(acts){
       else if(a.type==='addWing'){
         const nn=String(a.name||'').trim();
         if(!nn)throw new Error('חסר שם אגף');
-        snapshot();S.wings.push({id:'w'+uid(),name:nn});save();initDynamic();render();
+        snapshot();
+        S.wings.push({id:'w'+uid(),name:nn,building:S.buildings[0].id,layout:{a:[],b:[]}});
+        save();initDynamic();render();
         done.push(`נוסף אגף "${nn}"`);
       }
       else if(a.type==='renameWing'){
@@ -3259,7 +5111,7 @@ function runActions(acts){
       else if(a.type==='setZman'){
         const v=String(a.value||'').trim();
         if(!v)throw new Error('חסר ערך');
-        S.zman=v;save();$('#zman').textContent=v;render();
+        snapshot();S.zman=v;save();zmanEl.textContent=v;render();
         done.push(`שם הזמן: "${v}"`);
       }
       else if(a.type==='display'){
@@ -3314,6 +5166,10 @@ function runActions(acts){
         done.push(`הגדרה ${a.key}: ${a.value?'דלוקה':'כבויה'}`);
       }
     }catch(e){fail.push(e.message||String(e));}
+  }
+  }finally{
+    batchDepth--;
+    if(!batchDepth&&batchDirty){batchDirty=false;save();render();}
   }
   lastRunFailed=fail.length>0||blocked.length>0||declined.length>0;
   const parts=[];
@@ -3440,7 +5296,7 @@ async function sendAI(){
   let needsFix=await aiTurn();
   // give it exactly one shot at fixing its own failure, then stop
   if(needsFix){
-    addMsg('sys','↻ מתקן…');
+    addMsg('sys','🔄 מתקן…');
     await aiTurn();
   }
   $('#aiSend').disabled=false;
@@ -3499,7 +5355,7 @@ async function apiErr(res){
   try{const j=await res.json();extra=(j.error&&j.error.message)?' — '+j.error.message:'';}catch(e){}
   const hint={400:' (בקשה שגויה — אולי המודל לא נתמך במפתח הזה)',
               401:' (המפתח לא תקין)',403:' (המפתח נדחה — בדקו שהעתקתם אותו במלואו)',
-              404:' (המודל לא קיים — לחצו ↻ לטעינת הרשימה מהחשבון)',
+              404:' (המודל לא קיים — לחצו 🔄 לטעינת הרשימה מהחשבון)',
               429:' (חריגה זמנית ממכסה — נסו שוב עוד רגע)'}[res.status]||'';
   return 'שגיאה '+res.status+hint+extra;
 }
@@ -3529,7 +5385,7 @@ function fillModelSelect(){
 $('#setAiFetch').addEventListener('click',async()=>{
   const key=($('#setAiKey').value.trim())||localStorage.getItem(GKEY);
   if(!key){toast('קודם הדביקו מפתח');return;}
-  const lnk=$('#setAiFetch'); lnk.textContent='↻ טוען…';
+  const lnk=$('#setAiFetch'); lnk.textContent='🔄 טוען…';
   try{
     const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key));
     if(!res.ok)throw new Error(await apiErr(res));
@@ -3545,7 +5401,7 @@ $('#setAiFetch').addEventListener('click',async()=>{
     fillModelSelect();
     toast(`אומתו ${models.length} מודלים בחשבון ✓`);
   }catch(e){toast(e.message||'טעינת המודלים נכשלה');}
-  lnk.textContent='↻ טעינת הרשימה מהחשבון';
+  lnk.textContent='🔄 טעינת הרשימה מהחשבון';
 });
 $('#setAiTest').addEventListener('click',async()=>{
   const key=($('#setAiKey').value.trim())||localStorage.getItem(GKEY);
@@ -3665,10 +5521,11 @@ $('#aiInput').addEventListener('keydown',e=>{
 });
 
 /* ---------- search wiring ---------- */
-wireSearch('#boardSearch','#boardSearchClr','board',render);
+wireSearch('#boardSearch','#boardSearchClr','board',render,150);
 wireSearch('#ruleSearch','#ruleSearchClr','rule',()=>{repopulateForm();});
 wireSearch('#rulesSearch','#rulesSearchClr','rules',()=>renderRules(evaluate(S.assign)));
 wireSearch('#edSearch','#edSearchClr','edit',()=>{if(ED)renderEdit();});
+wireSearch('#abSearch','#abSearchClr','ab',()=>{if(selected)renderAssign();},120);
 
 /* ---------- download & share ---------- */
 const APP_HOME='https://ahavat-chinam.github.io/dorm-planner/';
@@ -3713,12 +5570,12 @@ $('#btnCopyLink').addEventListener('click',async()=>{
 function renderWelcome(){
   const empty=!S.boys.length&&!S.rooms.length;
   $('#welcome').hidden=!empty;
-  $('#pool').hidden=empty;
-  $('#roomsWrap').hidden=empty;
-  document.querySelectorAll('section.panel').forEach(s=>{
-    if(s.id==='welcome'||s.id==='pool')return;
-    s.hidden=empty;
-  });
+  $('#mainTabs').hidden=empty;
+  document.querySelectorAll('.vpane').forEach(p=>{p.hidden=empty;});
+  document.querySelector('footer').hidden=empty;
+  document.body.classList.toggle('rail-off',empty||S.settings.display.rail===false);
+  $('#railToggle').hidden=empty;
+  $('#stats').hidden=empty;
   $('#btnAuto').disabled=empty;
   $('#btnClear').disabled=empty;
   $('#btnXlsx').disabled=empty;
@@ -3730,6 +5587,7 @@ $('#welImport').addEventListener('click',()=>$('#fileNames').click());
 $('#welTemplate').addEventListener('click',downloadTemplate);
 $('#welRestore').addEventListener('click',()=>$('#fileImport').click());
 $('#welManual').addEventListener('click',()=>$('#btnEdit').click());
+$('#welWing').addEventListener('click',()=>openWing(S.wings.length===1&&!S.rooms.length?S.wings[0].id:null));
 
 /* ---------- settings panel ---------- */
 const SET_MAP={sound:'#setSound',flash:'#setFlash',pulse:'#setPulse',
@@ -3748,16 +5606,34 @@ function applyDisplay(){
   root.style.setProperty('--acc',theme==='light'?ac.la:ac.a);
   root.style.setProperty('--acc2',theme==='light'?ac.lb:ac.b);
   root.style.setProperty('--roomMin',d.roomW||'220px');
-  root.style.zoom=(d.text||100)/100;
+  /* CSS zoom scales lengths but NOT vh/vw — they keep resolving against the unzoomed
+     viewport, so a `74vh` panel ends up 74%×zoom tall and walks off the screen.
+     Publishing the real height in zoomed units keeps every such size honest. */
+  const z=(d.text||100)/100;
+  root.style.zoom=z;
+  root.style.setProperty('--vh',(window.innerHeight/z)+'px');
   b.classList.toggle('d-compact',d.density==='compact');
   b.classList.toggle('d-roomy',d.density==='roomy');
   b.classList.toggle('nobeds',!d.emptyBeds);
   b.classList.toggle('notilt',!d.tilt);
   b.classList.toggle('nogrid',!d.grid);
   b.classList.toggle('nomotion',!d.motion);
+  b.classList.toggle('rail-off',d.rail===false);
+  const tg=$('#railToggle');
+  if(tg)tg.textContent=d.rail===false?'👥':'←';
 }
 if(prefersDark&&prefersDark.addEventListener)
   prefersDark.addEventListener('change',()=>{if(S.settings.display.theme==='auto')applyDisplay();});
+addEventListener('resize',()=>{
+  const z=(S.settings.display.text||100)/100;
+  document.documentElement.style.setProperty('--vh',(window.innerHeight/z)+'px');
+});
+/* a second tab holding an older copy of the state would otherwise write straight
+   over this one's work — last-writer-wins across the whole document */
+addEventListener('storage',e=>{
+  if(e.key!==KEY||!e.newValue)return;
+  toast('⚠️ הנתונים שונו בלשונית אחרת של התוכנה — רעננו כאן לפני שתמשיכו לערוך');
+});
 function renderSetStats(){
   const ev=evaluate(S.assign);
   const placed=S.boys.filter(b=>S.assign[b]).length;
@@ -3771,17 +5647,28 @@ function renderSetStats(){
     ['סימולציות',S.sims.length,''],
     ['הפרות',ev.hard+ev.soft,(ev.hard+ev.soft)?'warnv':'okv']
   ];
-  $('#setStats').innerHTML=cells.map(([k,v,c])=>
-    `<div class="sg ${c}"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+  /* built as nodes, not markup: the advisor's name, its emoji and the model id all
+     come from outside and must never be able to reach innerHTML */
+  const tile=(v,k,cls,small)=>{
+    const d=el('div','sg'+(cls?' '+cls:''));
+    const vv=el('div','v',String(v));
+    if(small){vv.style.fontSize=small;vv.style.lineHeight='1.85';}
+    d.append(vv,el('div','k',String(k)));
+    return d;
+  };
+  const sg=$('#setStats'); sg.innerHTML='';
+  cells.forEach(([k,v,c])=>sg.appendChild(tile(v,k,c)));
   const hasKey=!!localStorage.getItem(GKEY);
   const model=localStorage.getItem(GMODEL)||DEF_MODEL;
   const c=aiCfg();
   const lvlCls=c.level==='full'?'warnv':c.level==='advise'?'':'okv';
-  $('#aiStatus').innerHTML=
-    `<div class="sg"><div class="v">${c.emoji}</div><div class="k">${c.name}</div></div>`+
-    `<div class="sg ${lvlCls}"><div class="v" style="font-size:12.5px;line-height:1.85">${LEVEL_SHORT[c.level]}</div><div class="k">הרשאה</div></div>`+
-    `<div class="sg ${hasKey?'okv':'warnv'}"><div class="v">${hasKey?'✓':'✗'}</div><div class="k">${hasKey?'מפתח מוגדר':'אין מפתח'}</div></div>`+
-    `<div class="sg"><div class="v" style="font-size:12px;line-height:1.9">${model}</div><div class="k">מודל פעיל</div></div>`;
+  const st2=$('#aiStatus'); st2.innerHTML='';
+  st2.append(
+    tile(c.emoji,c.name),
+    tile(LEVEL_SHORT[c.level],'הרשאה',lvlCls,'12.5px'),
+    tile(hasKey?'✓':'✗',hasKey?'מפתח מוגדר':'אין מפתח',hasKey?'okv':'warnv'),
+    tile(model,'מודל פעיל','','12px')
+  );
 }
 /* ---- display tab ---- */
 const DISP_SEG={theme:'#setTheme',text:'#setText',density:'#setDensity',roomW:'#setRoomW'};
@@ -3845,7 +5732,7 @@ $('#clearX').addEventListener('click',()=>$('#dlgClear').close());
 $('#setTabs').addEventListener('click',e=>{
   const t=e.target.closest('.tab'); if(!t)return;
   document.querySelectorAll('#setTabs .tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('on',p.dataset.p===t.dataset.t));
+  document.querySelectorAll('#dlgSettings .tabpane').forEach(p=>p.classList.toggle('on',p.dataset.p===t.dataset.t));
 });
 for(const [k,sel] of Object.entries(SET_MAP)){
   $(sel).addEventListener('change',()=>{
@@ -3855,7 +5742,7 @@ for(const [k,sel] of Object.entries(SET_MAP)){
 }
 $('#setZman').addEventListener('input',()=>{
   S.zman=$('#setZman').value.trim()||'הזמן הבא';
-  $('#zman').textContent=S.zman;save();
+  zmanEl.textContent=S.zman;save();
 });
 $('#setExport').addEventListener('click',()=>$('#btnExport').click());
 $('#setImport').addEventListener('click',()=>$('#btnImport').click());
@@ -3891,7 +5778,10 @@ $('#rstAll').addEventListener('click',()=>{
   localStorage.removeItem(GMODEL);
   localStorage.removeItem(GLIST);
   S=loadState();
-  selected=null;formMembers.clear();UNDO.length=0;ED=null;
+  clearSel();formMembers.clear();UNDO.length=0;ED=null;EDW=null;EDB=null;
+  editingRule=null;paintRuleForm();
+  V={level:'home',bld:null,wing:null};
+  setTab('board');
   clearSearches();
   AIH.length=0;$('#aiMsgs').innerHTML='';$('#aiPanel').hidden=true;
   save();initDynamic();applySettings();render();renderSetStats();
@@ -3913,24 +5803,34 @@ document.addEventListener('keydown',e=>{
   if(e.key==='/'||e.key==='f'&&e.ctrlKey){
     e.preventDefault();$('#boardSearch').focus();$('#boardSearch').select();return;
   }
-  if(e.key==='Escape'&&selected){selected=null;render();}
-  if((e.key==='Delete'||e.key==='Backspace')&&selected){e.preventDefault();assignBoy(selected,null);}
+  if(e.key==='Escape'&&selected){clearSel();render();return;}
+  if(e.key==='Delete'&&selected){e.preventDefault();assignBoy(selected,null);return;}
+  if(e.key==='Backspace'){
+    e.preventDefault();
+    if(selected)assignBoy(selected,null); else goBack();
+  }
 });
 
 /* ---------- zman title ---------- */
-$('#zman').addEventListener('blur',()=>{
-  const v=$('#zman').textContent.trim();
-  S.zman=v||'הזמן הבא';$('#zman').textContent=S.zman;save();
+zmanEl.addEventListener('blur',()=>{
+  const v=zmanEl.textContent.trim();
+  S.zman=v||'הזמן הבא';zmanEl.textContent=S.zman;save();
 });
-$('#zman').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){e.preventDefault();$('#zman').blur();}
+zmanEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();zmanEl.blur();}
+});
+/* contenteditable would otherwise accept pasted markup straight into the title */
+zmanEl.addEventListener('paste',e=>{
+  e.preventDefault();
+  const t=(e.clipboardData||window.clipboardData).getData('text').replace(/\s+/g,' ').trim().slice(0,60);
+  document.execCommand('insertText',false,t);
 });
 
 /* ---------- init ---------- */
 function initDynamic(){
   $('#verLbl').textContent='v'+APP_VERSION;
   $('#appLinkBox').textContent=APP_HOME;
-  $('#zman').textContent=S.zman||'הזמן הבא';
+  zmanEl.textContent=S.zman||'הזמן הבא';
   repopulateForm();
   paintRuleForm();
   fillModelSelect();
