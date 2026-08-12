@@ -999,12 +999,15 @@ body.rail-off .rl-toggle{inset-inline-end:8px}
 }
 .card.add:hover{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 6%,transparent)}
 .card.add .plus{font-size:26px;font-weight:400;line-height:1}
+/* bottom corner: the top inline-start corner is where the card's icon lives in RTL,
+   and an opacity:0 element there was silently eating the clicks meant to open it */
 .card-edit{
-  position:absolute;inset-block-start:11px;inset-inline-start:11px;
+  position:absolute;inset-block-end:11px;inset-inline-end:11px;
   background:var(--card2);border:1px solid var(--line);color:var(--dim);
-  cursor:pointer;font-size:12px;padding:4px 8px;border-radius:9px;opacity:0;transition:.13s;
+  cursor:pointer;font-size:12px;padding:4px 8px;border-radius:9px;
+  opacity:0;pointer-events:none;transition:.13s;
 }
-.card:hover .card-edit{opacity:1}
+.card:hover .card-edit,.card-edit:focus-visible{opacity:1;pointer-events:auto}
 .card-edit:hover{color:var(--tx);border-color:var(--hover)}
 
 /* miniature corridor drawn on a wing card — the plan at a glance */
@@ -1500,7 +1503,8 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     inset-inline-end:14px;top:auto;transform:none;
     bottom:calc(min(calc(.46 * var(--vh,100vh)),320px) + 10px);width:54px;height:28px;
   }
-  body.rail-off .rl-toggle{bottom:54px;inset-inline-end:14px}
+  /* clear of the ✨ button, which owns the corner when the rail is closed */
+  body.rail-off .rl-toggle{bottom:96px;inset-inline-end:14px}
   #assignBar{inset-inline-end:0;max-height:min(calc(.62 * var(--vh,100vh)),420px)}
   #aiFab,#aiPanel{left:16px}
   body:not(.rail-off) #aiFab,body:not(.rail-off) #aiPanel{display:none}
@@ -2553,16 +2557,18 @@ function migrate(s){
     }
     w.geom=normGeom(w.geom);
   });
-  /* a wing drawn before floors existed gets a sensible spot rather than none */
-  const used=new Map();
-  const PER=Math.floor((GH-2)/3);          /* wings per column before wrapping */
+  /* a wing drawn before geoms existed gets a real free spot — never a blind slot
+     that lands exactly on top of an existing wing */
   s.wings.forEach(w=>{
     if(w.geom)return;
-    const k=w.floor||'-';
-    const n=used.get(k)||0; used.set(k,n+1);
-    const col=Math.floor(n/PER),row=n%PER;
     const len=Math.min(8,Math.max(4,Math.ceil((s.rooms.filter(r=>r.wing===w.id).length||4)/2)+2));
-    w.geom=normGeom({x:Math.min(GW-len,1+col*(len+2)),y:2+row*3,len,dir:'h'});
+    const peers=s.wings.filter(x=>x!==w&&x.building===w.building&&x.floor===w.floor&&x.geom);
+    let g=null;
+    for(let y=1;y<GH&&!g;y++)for(let x=0;x+len<=GW&&!g;x++){
+      const t={x,y,len,dir:'h'};
+      if(geomFits(t,peers,null))g=t;
+    }
+    w.geom=normGeom(g||{x:0,y:0,len,dir:'h'});
   });
 
   /* ---- v3: free-grid plan per wing, plus the user's own saved templates ---- */
@@ -2651,7 +2657,15 @@ function loadIndex(){
   return ix;
 }
 function saveIndex(){
-  try{localStorage.setItem(IDXKEY,JSON.stringify(IX));}catch(e){warnQuota();}
+  /* merge, never clobber: a second tab may have created a project since we
+     booted, and writing our stale snapshot over the index would orphan it */
+  try{
+    const disk=loadIndex();
+    const mine=new Set(IX.projects.map(p=>p.id));
+    for(const p of disk.projects)
+      if(!mine.has(p.id)&&localStorage.getItem(pKey(p.id)))IX.projects.push(p);
+    localStorage.setItem(IDXKEY,JSON.stringify(IX));
+  }catch(e){warnQuota();}
 }
 const projMeta=id=>IX.projects.find(p=>p.id===id);
 function projSummary(){
@@ -2962,36 +2976,46 @@ function computeSuggestions(){
   const base=evaluate(S.assign);
   const baseScore=base.hard*1000+base.soft;
   if(baseScore===0) return [];
+  /* one shared trial object, mutated and restored per candidate — copying the
+     whole 300-key map 15,000 times was most of the old cost. And a clock:
+     this runs off a timer, so a frozen tab here has no excuse at all. */
+  const t0=Date.now(),BUDGET=600;
+  const trial={...S.assign};
   const found=[];
-  const consider=(asg,text)=>{
-    const ev=evaluate(asg);
+  const consider=text=>{
+    const ev=evaluate(trial);
     const sc=ev.hard*1000+ev.soft;
-    if(sc<baseScore) found.push({score:sc,text,asg,gain:gainTxt(base,ev)});
+    if(sc<baseScore)found.push({score:sc,text,asg:{...trial},gain:gainTxt(base,ev)});
+    if(found.length>12){found.sort((x,y)=>x.score-y.score);found.length=6;}
   };
-  /* occupancy once, instead of a full boy scan per candidate room */
   const cnt=new Map();
   for(const b of S.boys){const r=S.assign[b]; if(r)cnt.set(r,(cnt.get(r)||0)+1);}
-  /* only a boy who appears in a violated rule can lower the score — everyone else
-     is noise, and at 300 boys the difference is seconds per click */
   const suspects=new Set([...base.badHard,...base.badSoft]);
   const placed=S.boys.filter(b=>S.assign[b]&&!isLocked(b));
   const movable=placed.filter(b=>suspects.has(b));
+  outer1:
   for(const b of movable){
     for(const r of S.rooms){
+      if(Date.now()-t0>BUDGET)break outer1;
       if(r.num===S.assign[b]) continue;
-      if((cnt.get(r.num)||0)<r.beds)
-        consider({...S.assign,[b]:r.num},`להעביר את ${b} לחדר ${r.num}`);
+      if((cnt.get(r.num)||0)<r.beds){
+        trial[b]=r.num;
+        consider(`להעביר את ${b} לחדר ${r.num}`);
+        trial[b]=S.assign[b];
+      }
     }
   }
   const pairSeen=new Set();
+  outer2:
   for(const a of movable)for(const b of placed){
+    if(Date.now()-t0>BUDGET)break outer2;
     if(a===b||S.assign[a]===S.assign[b]) continue;
     const key=a<b?a+'|'+b:b+'|'+a;
     if(pairSeen.has(key))continue;
     pairSeen.add(key);
-    const asg={...S.assign};
-    [asg[a],asg[b]]=[asg[b],asg[a]];
-    consider(asg,`להחליף בין ${a} (${S.assign[a]}) ל־${b} (${S.assign[b]})`);
+    trial[a]=S.assign[b];trial[b]=S.assign[a];
+    consider(`להחליף בין ${a} (${S.assign[a]}) ל־${b} (${S.assign[b]})`);
+    trial[a]=S.assign[a];trial[b]=S.assign[b];
   }
   found.sort((x,y)=>x.score-y.score);
   return found.slice(0,3);
@@ -3107,7 +3131,24 @@ function syncLayouts(){
     if(!byWing.has(r.wing))r.wing=S.wings[0].id;
     byWing.get(r.wing).push(r);
   }
-  for(const w of S.wings)w.plan=normPlan(w.plan,byWing.get(w.id));
+  for(const w of S.wings){
+    w.plan=normPlan(w.plan,byWing.get(w.id));
+    /* a wing born outside the building canvas (the wing dialog, the AI, an import)
+       arrives without a floor or a spot on the drawing — it would be invisible in
+       the very screen the stepper sends people to. Adopt it in, without overlaps. */
+    const b2=S.buildings.find(x=>x.id===w.building);
+    if(b2&&!b2.floors.some(f=>f.id===w.floor))w.floor=b2.floors[0].id;
+    if(!w.geom){
+      const len=Math.min(8,Math.max(4,Math.ceil((byWing.get(w.id).length||4)/2)+2));
+      const peers=S.wings.filter(x=>x!==w&&x.building===w.building&&x.floor===w.floor&&x.geom);
+      let g=null;
+      for(let y=1;y<GH&&!g;y+=1)for(let x=0;x+len<=GW&&!g;x++){
+        const t={x,y,len,dir:'h'};
+        if(geomFits(t,peers,null))g=t;
+      }
+      w.geom=normGeom(g||{x:0,y:0,len,dir:'h'});
+    }
+  }
 }
 function render(){
   if(batchDepth){batchDirty=true;return;}
@@ -3397,7 +3438,12 @@ function buildSteps(){
      act:()=>$('#btnEdit').click(),btn:'📥 לרשימה'},
     {ico:'🛏️',t:'השיבוץ',d:'לחיצה על שם ← חדר, כללים, ואוטומט',
      done:placed>0,
-     act:()=>{const w=S.wings.find(x=>roomsOf(x.id).length);if(w)go('wing',w.building,w.id);},btn:'▶️ לשיבוץ'}
+     act:()=>{
+       const w=S.wings.find(x=>roomsOf(x.id).length);
+       if(w){go('wing',w.building,w.id);return;}
+       toast('אין עדיין חדרים לשבץ אליהם — נתחיל מהפריסה של האגף');
+       if(S.wings[0])openWing(S.wings[0].id);
+     },btn:'▶️ לשיבוץ'}
   ];
 }
 function stepperEl(){
@@ -4641,6 +4687,8 @@ $('#btnEditApply').addEventListener('click',()=>{
   S.assign=remapAsg(S.assign);
   S.locks=[...new Set(S.locks.map(mapB))].filter(b=>S.assign[b]);
   S.sims.forEach(s=>s.assign=remapAsg(s.assign));
+  /* groups follow the same renames and deletions as everything else */
+  S.groups.forEach(g=>{g.members=[...new Set(g.members.map(mapB))].filter(b=>S.boys.includes(b));});
   S.rules=S.rules.map(r=>{
     const n={...r};
     if(n.members)n.members=[...new Set(n.members.map(mapB))].filter(b=>S.boys.includes(b));
@@ -4770,6 +4818,7 @@ function renderGroups(){
     sw.style.background=g.color;
     sw.title='החלפת צבע';
     sw.addEventListener('click',()=>{
+      snapshot();
       const i=GROUP_COLORS.indexOf(g.color);
       g.color=GROUP_COLORS[(i+1)%GROUP_COLORS.length];
       save();renderGroups();render();
@@ -4777,8 +4826,9 @@ function renderGroups(){
     const nm=el('input','gn'); nm.type='text'; nm.value=g.name;
     nm.addEventListener('input',()=>{g.name=nm.value.slice(0,40);});
     nm.addEventListener('blur',()=>{
-      g.name=(nm.value.trim()||'קבוצה').slice(0,40);
-      save();renderGroups();render();
+      const nn=(nm.value.trim()||'קבוצה').slice(0,40);
+      if(nn!==g.name){snapshot();g.name=nn;save();}
+      renderGroups();render();
     });
     const cnt=el('span','gr-n',`${g.members.length} בחורים`);
     const pick=el('button','btn mini',GSEL===g.id?'סגירת הבחירה':'בחירת בחורים');
@@ -4827,7 +4877,9 @@ function renderGroups(){
   const hc=$('#grHits');
   hc.classList.toggle('none',!shown.length);
   hc.textContent=Q.grp?`${shown.length} מתוך ${S.boys.length}`:'';
-  if(!shown.length)pb.appendChild(el('span','hint',`אין שם שתואם ל"${Q.grp}"`));
+  if(!shown.length)pb.appendChild(el('span','hint',
+    S.boys.length?`אין שם שתואם ל"${Q.grp}"`
+    :'עדיין אין בחורים בפרויקט — הוסיפו קודם דרך ✏️ עריכה, ואז שבצו אותם לקבוצות'));
 }
 $('#grAdd').addEventListener('click',()=>{
   const inp=$('#grNew'),nm=inp.value.trim();
@@ -4849,7 +4901,10 @@ function fillWingFromGroup(wingId,groupId){
   if(!g||!w)return;
   const waiting=g.members.filter(b=>!S.assign[b]);
   if(!waiting.length){toast(`כל בני "${g.name}" כבר משובצים`);return;}
-  const rooms=roomsOf(wingId);
+  /* fill along the corridor the user actually sees, not the storage order */
+  const order=planRoomNums(w.plan);
+  const rooms=roomsOf(wingId).slice()
+    .sort((a,b)=>((order.indexOf(a.num)+1)||1e9)-((order.indexOf(b.num)+1)||1e9));
   const free=rooms.reduce((a,r)=>a+Math.max(0,r.beds-occupants(r.num).length),0);
   if(!free){toast(`אין מיטה פנויה ב${w.name}`);return;}
   snapshot();
@@ -4894,7 +4949,10 @@ $('#projSave').addEventListener('click',()=>{
   }
   const m=projMeta(EDP);
   if(m){m.name=nm;m.desc=ds;m.modified=Date.now();}
-  if(EDP===PID){S.zman=nm;S.desc=ds;zmanEl.textContent=nm;save();}
+  if(EDP===PID){
+    if(nm!==S.zman||ds!==S.desc){snapshot();S.zman=nm;S.desc=ds;save();}
+    zmanEl.textContent=nm;
+  }
   else{
     /* rename a project that is not open, without disturbing the one that is */
     const s=readProject(EDP);
@@ -5114,6 +5172,9 @@ function ghostGeom(a,c){
     try{grid.releasePointerCapture(e.pointerId);}catch(err){}
     const b=bldBy(EDB&&EDB.id);
     if(d.mode==='new'&&b){
+      /* a click is a deselect, not a wing — require actual movement, otherwise
+         every stray click plants a phantom 2-cell wing on the floor */
+      if(!d.cur||(d.cur.x===d.start.x&&d.cur.y===d.start.y)){bldPaint();return;}
       const g=ghostGeom(d.start,d.cur);
       if(g&&(g.len>=2)&&geomFits(g,floorWings(b.id,EDB.floor),null)){
         snapshot();
@@ -5489,7 +5550,7 @@ function paintCellEd(){
   layQ('.cell-room').hidden=c.t!=='room';
   layQ('.cell-free').hidden=c.t==='room';
   /* typing must repaint only the one label, or the caret jumps out of the field */
-  const echo=()=>{const n=layQ('.lay-c.sel .cn'); if(n)n.textContent=cellName(c);};
+  const echo=()=>{const n=layQ('.le-c.sel .cn'); if(n)n.textContent=cellName(c);};
   if(c.t==='room'){
     const numf=layQ('.cell-numf'); if(numf)numf.hidden=!LAY.numbered;
     const num=layQ('.cell-num');
@@ -5512,19 +5573,30 @@ function paintCellEd(){
 }
 
 $('#wgAutoLay').addEventListener('click',()=>{
-  /* straighten whatever was drawn back into a classic corridor */
+  /* straighten whatever was drawn back into classic corridors; a floor too wide
+     for one corridor wraps onto another one below — never off the grid edge */
   const rooms=layRooms().slice().sort((p,q)=>p.y-q.y||p.x-q.x);
   const svc=LAY.cells.filter(c=>c.t!=='room'&&c.t!=='hall');
   const a=[],b=[];
   rooms.forEach((c,i)=>(i%2?b:a).push(c));
   const head=svc.filter(c=>c.t==='entrance'),tail=svc.filter(c=>c.t!=='entrance');
+  const topRow=[...head,...a,...tail],botRow=[...b];
   const out=[];
-  let x=1;
-  for(const c of [...head,...a,...tail]){c.x=x++;c.y=1;out.push(c);}
-  const len=Math.max(x-1,b.length+1);
-  for(let i=1;i<=Math.min(len,PW-2);i++)out.push({t:'hall',x:i,y:2});
-  x=1;
-  for(const c of b){c.x=x++;c.y=3;out.push(c);}
+  let x=1,band=0;
+  const bandY=()=>1+band*4;                     /* rows 1-2-3, then 5-6-7… */
+  const flush=(hallLen)=>{
+    for(let i=1;i<=hallLen;i++)out.push({t:'hall',x:i,y:bandY()+1});
+  };
+  while((topRow.length||botRow.length)&&bandY()+2<PH){
+    let tx=1,bx=1,maxX=1;
+    while((topRow.length||botRow.length)&&Math.max(tx,bx)<=PW-2){
+      if(topRow.length&&tx<=PW-2){const c=topRow.shift();c.x=tx++;c.y=bandY();out.push(c);}
+      if(botRow.length&&bx<=PW-2){const c=botRow.shift();c.x=bx++;c.y=bandY()+2;out.push(c);}
+      maxX=Math.max(tx,bx)-1;
+    }
+    flush(Math.min(maxX,PW-2));
+    band++;
+  }
   LAY.cells=out;
   LAY.sel=null; renderLay();
   toast('הפריסה יושרה למסדרון קלאסי — אפשר לעקם אותה מחדש כרצונכם');
@@ -5546,12 +5618,15 @@ const packPlan=cells=>cells.map(c=>{
   return o;
 });
 /* built-ins describe themselves through make() (a straight corridor);
-   user templates carry a real drawn plan */
+   user templates carry a real drawn plan. The 8-room call is for previews only. */
 const tplPlanOf=t=>t.make?sidesToPlan(t.make(roomNums('1',8))):t.plan;
-const tplRoomCount=t=>tplPlanOf(t).filter(c=>c.t==='room').length;
+const tplRoomCount=t=>t.make?0:tplPlanOf(t).filter(c=>c.t==='room').length;
 /* instantiating a template: numbers flow along the plan in reading order */
 function tplPlan(t,nums,defBeds){
-  const src=tplPlanOf(t);
+  /* a built-in grows its corridor to the REAL room count — routing it through the
+     8-room preview skeleton dumped every room past the eighth in a corridor-less
+     block at the bottom */
+  const src=t.make?sidesToPlan(t.make(nums.map(String))):t.plan;
   const out=[];
   let i=0;
   const sorted=[...src].sort((p,q)=>p.y-q.y||p.x-q.x);
@@ -5598,13 +5673,15 @@ function renderTplMgr(){
     const card=el('div','tpl');
     const top=el('div','tpl-t');
     top.append(el('span','ti',t.ico||'⭐'),el('b',null,t.name));
-    card.append(top,el('div','tpl-d',(t.desc||'')+(t.desc?' · ':'')+tplRoomCount(t)+' חדרים'));
+    card.append(top,el('div','tpl-d',(t.desc||'')+(t.desc?' · ':'')
+      +(t.make?'מתאימה לכל מספר חדרים':tplRoomCount(t)+' חדרים')));
     card.appendChild(tplPreview(t));
     const row=el('div','dlgbtns wrap'); row.style.marginTop='10px';
     if(mine)row.appendChild(mini('✏️ עריכה',()=>openTplEdit(t,false)));
     row.appendChild(mini('⧉ שכפול ושינוי',()=>openTplEdit(t,true)));
     if(mine)row.appendChild(mini('🗑 מחיקה',()=>{
       if(!confirm(`למחוק את התבנית "${t.name}"?`))return;
+      snapshot();
       S.templates=S.templates.filter(x=>x.id!==t.id);
       save();renderTplMgr();
       if($('#dlgWing').open)renderTpls();
@@ -5646,12 +5723,19 @@ function openTplEdit(src,dup){
   $('#dlgTplEdit').showModal();
   $('#teName').focus(); $('#teName').select();
 }
-function closeTplEdit(){
-  $('#dlgTplEdit').close();
+/* the teardown lives on the dialog's close event, so Esc (which closes the
+   <dialog> natively without touching our buttons) can never leave LAY pointing
+   at a dead template draft and brick the wing editor underneath */
+function closeTplEdit(){$('#dlgTplEdit').close();}
+$('#dlgTplEdit').addEventListener('close',()=>{
   TLAY=null;
   LAY=WLAY;
   if($('#dlgWing').open&&LAY)renderLay();
-}
+});
+$('#dlgWing').addEventListener('close',()=>{
+  if($('#dlgTplEdit').open)return;   /* template editor stacked above stays live */
+  EDW=null;WLAY=null;LAY=TLAY||null;
+});
 $('#teCancel').addEventListener('click',closeTplEdit);
 $('#teX').addEventListener('click',closeTplEdit);
 $('#teSave').addEventListener('click',()=>{
@@ -5667,6 +5751,7 @@ $('#teSave').addEventListener('click',()=>{
     desc:$('#teDesc').value.trim().slice(0,120),
     plan:packPlan(TLAY.cells)
   };
+  snapshot();
   const i=S.templates.findIndex(x=>x.id===rec.id);
   if(i>=0)S.templates[i]=rec; else S.templates.push(rec);
   save();
@@ -5675,7 +5760,7 @@ $('#teSave').addEventListener('click',()=>{
   if($('#dlgWing').open)renderTpls();
   toast(i>=0?'התבנית עודכנה ⭐':'התבנית נשמרה ⭐ — תופיע מעכשיו בכל אגף');
 });
-const closeWing=()=>{$('#dlgWing').close();EDW=null;WLAY=null;LAY=null;};
+const closeWing=()=>{$('#dlgWing').close();};
 $('#wgCancel').addEventListener('click',closeWing);
 $('#wgX').addEventListener('click',closeWing);
 $('#wgBld').addEventListener('change',()=>{EDW.building=$('#wgBld').value;});
@@ -5703,22 +5788,36 @@ $('#wgSave').addEventListener('click',()=>{
   snapshot();
   const wid=EDW.id||('w'+uid());
   let w=wingBy(wid);
-  if(!w){w={id:wid,name:nm,building:EDW.building,plan:[]};S.wings.push(w);}
-  w.name=nm; w.building=EDW.building;
+  if(!w){
+    /* born with a floor; syncLayouts will find it a free spot on the drawing */
+    const b3=bldBy(EDW.building)||S.buildings[0];
+    w={id:wid,name:nm,building:EDW.building,floor:b3.floors[0].id,plan:[]};
+    S.wings.push(w);
+  }
+  w.name=nm;
+  if(w.building!==EDW.building){
+    /* moved to another building — its old floor id means nothing there */
+    w.building=EDW.building;
+    const b3=bldBy(EDW.building);
+    if(b3&&!b3.floors.some(f=>f.id===w.floor)){w.floor=b3.floors[0].id;delete w.geom;}
+  }
 
   const ren={};
   rooms.forEach(c=>{if(c.orig&&c.orig!==c.num)ren[c.orig]=c.num;});
   const mapR=n=>(Object.prototype.hasOwnProperty.call(ren,n)?ren[n]:n);
-  for(const [o,n] of Object.entries(ren))moveNote('room',o,n);
   const kept=new Set(rooms.map(c=>c.orig).filter(Boolean));
   const gone=(EDW.id?roomsOf(EDW.id):[]).filter(r=>!kept.has(r.num)).map(r=>r.num);
+  /* the erased rooms must go FIRST, while every number is still the original.
+     Deleting after the rename let a reused number (erase 103, renumber 102→103)
+     match the surviving room too — and silently evict its occupants and rules. */
+  dropRooms(gone);
+  for(const [o,n] of Object.entries(ren))moveNote('room',o,n);
 
   S.rooms=S.rooms.map(r=>r.wing===wid?{...r,num:mapR(r.num)}:r);
   const remap=asg=>{const o={};for(const [b,rm] of Object.entries(asg))o[b]=mapR(rm);return o;};
   S.assign=remap(S.assign);
   S.sims.forEach(s=>{s.assign=remap(s.assign);});
   S.rules.forEach(r=>{if(r.room)r.room=mapR(r.room);});
-  dropRooms(gone);
 
   /* rebuild this wing's rooms in place, so the rest of S.rooms keeps its order */
   const want=new Map(rooms.map(c=>[c.num,{num:c.num,beds:c.beds,wing:wid}]));
@@ -7511,6 +7610,14 @@ addEventListener('resize',()=>{
 /* a second tab holding an older copy of the state would otherwise write straight
    over this one's work — last-writer-wins across the whole document */
 addEventListener('storage',e=>{
+  if(e.key===IDXKEY&&e.newValue){
+    /* another tab changed the project list — adopt it so we stop clobbering */
+    IX=loadIndex();
+    if(PID&&!projMeta(PID))IX.projects.push({id:PID,name:S.zman,desc:S.desc||'',
+      created:Date.now(),modified:Date.now(),sum:projSummary()});
+    if(V.level==='projects')render();
+    return;
+  }
   if(!PID||e.key!==pKey(PID)||!e.newValue)return;
   toast('⚠️ הפרויקט הזה נערך בלשונית אחרת — רעננו כאן לפני שתמשיכו');
 });
@@ -7647,8 +7754,9 @@ $('#rstRules').addEventListener('click',()=>{
 $('#rstSims').addEventListener('click',()=>{
   if(!S.sims.length){toast('אין סימולציות למחוק');return;}
   if(!askConfirm(`למחוק את כל ${S.sims.length} הסימולציות השמורות?`))return;
+  snapshot();
   S.sims=[];S.activeSim=null;save();render();renderSetStats();
-  toast('הסימולציות נמחקו');
+  toast('הסימולציות נמחקו — Ctrl+Z מחזיר');
 });
 $('#rstAll').addEventListener('click',()=>{
   if(!confirm(`איפוס הפרויקט "${S.zman}"!\n\nיימחקו: רשימת הבחורים, הבניינים, האגפים והחדרים, השיבוץ, הנעילות, הכללים, הקבוצות והסימולציות של הפרויקט הזה — וגם מפתח היועץ.\nפרויקטים אחרים לא ייפגעו.\n\nלהמשיך?`))return;
@@ -7693,8 +7801,9 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- zman title ---------- */
 zmanEl.addEventListener('blur',()=>{
-  const v=zmanEl.textContent.trim();
-  S.zman=v||'הזמן הבא';zmanEl.textContent=S.zman;save();
+  const v=zmanEl.textContent.trim()||'הזמן הבא';
+  if(v!==S.zman){snapshot();S.zman=v;save();}
+  zmanEl.textContent=S.zman;
 });
 zmanEl.addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();zmanEl.blur();}
