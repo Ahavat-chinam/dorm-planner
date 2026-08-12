@@ -1,0 +1,3752 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>שיבוץ חדרים · פנימייה</title>
+<meta name="description" content="כלי שיבוץ חדרים לפנימייה — קובץ HTML אחד, עובד אופליין">
+<meta name="app-version" content="1.0">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🛏️</text></svg>'>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d16; --card:#131a2b; --card2:#1b2438; --line:#28365a;
+  --tx:#eaeffa; --dim:#8b9cc0; --acc:#22d3ee; --acc2:#8b5cf6;
+  --red:#ef4444; --red2:#f87171; --amber:#fbbf24; --green:#34d399;
+  /* derived surface palette — overridden wholesale by the light theme */
+  --line2:#33436e; --raise:#232e4d; --muted:#5f7099;
+  --tx2:#aebdde; --tx3:#a9b8d8; --panel2:#121a2c;
+  --roomA:#182136; --roomB:#111826;
+  --hover:#46588f; --hover2:#4a5f9d; --dash:#37476f;
+  --sunk:rgba(10,14,25,.4); --sunk2:rgba(10,14,25,.55);
+  --glow:rgba(148,163,184,.05); --shadow:rgba(0,0,0,.45);
+  --headTint:rgba(34,211,238,.07);
+  --sh1:rgba(0,0,0,.33); --sh2:rgba(0,0,0,.43); --sh3:rgba(0,0,0,.55); --sh4:rgba(0,0,0,.7);
+  --chipSh:rgba(6,10,20,.9); --backdrop:rgba(4,7,14,.83);
+  --sheen:rgba(255,255,255,.035); --sheen2:rgba(255,255,255,.09);
+  --onAcc:#06121f;
+  --roomMin:220px; --gapY:24px; --padPanel:18px;
+}
+:root[data-theme="light"]{
+  --bg:#eef2f9; --card:#ffffff; --card2:#f1f5fb; --line:#cfd9ec;
+  --tx:#16203a; --dim:#48566f; --acc:#0e7f96; --acc2:#6d43d6;
+  --red:#dc2626; --red2:#b91c1c; --amber:#a1610a; --green:#15803d;
+  --line2:#c3cfe6; --raise:#ffffff; --muted:#5b6880;
+  --tx2:#3d4a68; --tx3:#33415e; --panel2:#ffffff;
+  --roomA:#ffffff; --roomB:#f6f9ff;
+  --hover:#93a6c9; --hover2:#7e93bb; --dash:#c3cfe6;
+  --sunk:rgba(22,32,58,.045); --sunk2:rgba(22,32,58,.06);
+  --glow:rgba(22,32,58,.05); --shadow:rgba(30,44,80,.14);
+  --headTint:rgba(14,143,168,.09);
+  --sh1:rgba(30,44,80,.09); --sh2:rgba(30,44,80,.13); --sh3:rgba(30,44,80,.17); --sh4:rgba(30,44,80,.25);
+  --chipSh:rgba(30,44,80,.16); --backdrop:rgba(140,155,185,.55);
+  --sheen:rgba(22,32,58,.02); --sheen2:rgba(22,32,58,.07);
+  --onAcc:#ffffff;
+}
+/* a few dark-only flourishes that read wrong on white */
+:root[data-theme="light"] .chip{background:linear-gradient(180deg,#fff,var(--card2))}
+:root[data-theme="light"] .chip .av{box-shadow:inset 0 -2px 4px rgba(0,0,0,.18)}
+:root[data-theme="light"] .plate .no{text-shadow:none}
+:root[data-theme="light"] .stat::before{box-shadow:none}
+:root[data-theme="light"] .sim::before{background:rgba(22,32,58,.1)}
+:root[data-theme="light"] #alarm .banner{background:linear-gradient(180deg,#dc2626,#991b1b)}
+:root[data-theme="light"] #toast{background:#16203a;color:#fff;border-color:#16203a}
+:root[data-theme="light"] .rstat.vs{color:#fff}
+:root[data-theme="light"] .stat.gold{color:#92400e}
+:root[data-theme="light"] .stat.warn{color:#92400e}
+:root[data-theme="light"] .stat.good{color:#166534}
+:root[data-theme="light"] .stat.bad{color:#b91c1c;background:rgba(220,38,38,.1)}
+:root[data-theme="light"] .rdetail{color:var(--muted)}
+:root[data-theme="light"] .rule.viol-soft .rdetail{color:#92400e}
+:root[data-theme="light"] .rule.viol-hard .rdetail{color:#b91c1c}
+:root[data-theme="light"] .lvl.soft{color:#92400e}
+:root[data-theme="light"] .sstats b.s{color:#92400e}
+:root[data-theme="light"] .sstats b.g{color:#166534}
+:root[data-theme="light"] .sstats b.h{color:#b91c1c}
+:root[data-theme="light"] .chip.locked{background:linear-gradient(90deg,rgba(180,83,9,.12),var(--card2) 70%);border-color:rgba(180,83,9,.5)}
+:root[data-theme="light"] .bed{color:var(--muted)}
+:root[data-theme="light"] footer{color:var(--muted)}
+:root[data-theme="light"] .seg button.on[data-l="full"]{background:linear-gradient(135deg,#d97706,#dc2626);color:#fff}
+:root[data-theme="light"] dialog::backdrop{backdrop-filter:blur(3px)}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;
+  background:
+    radial-gradient(1000px 520px at 90% -10%, color-mix(in srgb,var(--acc) 13%,transparent), transparent 55%),
+    radial-gradient(850px 520px at -6% 112%, color-mix(in srgb,var(--acc2) 14%,transparent), transparent 55%),
+    var(--gridBg,repeating-linear-gradient(0deg, var(--glow) 0 1px, transparent 1px 38px)),
+    var(--gridBg2,repeating-linear-gradient(90deg, var(--glow) 0 1px, transparent 1px 38px)),
+    var(--bg);
+  color:var(--tx); min-height:100vh;
+  padding:26px clamp(14px,3.5vw,46px) 60px;
+}
+body.nogrid{--gridBg:none;--gridBg2:none}
+/* density */
+body.d-compact{--gapY:16px;--padPanel:13px}
+body.d-roomy{--gapY:32px;--padPanel:24px}
+/* reduced motion */
+body.nomotion *,body.nomotion *::before,body.nomotion *::after{
+  animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;
+}
+body.notilt .chip,body.notilt .sim{transform:none!important}
+body.nobeds .bed{display:none}
+
+/* ================= header ================= */
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:24px}
+.hleft{display:flex;flex-direction:column;gap:10px}
+.overline{font-size:11.5px;letter-spacing:3.5px;font-weight:800;color:var(--dim)}
+h1{
+  font-size:clamp(26px,3.6vw,40px);font-weight:900;letter-spacing:-1px;line-height:1.05;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+h1 .grad{
+  background:linear-gradient(110deg,#fff 10%,var(--acc) 45%,var(--acc2) 80%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gradSlide 7s ease-in-out infinite alternate;
+}
+@keyframes gradSlide{0%{background-position:0% 0}100%{background-position:100% 0}}
+h1 .zman{
+  font-size:.42em;font-weight:800;color:var(--acc);
+  border:1.5px dashed rgba(34,211,238,.45);border-radius:999px;padding:4px 15px;
+  outline:none;cursor:text;letter-spacing:0;
+}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:800;padding:5px 13px;border-radius:999px;
+  background:var(--card2);border:1px solid var(--line);color:var(--dim);
+}
+.stat::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
+.stat.good{color:var(--green);border-color:rgba(52,211,153,.35)}
+.stat.bad{color:var(--red2);border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08);animation:statAlarm 1.1s infinite}
+.stat.warn{color:var(--amber);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.06)}
+.stat.gold{color:#fcd34d;border-color:rgba(251,191,36,.35)}
+@keyframes statAlarm{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3)}50%{box-shadow:0 0 0 4px rgba(239,68,68,.18)}}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ================= buttons / inputs ================= */
+.btn{
+  background:var(--card2);border:1px solid var(--line);color:var(--tx);
+  padding:9px 15px;border-radius:12px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:700;
+  transition:transform .12s,border-color .12s,box-shadow .12s,filter .12s;
+}
+.btn:hover{border-color:var(--hover);transform:translateY(-2px);box-shadow:0 8px 18px var(--sh1)}
+.btn.accent{
+  background:linear-gradient(130deg,var(--acc),var(--acc2));border:none;color:var(--onAcc);
+  box-shadow:0 4px 18px rgba(34,211,238,.25);
+}
+.btn.accent:hover{filter:brightness(1.1);box-shadow:0 8px 26px rgba(34,211,238,.35)}
+.btn.mini{padding:4px 10px;font-size:12px;border-radius:9px}
+.btn.danger:hover{border-color:var(--red);color:var(--red2)}
+select,input[type=text]{
+  background:var(--card2);border:1px solid var(--line);color:var(--tx);
+  padding:9px 11px;border-radius:11px;font:inherit;font-size:13.5px;font-weight:600;outline:none;
+}
+select:focus,input[type=text]:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+
+/* ================= sections ================= */
+section{margin-bottom:24px}
+.panel{
+  background:linear-gradient(180deg,var(--sheen),transparent 40%),var(--card);
+  border:1px solid var(--line);border-radius:20px;padding:18px 20px;
+}
+h2{
+  font-size:14.5px;font-weight:800;color:var(--tx2);letter-spacing:.6px;
+  margin-bottom:14px;display:flex;align-items:center;gap:11px;
+}
+h2::before{content:'';width:24px;height:5px;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--acc2));flex:none}
+.empty-note{color:var(--dim);font-size:13.5px;padding:4px 2px;line-height:1.7}
+
+/* ================= pool: name tags ================= */
+#pool .chips{display:flex;flex-wrap:wrap;gap:11px;min-height:46px;align-items:center;padding-top:4px}
+#pool.over{outline:2.5px solid var(--acc);outline-offset:-2px;border-radius:20px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;position:relative;
+  background:linear-gradient(180deg,var(--raise),var(--card2));
+  border:1px solid var(--line2);border-radius:11px;
+  padding:7px 13px 7px 10px;cursor:grab;user-select:none;font-size:14.5px;font-weight:700;
+  transform:rotate(var(--rot,0deg));
+  box-shadow:0 3px 0 var(--chipSh), 0 7px 16px var(--sh2);
+  transition:transform .15s,box-shadow .15s,border-color .15s;
+}
+.chip:hover{transform:rotate(0deg) translateY(-3px);box-shadow:0 5px 0 var(--chipSh),0 12px 22px var(--sh3);border-color:var(--hover2)}
+.chip.sel{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.3),0 3px 0 var(--chipSh)}
+.chip.dragging{opacity:.35}
+.chip .av{
+  width:24px;height:24px;border-radius:8px;flex:none;
+  display:grid;place-items:center;font-size:12.5px;color:#fff;font-weight:900;
+  box-shadow:inset 0 -2px 4px var(--sh1);
+}
+.chip.bad-hard{animation:chipAlarm 1.1s infinite}
+.chip.bad-soft{border-color:rgba(251,191,36,.6)}
+@keyframes chipAlarm{
+  0%,100%{border-color:rgba(239,68,68,.55);box-shadow:0 0 0 1px rgba(239,68,68,.25),0 3px 0 var(--chipSh)}
+  50%{border-color:var(--red);box-shadow:0 0 0 4px rgba(239,68,68,.35),0 0 18px rgba(239,68,68,.4),0 3px 0 var(--chipSh)}
+}
+.chip.inroom{
+  width:100%;border-radius:12px;transform:none;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 13%,var(--card2)),var(--card2) 65%);
+  border-color:var(--line2);box-shadow:none;justify-content:flex-start;
+}
+.chip.inroom:hover{transform:translateX(-3px);box-shadow:0 4px 12px var(--sh1)}
+.chip.locked{
+  cursor:default;
+  border-color:rgba(251,191,36,.55);
+  background:linear-gradient(90deg,rgba(251,191,36,.13),var(--card2) 70%);
+}
+.chip.locked:hover{transform:none;box-shadow:none;border-color:rgba(251,191,36,.75)}
+.chip .lock{
+  margin-inline-start:auto;background:none;border:none;cursor:pointer;
+  font-size:14px;opacity:.22;padding:2px 5px;border-radius:7px;transition:.12s;line-height:1;
+}
+.chip:hover .lock{opacity:.85}
+.chip.locked .lock{opacity:1;filter:drop-shadow(0 0 6px rgba(251,191,36,.6))}
+.chip .lock:hover{background:rgba(251,191,36,.15)}
+
+/* ================= rooms / wings ================= */
+#rooms{display:flex;flex-direction:column;gap:18px}
+.wing-head{display:flex;align-items:baseline;gap:11px;font-size:13.5px;font-weight:900;letter-spacing:2px;color:var(--tx2)}
+.wing-head::before{content:'';width:20px;height:4.5px;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--acc2));align-self:center}
+.wing-head .whcnt{color:var(--muted);font-weight:700;letter-spacing:0;font-size:12px}
+.wing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.room{
+  background:linear-gradient(168deg,var(--roomA),var(--roomB));
+  border:1px solid var(--line2);border-radius:20px;overflow:hidden;position:relative;
+  cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s;
+}
+.room::after{content:'';position:absolute;top:0;bottom:0;right:0;width:5px;background:var(--ac);opacity:.85}
+.room.over{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 40%,transparent);transform:translateY(-3px)}
+.room.full-over{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.35)}
+.room.warn-hard{border-color:var(--red);animation:roomAlarm 1.1s infinite}
+.room.warn-soft{border-color:rgba(251,191,36,.55)}
+@keyframes roomAlarm{
+  0%,100%{box-shadow:0 0 0 2px rgba(239,68,68,.3)}
+  50%{box-shadow:0 0 0 5px rgba(239,68,68,.55),0 0 30px rgba(239,68,68,.45)}
+}
+.room.shake{animation:shake .4s}
+@keyframes shake{15%,55%{transform:translateX(-6px)}35%,75%{transform:translateX(6px)}}
+.rhead{
+  display:flex;justify-content:space-between;align-items:center;padding:11px 15px 10px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ac) 15%,transparent),transparent 75%);
+  border-bottom:1px solid var(--line);
+}
+.plate{display:flex;align-items:baseline;gap:9px}
+.plate .no{
+  font-size:25px;font-weight:900;color:var(--ac);letter-spacing:.5px;
+  text-shadow:0 0 20px color-mix(in srgb,var(--ac) 55%,transparent);
+}
+.plate .lbl{font-size:10.5px;font-weight:800;letter-spacing:2.5px;color:var(--dim)}
+.occ{
+  font-size:12px;font-weight:800;color:var(--dim);
+  background:var(--sunk2);border:1px solid var(--line);padding:3px 10px;border-radius:999px;
+}
+.occ.fullr{color:var(--green);border-color:rgba(52,211,153,.4)}
+.slots{display:flex;flex-direction:column;gap:8px;padding:12px 14px 14px}
+.bed{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  border:1.5px dashed var(--dash);border-radius:12px;padding:8px 10px;
+  color:var(--muted);font-size:12.5px;font-weight:700;letter-spacing:1px;
+}
+.bed svg{width:26px;height:16px;opacity:.8}
+
+/* ================= rules ================= */
+.ruleform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:15px}
+.mpick{
+  flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;
+  background:var(--sunk);border:1.5px dashed var(--line);border-radius:13px;padding:9px 11px;
+}
+.mpick .hint{font-size:12px;color:var(--muted);font-weight:700;align-self:center}
+.mp{
+  font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:999px;
+  border:1px solid var(--line);cursor:pointer;color:var(--dim);transition:.12s;user-select:none;
+}
+.mp:hover{border-color:var(--hover);color:var(--tx)}
+.mp.on{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
+#rulesList{display:flex;flex-direction:column;gap:8px}
+.rule{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border:1px solid var(--line);border-radius:13px;background:var(--card2);
+  flex-wrap:wrap;transition:border-color .15s;
+}
+.rule.viol-hard{border-color:rgba(239,68,68,.75);animation:ruleAlarm 1.1s infinite}
+@keyframes ruleAlarm{0%,100%{background:rgba(239,68,68,.08)}50%{background:rgba(239,68,68,.18);box-shadow:0 0 16px rgba(239,68,68,.25)}}
+.rule.viol-soft{border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.06)}
+.rule.off{opacity:.4}
+.rtext{font-size:14px;font-weight:700;flex:1;min-width:180px}
+.rdetail{color:var(--dim);font-size:12.5px;font-weight:600;margin-top:2px}
+.rule.viol-hard .rdetail{color:#fca5a5}
+.rule.viol-soft .rdetail{color:#fcd34d}
+.lvl{font-size:11.5px;font-weight:900;padding:3px 10px;border-radius:999px;border:1.5px solid;flex:none}
+.lvl.hard{color:var(--red2);border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.07)}
+.lvl.soft{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.05)}
+.rstat{font-size:12.5px;font-weight:900;padding:3.5px 11px;border-radius:999px;flex:none}
+.rstat.ok{color:var(--green);background:rgba(52,211,153,.1)}
+.rstat.vh{color:#fff;background:#c81e1e}
+.rstat.vs{color:#111;background:var(--amber)}
+.rstat.pend{color:var(--dim);background:rgba(139,156,192,.1)}
+.rule .rbtn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:3px 7px;border-radius:8px;flex:none}
+.rule .del:hover{color:var(--red2);background:rgba(239,68,68,.12)}
+.sw{position:relative;width:36px;height:20px;flex:none;cursor:pointer}
+.sw input{opacity:0;width:100%;height:100%;position:absolute;cursor:pointer;margin:0}
+.sw i{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.15s;pointer-events:none}
+.sw i::after{content:'';position:absolute;top:2.5px;right:2.5px;width:15px;height:15px;border-radius:50%;background:var(--dim);transition:.15s}
+.sw input:checked+i{background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.sw input:checked+i::after{transform:translateX(-16px);background:#fff}
+
+/* ================= suggestions ================= */
+#suggBox{margin-top:16px;border-top:1.5px dashed var(--line2);padding-top:14px}
+#suggBox h3{font-size:13.5px;font-weight:800;color:var(--acc);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.suggs{display:flex;flex-direction:column;gap:8px}
+.sugg{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+  background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.25);
+  border-radius:12px;padding:9px 13px;font-size:13.5px;font-weight:700;
+}
+.sugg .gain{color:var(--green);font-size:12px;font-weight:900;background:rgba(52,211,153,.1);padding:2.5px 9px;border-radius:999px}
+.sugg .stext{flex:1;min-width:160px}
+
+/* ================= sims: sticky notes ================= */
+.savebar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+#simsBar{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch;padding-top:6px}
+.sim{
+  position:relative;background:linear-gradient(180deg,var(--raise),var(--card2));
+  border:1px solid var(--line2);border-radius:14px;
+  padding:13px 15px 11px;min-width:172px;cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;
+  transform:rotate(var(--rot,0deg));
+  box-shadow:0 6px 16px var(--sh2);
+  transition:transform .15s,border-color .15s,box-shadow .15s;
+}
+.sim::before{
+  content:'';position:absolute;top:-8px;right:50%;transform:translateX(50%) rotate(-2deg);
+  width:48px;height:15px;background:rgba(148,163,184,.22);
+  border:1px solid var(--sheen2);border-radius:3px;
+}
+.sim:hover{transform:rotate(0deg) translateY(-4px);border-color:var(--hover2);box-shadow:0 12px 26px var(--sh3)}
+.sim.active{border-color:var(--acc);box-shadow:0 0 0 2.5px rgba(34,211,238,.3),0 6px 16px var(--sh2)}
+.sname{font-size:14.5px;font-weight:900}
+.sstats{font-size:12px;color:var(--dim);font-weight:700}
+.sstats b.h{color:var(--red2)} .sstats b.s{color:var(--amber)} .sstats b.g{color:var(--green)}
+.sbtns{display:flex;gap:5px;margin-top:3px}
+
+footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:10px;line-height:2.1}
+kbd{
+  background:var(--card2);border:1px solid var(--line);border-bottom-width:2.5px;
+  border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:800;color:var(--tx3);
+  font-family:inherit;margin:0 2px;
+}
+
+/* ================= alarm overlay ================= */
+#alarm{position:fixed;inset:0;z-index:99;pointer-events:none;display:none}
+#alarm.on{display:block}
+#alarm .vig{
+  position:absolute;inset:0;
+  box-shadow:inset 0 0 0 5px var(--red), inset 0 0 170px 40px rgba(239,68,68,.4);
+  animation:vigFlash 1.7s ease-out forwards;
+}
+@keyframes vigFlash{0%{opacity:0}7%{opacity:1}30%{opacity:.75}45%{opacity:1}70%{opacity:.85}100%{opacity:0}}
+#alarm .banner{
+  position:absolute;top:15%;right:50%;transform:translateX(50%);
+  background:linear-gradient(180deg,#b91c1c,#7f1d1d);
+  border:2.5px solid var(--red2);color:#fff;
+  font-weight:900;font-size:16.5px;padding:14px 28px;border-radius:16px;
+  box-shadow:0 20px 60px var(--sh4),0 0 50px rgba(239,68,68,.5);
+  display:flex;gap:10px;align-items:center;max-width:88vw;
+  animation:bannerPop 1.7s ease forwards;
+}
+#alarm .banner .big{font-size:24px}
+@keyframes bannerPop{
+  0%{transform:translateX(50%) translateY(-30px) scale(.8);opacity:0}
+  9%{transform:translateX(50%) translateY(0) scale(1.05);opacity:1}
+  16%{transform:translateX(50%) scale(1)}
+  72%{opacity:1}
+  100%{opacity:0;transform:translateX(50%) translateY(-10px)}
+}
+
+/* pulsing can be switched off in settings — colors stay */
+body.nopulse .room.warn-hard,body.nopulse .chip.bad-hard,
+body.nopulse .rule.viol-hard,body.nopulse .stat.bad{animation:none}
+body.nopulse .rule.viol-hard{background:rgba(239,68,68,.13)}
+body.nofab #aiFab{display:none}
+
+/* ================= paste / file import ================= */
+.ed-import{margin-top:12px}
+.ed-import summary{cursor:pointer;font-size:12.5px;font-weight:800;color:var(--acc);padding:4px 0;user-select:none}
+.ed-import textarea{margin-top:8px}
+.ed-import .dlgbtns{margin-top:9px}
+.lnk{color:var(--acc);cursor:pointer;text-decoration:underline;font-weight:800}
+.lnk:hover{color:#67e8f9}
+.drop{
+  margin-top:9px;border:2px dashed var(--line2);border-radius:14px;
+  padding:16px 14px;text-align:center;font-size:13px;font-weight:700;
+  color:var(--tx3);background:var(--sunk);transition:.15s;
+}
+.drop.over{border-color:var(--acc);background:rgba(34,211,238,.09);transform:scale(1.01)}
+.drop .dz-ico{font-size:26px;margin-bottom:5px;opacity:.85}
+.drop .dz-sub{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:5px}
+
+/* ================= settings dialog ================= */
+.tabs{display:flex;gap:5px;margin-bottom:15px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{
+  background:none;border:none;border-bottom:2.5px solid transparent;
+  color:var(--dim);font:inherit;font-size:13.5px;font-weight:800;
+  padding:8px 14px;cursor:pointer;margin-bottom:-1px;transition:.14s;
+}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.tabpane{display:none}
+.tabpane.on{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.dlg-lead{font-size:13.5px;color:var(--tx3);line-height:1.75;margin-bottom:14px}
+.ed-sec .hint{font-size:12.5px;color:var(--dim);line-height:1.8;margin-bottom:11px}
+label.fl{display:block;font-size:12px;font-weight:800;color:var(--dim);margin-bottom:5px}
+#setZman{width:100%}
+label.row{
+  display:flex;align-items:center;gap:11px;padding:8px 2px;cursor:pointer;
+  border-bottom:1px solid rgba(40,54,90,.5);
+}
+label.row:last-child{border-bottom:none}
+label.row>span:last-child{display:flex;flex-direction:column;gap:2px}
+label.row b{font-size:13.5px;font-weight:700}
+label.row small{font-size:11.5px;color:var(--dim);font-weight:600}
+.dlgbtns.wrap{flex-wrap:wrap}
+.danger-sec{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+.btn.danger-btn{border-color:rgba(239,68,68,.5);color:#fca5a5;background:rgba(239,68,68,.09)}
+.btn.danger-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.sg{
+  background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:9px 11px;text-align:center;
+}
+.sg .v{font-size:19px;font-weight:900;color:var(--acc)}
+.sg .k{font-size:11px;color:var(--dim);font-weight:700;margin-top:1px}
+.sg.warnv .v{color:var(--amber)}
+.sg.okv .v{color:var(--green)}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{
+  display:flex;align-items:center;gap:12px;text-align:right;width:100%;
+  background:var(--card2);border:1px solid var(--line);border-radius:13px;
+  padding:12px 14px;cursor:pointer;font:inherit;color:var(--tx);transition:.14s;
+}
+.opt:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:0 8px 18px var(--sh1)}
+.opt .oi{font-size:21px;flex:none}
+.opt .ot{display:flex;flex-direction:column;gap:2px}
+.opt .ot b{font-size:14px;font-weight:800}
+.opt .ot small{font-size:12px;color:var(--dim);font-weight:600;line-height:1.55}
+.opt.danger-opt:hover{border-color:var(--red);box-shadow:0 8px 18px rgba(239,68,68,.2)}
+
+/* ---- api key guide ---- */
+.keyguide{
+  background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.22);
+  border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.85;
+}
+.keyguide b{color:var(--acc)}
+.keyguide ol{margin:6px 14px 0 0;padding:0;color:var(--tx3);font-weight:600}
+.keyguide li{margin-bottom:3px}
+.keyguide a{color:var(--acc);font-weight:800}
+.keyguide code{background:var(--sunk2);padding:1px 6px;border-radius:5px;font-size:11.5px}
+.ai-row{display:flex;gap:6px;flex-wrap:wrap}
+/* ================= first-run welcome ================= */
+.wel{text-align:center;padding:16px 8px 10px;max-width:640px;margin:0 auto}
+.wel-ico{font-size:44px;margin-bottom:8px}
+.wel h3{font-size:20px;font-weight:900;margin-bottom:8px}
+.wel>p{color:var(--dim);font-size:14px;line-height:1.8;margin-bottom:18px}
+.wel-btns{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.wel-how{
+  text-align:right;font-size:12.5px;color:var(--dim);line-height:1.9;
+  background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:14px 16px;
+}
+.wel-how b{color:var(--tx2)}
+.wel-tbl{border-collapse:collapse;margin:10px 0;font-size:12.5px;width:100%}
+.wel-tbl th,.wel-tbl td{border:1px solid var(--line);padding:6px 11px;text-align:right}
+.wel-tbl th{background:var(--card2);color:var(--tx2);font-weight:800}
+.wel-tbl td{color:var(--muted)}
+
+.swatches{display:flex;gap:9px;flex-wrap:wrap}
+.sw-dot{
+  width:34px;height:34px;border-radius:11px;cursor:pointer;
+  border:2px solid transparent;box-shadow:0 3px 9px var(--sh1);transition:.14s;
+}
+.sw-dot:hover{transform:translateY(-2px) scale(1.06)}
+.sw-dot.on{border-color:var(--tx);box-shadow:0 0 0 3px var(--sunk2),0 4px 12px var(--sh2)}
+.keystat{
+  font-size:12px;font-weight:800;margin-top:7px;padding:6px 10px;border-radius:9px;
+  border:1px solid var(--line);background:var(--sunk);color:var(--dim);line-height:1.6;
+}
+.keystat.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);background:color-mix(in srgb,var(--green) 9%,transparent)}
+.keystat.bad{color:var(--red2);border-color:color-mix(in srgb,var(--red) 45%,transparent);background:color-mix(in srgb,var(--red) 9%,transparent)}
+.keystat.busy{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 40%,transparent)}
+.powers{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.pgrp{font-size:11.5px;line-height:1.6;color:var(--muted)}
+.pgrp b{color:var(--tx2);font-weight:800;margin-inline-end:5px}
+#dlgSettings .seg button{padding:8px 4px;font-size:12px}
+
+/* ================= AI chat ================= */
+#aiFab{
+  position:fixed;left:22px;bottom:22px;z-index:70;
+  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;font-size:23px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  box-shadow:0 8px 26px rgba(34,211,238,.4);
+  transition:transform .15s,box-shadow .15s;
+}
+#aiFab:hover{transform:translateY(-3px) scale(1.06);box-shadow:0 12px 34px rgba(34,211,238,.5)}
+#aiPanel{
+  position:fixed;left:22px;bottom:86px;z-index:70;
+  width:min(370px,92vw);height:min(520px,74vh);
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,var(--sheen),transparent 30%),var(--panel2);
+  border:1px solid var(--line2);border-radius:18px;overflow:hidden;
+  box-shadow:0 24px 60px var(--sh3);
+}
+#aiPanel[hidden]{display:none!important}
+.ai-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px 13px;border-bottom:1px solid var(--line);flex:none;
+  background:linear-gradient(90deg,rgba(34,211,238,.08),transparent 75%);
+}
+.ai-id{display:flex;align-items:center;gap:9px;min-width:0}
+.ai-av{
+  width:31px;height:31px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:16px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 3px 10px rgba(34,211,238,.3);
+}
+.ai-idtxt{display:flex;flex-direction:column;min-width:0}
+.ai-idtxt b{font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-idtxt small{font-size:10.5px;color:var(--dim);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-head .ai-hbtns{display:flex;gap:2px;flex:none}
+.ai-head .ai-hbtns button{background:none;border:none;color:var(--dim);cursor:pointer;font-size:13.5px;padding:5px 7px;border-radius:8px}
+.ai-head .ai-hbtns button:hover{color:var(--tx);background:var(--card2)}
+
+/* the chat body holds the messages and the settings overlay on top of them */
+.ai-body{position:relative;flex:1;min-height:0;display:flex}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}
+
+/* settings slide over the conversation instead of pushing it around */
+.ai-setup{
+  position:absolute;inset:0;z-index:2;
+  display:flex;flex-direction:column;background:var(--panel2);
+  animation:setupIn .16s ease-out;
+}
+.ai-setup[hidden]{display:none!important}
+@keyframes setupIn{from{opacity:0}to{opacity:1}}
+.ai-setup-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px;flex:none;
+}
+.ai-setup-body{overflow-y:auto;padding:13px 14px;display:flex;flex-direction:column;gap:13px;flex:1;min-height:0}
+.ai-setup-foot{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--line);flex:none;background:var(--sunk)}
+.ai-grp{display:flex;flex-direction:column;gap:7px}
+.ai-grp-t{font-size:11.5px;font-weight:900;color:var(--tx2);letter-spacing:.6px}
+.ai-sublabel{font-size:11.5px;font-weight:800;color:var(--dim);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ai-setup input,.ai-setup select{
+  padding:8px 10px;font-size:13px;background:var(--card2);border:1px solid var(--line);
+  border-radius:9px;color:var(--tx);outline:none;font-family:inherit;font-weight:600;
+}
+.ai-setup input:focus,.ai-setup select:focus{border-color:var(--acc)}
+.emoji-in{width:52px;text-align:center;font-size:16px!important}
+.ai-note{font-size:11px;color:var(--muted);line-height:1.7}
+.ai-help summary{cursor:pointer;font-size:11.5px;font-weight:800;color:var(--acc);user-select:none}
+.ai-help .keyguide{margin-top:7px;font-size:11.5px}
+.ai-help .keyguide ol{margin:0 14px 0 0}
+label.row.compact{border:none;padding:4px 0}
+label.row.compact b{font-size:12.5px}
+label.row.compact small{font-size:11px}
+
+/* segmented capability picker */
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
+.seg button{
+  flex:1;background:none;border:none;color:var(--dim);cursor:pointer;
+  font:inherit;font-size:11.5px;font-weight:800;padding:7px 4px;border-radius:8px;transition:.13s;
+}
+.seg button:hover{color:var(--tx)}
+.seg button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc)}
+.seg button.on[data-l="full"]{background:linear-gradient(135deg,#fbbf24,#f87171);color:#2a1206}
+
+/* empty-state quick prompts */
+.ai-quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.ai-quick button{
+  background:var(--card2);border:1px solid var(--line);color:var(--tx3);
+  font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer;transition:.13s;
+}
+.ai-quick button:hover{border-color:var(--acc);color:var(--tx);transform:translateY(-1px)}
+.ai-m{max-width:88%;padding:8px 13px;border-radius:14px;font-size:13.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.ai-m.user{
+  align-self:flex-start;
+  background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(139,92,246,.18));
+  border:1px solid rgba(34,211,238,.3);border-bottom-right-radius:4px;
+}
+.ai-m.model{align-self:flex-end;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:4px}
+/* the model narrated an action that did not go through */
+.ai-m.model.stale{opacity:.55;border-style:dashed;text-decoration-color:var(--muted)}
+.ai-m.model.stale::after{
+  content:'⚠️ לא בוצע במלואו';display:block;margin-top:5px;
+  font-size:11px;font-weight:800;color:var(--amber);
+}
+.ai-m.sys{
+  align-self:center;max-width:95%;font-size:12px;color:var(--tx3);
+  background:rgba(52,211,153,.07);border:1px dashed rgba(52,211,153,.3);
+}
+.ai-m.typing{color:var(--dim)}
+.ai-m.typing i{animation:blink 1.2s infinite;font-style:normal}
+.ai-m.typing i:nth-child(2){animation-delay:.2s}
+.ai-m.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+.ai-inputrow{display:flex;gap:7px;padding:11px;border-top:1px solid var(--line)}
+.ai-inputrow textarea{
+  flex:1;resize:none;background:var(--card2);border:1px solid var(--line);
+  border-radius:11px;color:var(--tx);padding:9px 11px;font:inherit;font-size:13.5px;outline:none;
+}
+.ai-inputrow textarea:focus{border-color:var(--acc)}
+
+/* ================= toast / dialog ================= */
+#toast{
+  position:fixed;bottom:28px;right:50%;transform:translateX(50%) translateY(20px);
+  background:var(--card2);border:1px solid var(--hover);color:var(--tx);
+  padding:12px 24px;border-radius:13px;font-size:14px;font-weight:800;
+  opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 12px 34px var(--sh4);
+}
+#toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+dialog{
+  background:linear-gradient(180deg,var(--sheen),transparent 22%),var(--card);
+  color:var(--tx);border:1px solid var(--line2);border-radius:20px;
+  padding:0;width:min(700px,94vw);max-height:min(86vh,880px);
+  overflow:hidden;                      /* keeps the rounded corners over scrolling content */
+  box-shadow:0 30px 80px var(--sh4);
+  /* centred against the visual viewport, unaffected by the page scrollbar or RTL */
+  position:fixed;inset:auto;margin:0;
+  top:50%;left:50%;translate:-50% -50%;
+}
+dialog::backdrop{background:var(--backdrop);backdrop-filter:blur(5px)}
+dialog[open]{animation:dlgIn .18s ease-out}
+@keyframes dlgIn{from{opacity:0;scale:.985}to{opacity:1;scale:1}}
+.dlg-in{display:flex;flex-direction:column;max-height:inherit;min-height:0}
+.dlg-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:17px 22px 14px;border-bottom:1px solid var(--line);flex:none;
+  background:linear-gradient(90deg,rgba(34,211,238,.07),transparent 70%);
+}
+dialog h3{font-size:17.5px;font-weight:900;margin:0}
+.dlg-x{
+  background:none;border:1px solid transparent;color:var(--dim);cursor:pointer;
+  font-size:15px;line-height:1;padding:6px 10px;border-radius:9px;flex:none;
+}
+.dlg-x:hover{color:var(--tx);background:var(--card2);border-color:var(--line)}
+.dlg-body{
+  overflow-y:auto;overscroll-behavior:contain;
+  padding:18px 22px;flex:1 1 auto;min-height:0;
+}
+.dlg-foot{
+  display:flex;gap:8px;padding:13px 22px;border-top:1px solid var(--line);
+  flex:none;background:var(--sunk);
+}
+/* fixed body height — the panel must not resize when switching tabs */
+#dlgSettings .dlg-body{height:min(500px,56vh)}
+.dlg-body::-webkit-scrollbar{width:10px}
+.dlg-body::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+.dlg-body::-webkit-scrollbar-thumb:hover{background:var(--hover);background-clip:content-box}
+
+/* ---- visual editor ---- */
+.ed-sec{
+  background:var(--sunk);border:1px solid var(--line);border-radius:15px;
+  padding:14px 16px;margin-bottom:14px;
+}
+.ed-sec>h4{font-size:13.5px;font-weight:900;color:var(--tx2);letter-spacing:.5px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.ed-sec>h4 .cnt{font-size:11px;color:var(--dim);background:var(--card2);border:1px solid var(--line);padding:1.5px 8px;border-radius:999px}
+.ed-boys{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+.ed-boy{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:3px 4px 3px 6px;
+}
+.ed-boy input{
+  background:none;border:none;color:var(--tx);font:inherit;font-size:13px;font-weight:700;
+  width:95px;outline:none;padding:3px 5px;border-radius:6px;
+}
+.ed-boy input:focus{background:rgba(34,211,238,.08)}
+.ed-x{
+  background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;
+  padding:2px 6px;border-radius:6px;line-height:1;
+}
+.ed-x:hover{color:var(--red2);background:rgba(239,68,68,.12)}
+.ed-add{display:flex;gap:7px;flex-wrap:wrap}
+.ed-add input{flex:1;min-width:140px;padding:7px 10px;font-size:13px}
+.ed-wing{
+  border:1px solid var(--line2);border-radius:13px;padding:12px 13px;margin-bottom:11px;
+  background:linear-gradient(180deg,var(--sheen),transparent);
+}
+.ed-wing-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ed-wing-head .wicon{font-size:15px}
+.ed-wing-head input{
+  flex:1;background:none;border:none;border-bottom:1.5px dashed rgba(34,211,238,.35);
+  color:var(--acc);font:inherit;font-size:14.5px;font-weight:900;outline:none;padding:3px 5px;min-width:80px;
+}
+.ed-wing-head input:focus{border-bottom-color:var(--acc)}
+.ed-rooms{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
+.ed-room{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ed-room .rlabel{font-size:12px;color:var(--dim);font-weight:800}
+.ed-room input.rnum{width:70px;padding:6px 9px;font-size:13px;font-weight:800;text-align:center}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card2)}
+.step button{
+  background:none;border:none;color:var(--tx);width:28px;height:28px;cursor:pointer;
+  font-weight:900;font-size:15px;line-height:1;
+}
+.step button:hover{background:var(--line2)}
+.step .val{min-width:34px;text-align:center;font-weight:900;font-size:13.5px}
+.dlgbtns{display:flex;gap:8px;margin-top:12px}
+
+/* ================= search boxes ================= */
+.search{position:relative;display:inline-flex;align-items:center;flex:1;min-width:150px}
+.search input{
+  width:100%;padding:8px 32px 8px 30px;font-size:13px;font-weight:600;
+  background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--tx);
+  outline:none;font-family:inherit;
+}
+.search input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.14)}
+.search::before{
+  content:'🔍';position:absolute;inset-inline-start:10px;
+  font-size:12px;opacity:.55;pointer-events:none;
+}
+.search .clr{
+  position:absolute;inset-inline-end:6px;background:none;border:none;
+  color:var(--dim);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;line-height:1;
+}
+.search .clr:hover{color:var(--red2);background:rgba(239,68,68,.12)}
+.search .clr[hidden]{display:none}
+.search.wide{flex-basis:100%}
+.ruleform .search{flex:0 1 190px;min-width:130px}
+.ruleform.editmode{
+  background:rgba(139,92,246,.09);border:1.5px solid rgba(139,92,246,.45);
+  border-radius:14px;padding:12px;margin:-4px -4px 15px;
+}
+.editbanner{
+  flex-basis:100%;font-size:12.5px;font-weight:800;color:#c4b5fd;
+  display:flex;align-items:center;gap:7px;
+}
+.rule.editing{border-color:var(--acc2);box-shadow:0 0 0 2px rgba(139,92,246,.3)}
+.rule .edit:hover{color:var(--acc2);background:rgba(139,92,246,.14)}
+.searchrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+.hitcount{font-size:12px;font-weight:800;color:var(--dim);white-space:nowrap}
+.hitcount.none{color:var(--amber)}
+/* a boy matching the board search glows wherever he sits */
+.chip.hit{
+  border-color:var(--acc)!important;
+  box-shadow:0 0 0 2.5px rgba(34,211,238,.45),0 0 22px rgba(34,211,238,.35)!important;
+}
+.room.hasHit{border-color:rgba(34,211,238,.6)}
+.chip.dim{opacity:.32}
+</style>
+</head>
+<body>
+
+<div id="alarm">
+  <div class="vig"></div>
+  <div class="banner"><span class="big">⛔</span><span><b>אסור!</b> <span id="alarmText"></span></span></div>
+</div>
+
+<header>
+  <div class="hleft">
+    <div class="overline" id="overline">🏢 פנימייה</div>
+    <h1><span class="grad">שיבוץ חדרים</span> <span class="zman" id="zman" contenteditable="true" spellcheck="false"></span></h1>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="actions">
+    <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
+    <button class="btn" id="btnClear">🧹 נקה לוח</button>
+    <button class="btn" id="btnEdit">✏️ עריכה</button>
+    <button class="btn" id="btnXlsx">📊 אקסל</button>
+    <button class="btn" id="btnSettings">⚙️ הגדרות</button>
+  </div>
+</header>
+
+<section id="welcome" class="panel" hidden>
+  <div class="wel">
+    <div class="wel-ico">🏠</div>
+    <h3>ברוכים הבאים — התוכנה עדיין ריקה</h3>
+    <p>כדי להתחיל צריך להזין את רשימת הבחורים ואת החדרים. הדרך המהירה: קובץ אקסל.</p>
+    <div class="wel-btns">
+      <button class="btn accent" id="welImport">📥 ייבוא מקובץ</button>
+      <button class="btn" id="welTemplate">📄 הורדת קובץ תבנית</button>
+      <button class="btn" id="welManual">✏️ הזנה ידנית</button>
+      <button class="btn" id="welRestore">📂 שחזור מגיבוי</button>
+    </div>
+    <div class="wel-how">
+      <b>מבנה הקובץ</b> — עמודה לבחורים, ולצידה עמודות לחדרים:
+      <table class="wel-tbl">
+        <tr><th>בחורים</th><th>חדר</th><th>מיטות</th><th>אגף</th></tr>
+        <tr><td>ישראל ישראלי</td><td>405</td><td>4</td><td>אגף 400</td></tr>
+        <tr><td>משה כהן</td><td>406</td><td>4</td><td>אגף 400</td></tr>
+      </table>
+      עמודת האגף אינה חובה. אפשר גם קובץ עם שמות בלבד, ולהוסיף את החדרים ידנית.
+    </div>
+  </div>
+</section>
+
+<section id="pool" class="panel">
+  <h2>👥 ממתינים לשיבוץ <span id="poolCount" class="stat"></span></h2>
+  <div class="searchrow">
+    <span class="search"><input type="text" id="boardSearch" placeholder="חיפוש בחור — גם בממתינים וגם בחדרים…">
+      <button class="clr" id="boardSearchClr" hidden title="ניקוי">✕</button></span>
+    <span class="hitcount" id="boardHits"></span>
+  </div>
+  <div class="chips" id="poolChips"></div>
+</section>
+
+<section id="roomsWrap">
+  <div id="rooms"></div>
+</section>
+
+<section class="panel">
+  <h2>⚖️ תנאים וכללים</h2>
+  <div class="ruleform" id="ruleForm">
+    <div class="editbanner" id="editBanner" hidden>✏️ עריכת כלל קיים — שנו מה שצריך ולחצו "עדכון הכלל"</div>
+    <select id="rtype">
+      <option value="separate">🚫 לא באותו חדר</option>
+      <option value="together">🤝 ביחד באותו חדר</option>
+      <option value="inRoom">📍 שיבוץ לחדר</option>
+      <option value="notInRoom">🚷 הרחקה מחדר</option>
+    </select>
+    <select id="rboyA" hidden></select>
+    <select id="rroom" hidden></select>
+    <select id="rlevel">
+      <option value="hard">בלתי מתפשר (בשום אופן)</option>
+      <option value="soft">עדיף (רצוי)</option>
+    </select>
+    <button class="btn accent" id="btnAddRule">+ הוספת כלל</button>
+    <button class="btn" id="btnCancelRule" hidden>ביטול</button>
+    <span class="search" id="ruleSearchWrap"><input type="text" id="ruleSearch" placeholder="חיפוש שם…">
+      <button class="clr" id="ruleSearchClr" hidden title="ניקוי">✕</button></span>
+    <div class="mpick" id="memberPick" hidden></div>
+  </div>
+  <div class="searchrow" id="rulesFilterRow" hidden>
+    <span class="search"><input type="text" id="rulesSearch" placeholder="חיפוש בכללים — שם, חדר או סוג…">
+      <button class="clr" id="rulesSearchClr" hidden title="ניקוי">✕</button></span>
+    <span class="hitcount" id="rulesHits"></span>
+  </div>
+  <div id="rulesList"></div>
+  <div id="suggBox" hidden>
+    <h3>💡 הצעות לתיקון</h3>
+    <div class="suggs" id="suggList"></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>🗂️ סימולציות שמורות</h2>
+  <div class="savebar">
+    <input type="text" id="simName" placeholder="שם לסימולציה הנוכחית…" style="min-width:210px">
+    <button class="btn accent" id="btnSaveSim">📌 שמירת המצב הנוכחי</button>
+  </div>
+  <div id="simsBar"></div>
+</section>
+
+<footer>
+  גררו בחור לחדר (או: לחיצה על בחור ואז על חדר) · לחיצה כפולה מחזירה לממתינים · לחיצה על 🔓 שעל בחור משובץ נועלת אותו במקומו<br>
+  <kbd>/</kbd> חיפוש · <kbd>Ctrl+Z</kbd> ביטול · <kbd>Ctrl+S</kbd> שמירת סימולציה · <kbd>Delete</kbd> הוצאת המסומן · גיבוי, איפוס והגדרות — בכפתור ⚙️
+</footer>
+
+<button id="aiFab" title="יועץ AI">✨</button>
+<div id="aiPanel" hidden>
+  <div class="ai-head">
+    <div class="ai-id">
+      <span class="ai-av" id="aiAvatar">✨</span>
+      <span class="ai-idtxt">
+        <b id="aiNameLbl">יועץ שיבוץ</b>
+        <small id="aiSubLbl"></small>
+      </span>
+    </div>
+    <span class="ai-hbtns">
+      <button id="aiClear" title="שיחה חדשה">🗑</button>
+      <button id="aiSettings" title="הגדרות היועץ">⚙️</button>
+      <button id="aiClose" title="סגירה">✕</button>
+    </span>
+  </div>
+
+  <div class="ai-body">
+    <div class="ai-msgs" id="aiMsgs"></div>
+  </div>
+
+  <div class="ai-inputrow">
+    <textarea id="aiInput" rows="1" placeholder="שאלו או בקשו…"></textarea>
+    <button id="aiSend" class="btn accent">שלח</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="fileImport" accept=".json" hidden>
+<input type="file" id="fileNames" accept=".xlsx,.docx,.csv,.tsv,.txt,.json" hidden>
+<button id="btnExport" hidden></button>
+<button id="btnImport" hidden></button>
+
+<dialog id="dlgClear">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>🧹 ניקוי הלוח</h3>
+      <button class="dlg-x" id="clearX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <p class="dlg-lead" id="clearLead"></p>
+      <div class="opts" id="clearOpts"></div>
+    </div>
+    <div class="dlg-foot"><button class="btn" id="clearCancel">ביטול</button></div>
+  </div>
+</dialog>
+
+<dialog id="dlgSettings">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>⚙️ הגדרות וניהול</h3>
+      <button class="dlg-x" id="setX" title="סגירה">✕</button></div>
+    <div class="tabs" id="setTabs">
+      <button class="tab on" data-t="display">🎨 תצוגה</button>
+      <button class="tab" data-t="general">🔔 כללי</button>
+      <button class="tab" data-t="data">💾 נתונים</button>
+      <button class="tab" data-t="ai">✨ יועץ</button>
+      <button class="tab" data-t="about">ℹ️ אודות</button>
+    </div>
+    <div class="dlg-body">
+
+    <div class="tabpane on" data-p="display">
+      <div class="ed-sec">
+        <h4>🌗 ערכת נושא</h4>
+        <div class="seg" id="setTheme">
+          <button data-v="dark">🌙 כהה</button>
+          <button data-v="light">☀️ בהיר</button>
+          <button data-v="auto">🖥️ לפי המערכת</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>🎨 צבע ראשי</h4>
+        <div class="swatches" id="setAccent"></div>
+      </div>
+      <div class="ed-sec">
+        <h4>📐 פריסה</h4>
+        <label class="fl">גודל טקסט</label>
+        <div class="seg" id="setText">
+          <button data-v="90">קטן</button><button data-v="100">רגיל</button>
+          <button data-v="110">גדול</button><button data-v="125">גדול מאוד</button>
+        </div>
+        <label class="fl" style="margin-top:11px">צפיפות</label>
+        <div class="seg" id="setDensity">
+          <button data-v="compact">צפוף</button><button data-v="regular">רגיל</button>
+          <button data-v="roomy">מרווח</button>
+        </div>
+        <label class="fl" style="margin-top:11px">רוחב כרטיסי החדרים</label>
+        <div class="seg" id="setRoomW">
+          <button data-v="170px">צר — הרבה בשורה</button>
+          <button data-v="220px">בינוני</button>
+          <button data-v="300px">רחב</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>✨ אלמנטים</h4>
+        <label class="row"><span class="sw"><input type="checkbox" id="setEmptyBeds"><i></i></span>
+          <span><b>הצגת מיטות פנויות</b><small>שורות "פנוי" בתוך כל חדר</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setTilt"><i></i></span>
+          <span><b>תגי שם מוטים</b><small>מראה של פתקים מודבקים</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setGrid"><i></i></span>
+          <span><b>רקע משובץ</b><small>שרטוט אדריכלי עדין מאחורי הכול</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setMotion"><i></i></span>
+          <span><b>אנימציות</b><small>כיבוי גם מבטל את ההבהוב האדום</small></span></label>
+      </div>
+      <div class="dlgbtns"><button class="btn" id="setDispReset">↺ החזרת ברירות המחדל לתצוגה</button></div>
+    </div>
+
+    <div class="tabpane" data-p="general">
+      <div class="ed-sec">
+        <h4>🏷️ כותרת</h4>
+        <label class="fl">שם הזמן / התקופה</label>
+        <input type="text" id="setZman" placeholder="למשל: זמן חורף תשפ״ז">
+      </div>
+      <div class="ed-sec">
+        <h4>🔔 התראות</h4>
+        <label class="row"><span class="sw"><input type="checkbox" id="setSound"><i></i></span>
+          <span><b>צליל אזעקה</b><small>זמזום קצר כשמפרים כלל בלתי־מתפשר</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setFlash"><i></i></span>
+          <span><b>הבזק אדום על המסך</b><small>באנר "אסור!" בהפרת כלל בלתי־מתפשר</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setPulse"><i></i></span>
+          <span><b>הבהוב מתמשך</b><small>חדרים ובחורים בהפרה ימשיכו להבהב באדום</small></span></label>
+      </div>
+      <div class="ed-sec">
+        <h4>🎛️ התנהגות</h4>
+        <label class="row"><span class="sw"><input type="checkbox" id="setSuggest"><i></i></span>
+          <span><b>הצעות תיקון אוטומטיות</b><small>הצגת מהלכים שמפחיתים הפרות</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setConfirm"><i></i></span>
+          <span><b>אישור לפני פעולות הרסניות</b><small>ניקוי לוח, מחיקת סימולציה, שיבוץ מחדש</small></span></label>
+        <label class="row"><span class="sw"><input type="checkbox" id="setAiFab"><i></i></span>
+          <span><b>כפתור היועץ ✨ על המסך</b><small>אפשר לכבות; היועץ נשאר זמין דרך ההגדרות</small></span></label>
+      </div>
+    </div>
+
+    <div class="tabpane" data-p="data">
+      <div class="ed-sec">
+        <h4>💾 גיבוי ושחזור</h4>
+        <p class="hint">הגיבוי כולל בחורים, אגפים, חדרים, שיבוץ, נעילות, כללים, סימולציות והגדרות — הכול בקובץ אחד. המפתח של היועץ לא נכלל.</p>
+        <div class="dlgbtns">
+          <button class="btn" id="setExport">💾 שמירת גיבוי</button>
+          <button class="btn" id="setImport">📂 שחזור מגיבוי</button>
+          <button class="btn" id="setXlsx">📊 ייצוא לאקסל</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>📊 מה יש כרגע</h4>
+        <div class="statgrid" id="setStats"></div>
+      </div>
+      <div class="ed-sec danger-sec">
+        <h4>⚠️ איפוס</h4>
+        <p class="hint">בחרו מה למחוק. הפעולה אינה הפיכה — כדאי לשמור גיבוי קודם.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn" id="rstAssign">ניקוי שיבוץ בלבד</button>
+          <button class="btn" id="rstRules">מחיקת כל הכללים</button>
+          <button class="btn" id="rstSims">מחיקת כל הסימולציות</button>
+        </div>
+        <div class="dlgbtns wrap">
+          <button class="btn danger-btn" id="rstAll">🗑️ איפוס מלא — הכול לברירת המחדל</button>
+        </div>
+        <p class="hint">איפוס מלא מוחק גם את רשימת הבחורים, האגפים, החדרים, ההגדרות ומפתח היועץ — התוכנה חוזרת למצב של התקנה חדשה.</p>
+      </div>
+    </div>
+
+    <div class="tabpane" data-p="ai">
+      <div class="ed-sec">
+        <h4>🪪 זהות</h4>
+        <div class="ai-row">
+          <input type="text" id="setAiEmoji" maxlength="2" class="emoji-in" placeholder="✨" title="אימוג'י">
+          <input type="text" id="setAiName" placeholder="שם היועץ…" style="flex:1;min-width:130px">
+        </div>
+        <p class="hint" style="margin:8px 0 0">השם והאימוג'י מופיעים בכותרת הצ'אט, בכפתור הצף ובחלונות האישור — והיועץ עצמו יודע איך קוראים לו.</p>
+      </div>
+      <div class="ed-sec">
+        <h4>🛡️ יכולות והרשאות</h4>
+        <div class="seg" id="setAiLevel">
+          <button data-l="advise">ייעוץ בלבד</button>
+          <button data-l="act">פעולות רגילות</button>
+          <button data-l="full">ללא הגבלה</button>
+        </div>
+        <p class="hint" id="setAiLevelNote" style="margin:9px 0 0"></p>
+        <label class="row"><span class="sw"><input type="checkbox" id="setAiAsk"><i></i></span>
+          <span><b>אישור לפני פעולה הרסנית</b><small>מחיקה, ניקוי מלא, איפוס או שינוי רשימות</small></span></label>
+        <div id="aiPowers" class="powers"></div>
+      </div>
+      <div class="ed-sec">
+        <h4>🔑 חיבור ל־Gemini</h4>
+        <label class="fl">מפתח API</label>
+        <input type="password" id="setAiKey" placeholder="הדביקו כאן את המפתח…" autocomplete="off" spellcheck="false" style="width:100%">
+        <div class="keystat" id="keyStatus" hidden></div>
+        <label class="fl" style="margin-top:10px">מודל <span class="lnk" id="setAiFetch">↻ טעינת הרשימה מהחשבון</span></label>
+        <select id="setAiModel" style="width:100%"></select>
+        <div class="dlgbtns wrap">
+          <button class="btn" id="setAiTest">🔌 בדיקת חיבור</button>
+          <button class="btn danger-btn" id="setAiKeyDel">מחיקת המפתח</button>
+        </div>
+        <details class="ai-help" style="margin-top:10px">
+          <summary>איך משיגים מפתח חינמי? (דקה אחת)</summary>
+          <div class="keyguide">
+            <ol>
+              <li>נכנסים ל־<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
+              <li>מתחברים עם חשבון גוגל רגיל — בלי כרטיס אשראי</li>
+              <li>לוחצים <b>Create API key</b> ומאשרים</li>
+              <li>מעתיקים את המפתח במלואו ומדביקים למעלה — התוכנה תבדוק אותו מיד מול גוגל</li>
+            </ol>
+          </div>
+        </details>
+        <p class="hint" style="margin-top:9px">המפתח נשמר רק בדפדפן במחשב הזה ואינו נכלל בקובצי הגיבוי.</p>
+      </div>
+      <div class="ed-sec">
+        <h4>📊 מצב</h4>
+        <div class="statgrid" id="aiStatus"></div>
+        <div class="dlgbtns"><button class="btn accent" id="setOpenAi">פתיחת השיחה ✨</button></div>
+      </div>
+    </div>
+
+    <div class="tabpane" data-p="about">
+      <div class="ed-sec">
+        <h4>🏠 שיבוץ חדרים לפנימייה <span class="cnt" id="verLbl"></span></h4>
+        <p class="hint">
+          קובץ HTML אחד עצמאי. כל הנתונים נשמרים מקומית בדפדפן במחשב הזה — שום דבר לא נשלח לשום מקום,
+          למעט הודעות שאתם שולחים ליועץ ה־AI (אם הפעלתם אותו).<br><br>
+          <b>קיצורי מקלדת:</b> <code>/</code> חיפוש · <code>Ctrl+S</code> שמירת סימולציה ·
+          <code>Ctrl+Z</code> ביטול הפעולה האחרונה (עד 60 צעדים) ·
+          <code>Delete</code> החזרת הבחור המסומן לממתינים · <code>Esc</code> ביטול סימון<br><br>
+          <b>טיפ:</b> נעלו 🔒 בחורים שכבר סגורים, ואז "שיבוץ אוטומטי" ישלים סביבם בלי לגעת בהם.
+        </p>
+      </div>
+    </div>
+
+    </div>
+    <div class="dlg-foot"><button class="btn accent" id="setClose">סגירה</button></div>
+  </div>
+</dialog>
+
+<dialog id="dlgEdit">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>✏️ עריכת רשימות</h3>
+      <button class="dlg-x" id="editX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+    <div class="ed-sec">
+      <h4>👥 בחורים <span class="cnt" id="edBoysCnt"></span></h4>
+      <div class="searchrow">
+        <span class="search"><input type="text" id="edSearch" placeholder="חיפוש שם ברשימה…">
+          <button class="clr" id="edSearchClr" hidden title="ניקוי">✕</button></span>
+        <span class="hitcount" id="edHits"></span>
+      </div>
+      <div class="ed-boys" id="edBoysList"></div>
+      <div class="ed-add">
+        <input type="text" id="edNewBoy" placeholder="שם בחור חדש…">
+        <button class="btn mini accent" id="edAddBoy">+ הוספה</button>
+      </div>
+      <details class="ed-import">
+        <summary>📥 ייבוא שמות — מקובץ או בהדבקה</summary>
+        <div class="drop" id="edDrop">
+          <div class="dz-ico">📄</div>
+          <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="edPickFile">בחרו קובץ מהמחשב</span></div>
+          <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
+            קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא הכול בבת אחת ·
+            <span class="lnk" id="edTemplate">הורדת תבנית</span></div>
+        </div>
+        <textarea id="edPaste" rows="4" placeholder="…או הדביקו כאן רשימת שמות — שם בכל שורה, או מופרדים בפסיקים.&#10;מספור וסימנים (1. , - , •) ינוקו אוטומטית."></textarea>
+        <div class="dlgbtns">
+          <button class="btn mini accent" id="edPasteAdd">➕ הוספה לרשימה</button>
+          <button class="btn mini danger" id="edPasteReplace">🔁 החלפת כל הרשימה</button>
+        </div>
+      </details>
+    </div>
+    <div class="ed-sec">
+      <h4>🏢 אגפים וחדרים <span class="cnt" id="edRoomsCnt"></span></h4>
+      <div id="edWings"></div>
+      <button class="btn mini" id="edAddWing">+ אגף חדש</button>
+    </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="btnEditApply">שמירה</button>
+      <button class="btn" id="btnEditCancel">ביטול</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+
+/* the app ships empty — data comes from the user's own file */
+const DEFAULT_BOYS=[];
+const DEFAULT_ROOMS=[];
+const ROOM_COLORS=['#22d3ee','#a78bfa','#fbbf24','#fb7185','#34d399','#f472b6','#facc15','#60a5fa'];
+const BED_SVG='<svg viewBox="0 0 30 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M27 3v12"/><path d="M3 7v8"/><path d="M4 11.5h22"/><rect x="19.5" y="6.5" width="5.5" height="3.6" rx="1.6" fill="currentColor" stroke="none"/></svg>';
+const APP_VERSION='1.0';
+const KEY='dorm-planner-v1';
+/* each accent carries a darker pair for the light theme, so text on white stays readable */
+const ACCENTS={
+  cyan:  {a:'#22d3ee',b:'#8b5cf6',la:'#0e7f96',lb:'#6d43d6',he:'טורקיז'},
+  blue:  {a:'#3b82f6',b:'#6366f1',la:'#1d4ed8',lb:'#4338ca',he:'כחול'},
+  green: {a:'#10b981',b:'#0ea5e9',la:'#047857',lb:'#0369a1',he:'ירוק'},
+  amber: {a:'#f59e0b',b:'#ef4444',la:'#b45309',lb:'#b91c1c',he:'ענבר'},
+  pink:  {a:'#ec4899',b:'#8b5cf6',la:'#be185d',lb:'#6d28d9',he:'ורוד'},
+  violet:{a:'#a855f7',b:'#6366f1',la:'#7e22ce',lb:'#4338ca',he:'סגול'}
+};
+const DEFAULT_DISPLAY={theme:'dark',accent:'cyan',text:100,density:'regular',
+  roomW:'220px',emptyBeds:true,tilt:true,grid:true,motion:true};
+const DEFAULT_SETTINGS={sound:true,flash:true,pulse:true,suggest:true,confirm:true,aiFab:true,
+  ai:{name:'יועץ שיבוץ',emoji:'✨',level:'act',askFirst:true},
+  display:Object.assign({},DEFAULT_DISPLAY)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+let S=loadState();
+let selected=null;
+let formMembers=new Set();
+const Q={board:'',rule:'',rules:'',edit:''};
+
+/* Hebrew-friendly matching: ignores geresh/quotes, hyphens and double spaces */
+const norm=s=>String(s||'').toLowerCase()
+  .replace(/[׳״'"`\-־–—.,]/g,'').replace(/\s+/g,' ').trim();
+const hits=(text,q)=>!q||norm(text).includes(norm(q));
+function clearSearches(){
+  for(const k of Object.keys(Q))Q[k]='';
+  for(const [inp,clr] of [['#boardSearch','#boardSearchClr'],['#ruleSearch','#ruleSearchClr'],
+                          ['#rulesSearch','#rulesSearchClr'],['#edSearch','#edSearchClr']]){
+    const i=$(inp); if(i)i.value='';
+    const c=$(clr); if(c)c.hidden=true;
+  }
+}
+function wireSearch(inputSel,clrSel,key,after){
+  const inp=$(inputSel),clr=$(clrSel);
+  const sync=()=>{
+    Q[key]=inp.value;
+    clr.hidden=!inp.value;
+    after();
+  };
+  inp.addEventListener('input',sync);
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();inp.value='';sync();}
+  });
+  clr.addEventListener('click',()=>{inp.value='';sync();inp.focus();});
+}
+
+function migrate(s){
+  if(!s||typeof s!=='object')s={};
+  /* a truncated or hand-edited backup must never leave the app in a broken shape */
+  if(!Array.isArray(s.boys)||!s.boys.length)s.boys=[...DEFAULT_BOYS];
+  s.boys=[...new Set(s.boys.map(b=>String(b).trim()).filter(Boolean))];
+  if(!Array.isArray(s.rooms)||!s.rooms.length)s.rooms=DEFAULT_ROOMS.map(r=>({...r}));
+  /* room numbers must stay unique — occupants() matches by number, so a duplicate
+     would put the same boy in two rooms at once */
+  const seenRooms=new Set();
+  s.rooms=s.rooms.filter(r=>r&&r.num!=null).map(r=>{
+    let num=String(r.num).trim()||'?';
+    if(seenRooms.has(num)){let k=2;while(seenRooms.has(num+'-'+k))k++;num=num+'-'+k;}
+    seenRooms.add(num);
+    return {num,beds:Math.max(1,Math.min(12,+r.beds||2)),wing:r.wing};
+  });
+  if(!s.assign||typeof s.assign!=='object')s.assign={};
+  if(!Array.isArray(s.rules))s.rules=[];
+  s.rules=s.rules.filter(r=>r&&typeof r==='object');
+  if(!Array.isArray(s.sims))s.sims=[];
+  s.sims=s.sims.filter(x=>x&&x.assign&&typeof x.assign==='object');
+  if(typeof s.zman!=='string'||!s.zman.trim())s.zman='הזמן הבא';
+  s.settings=Object.assign({},DEFAULT_SETTINGS,s.settings||{});
+  s.settings.ai=Object.assign({},DEFAULT_SETTINGS.ai,s.settings.ai||{});
+  s.settings.display=Object.assign({},DEFAULT_DISPLAY,s.settings.display||{});
+  if(!ACCENTS[s.settings.display.accent])s.settings.display.accent='cyan';
+  if(!Array.isArray(s.wings)||!s.wings.length){
+    s.wings=[{id:'w1',name:'אגף ראשי'}];
+    (s.rooms||[]).forEach(r=>r.wing='w1');
+  }
+  (s.rooms||[]).forEach(r=>{if(!r.wing)r.wing=s.wings[0].id;});
+  if(!Array.isArray(s.locks))s.locks=[];
+  s.rules.forEach(r=>{
+    if((r.type==='separate'||r.type==='together')&&!Array.isArray(r.members))
+      r.members=[r.a,r.b].filter(Boolean);
+  });
+  /* drop anything pointing at a boy or room that no longer exists */
+  const roomSet=new Set(s.rooms.map(r=>r.num)), boySet=new Set(s.boys);
+  s.rules=s.rules.filter(r=>{
+    if(!r||!r.type)return false;
+    if(r.members){r.members=r.members.filter(b=>boySet.has(b));return r.members.length>=2;}
+    return boySet.has(r.a)&&roomSet.has(r.room);
+  });
+  for(const b of Object.keys(s.assign))
+    if(!boySet.has(b)||!roomSet.has(s.assign[b]))delete s.assign[b];
+  s.locks=[...new Set(s.locks)].filter(b=>s.assign[b]);
+  s.sims.forEach(sim=>{
+    for(const b of Object.keys(sim.assign))
+      if(!boySet.has(b)||!roomSet.has(sim.assign[b]))delete sim.assign[b];
+  });
+  return s;
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const s=JSON.parse(raw); if(s&&Array.isArray(s.boys)&&Array.isArray(s.rooms)) return migrate(s);}
+  }catch(e){}
+  return migrate({boys:[...DEFAULT_BOYS],rooms:DEFAULT_ROOMS.map(r=>({...r})),assign:{},rules:[],sims:[],zman:'הזמן הבא',activeSim:null});
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+
+/* ---------- helpers ---------- */
+const occupants=num=>S.boys.filter(b=>S.assign[b]===num);
+const roomBy=num=>S.rooms.find(r=>r.num===num);
+const isLocked=name=>S.locks.includes(name);
+function nameHash(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))>>>0;return h;}
+/* avatar hue is stable per name; lightness is tuned so the initial keeps ~4.5:1 on it */
+function avPaint(name){
+  const h=nameHash(name)%360;
+  // yellow/green hues read much brighter at the same lightness — compensate
+  const bright=(h>=45&&h<=190);
+  return {bg:`hsl(${h},58%,${bright?30:38}%)`,fg:'#fff'};
+}
+const avColor=name=>avPaint(name).bg;
+/* Windows forbids \ / : * ? " < > | in filenames */
+const safeFile=s=>String(s).replace(/[\/\\:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,90)||'שיבוץ';
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ---------- alarm (hard-rule violation) ---------- */
+function buzz(){
+  try{
+    const ctx=buzz._c||(buzz._c=new (window.AudioContext||window.webkitAudioContext)());
+    if(ctx.state==='suspended')ctx.resume();
+    const t0=ctx.currentTime;
+    for(const[st,fr]of[[0,110],[0.22,88]]){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sawtooth';o.frequency.value=fr;
+      g.gain.setValueAtTime(0.0001,t0+st);
+      g.gain.exponentialRampToValueAtTime(0.14,t0+st+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+st+0.3);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(t0+st);o.stop(t0+st+0.32);
+    }
+  }catch(e){}
+}
+function alarm(txt){
+  const st=S.settings;
+  if(st.flash){
+    $('#alarmText').textContent=txt;
+    const al=$('#alarm');
+    al.classList.remove('on'); void al.offsetWidth; al.classList.add('on');
+    clearTimeout(alarm._t); alarm._t=setTimeout(()=>al.classList.remove('on'),1750);
+  }
+  if(st.sound)buzz();
+  if(!st.flash&&!st.sound)toast('⛔ אסור! '+txt);
+}
+
+/* ---------- undo ---------- */
+const UNDO=[];
+const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','sims','zman'];
+function snapshot(){
+  const o={};
+  for(const k of UNDO_KEYS)o[k]=S[k];
+  UNDO.push(JSON.stringify(o));
+  if(UNDO.length>60)UNDO.shift();
+}
+function undo(){
+  if(!UNDO.length){toast('אין מה לבטל');return;}
+  const p=JSON.parse(UNDO.pop());
+  for(const k of UNDO_KEYS)if(p[k]!==undefined)S[k]=p[k];
+  S.activeSim=null;selected=null;formMembers.clear();editingRule=null;
+  save();initDynamic();render();
+  toast('↩️ הפעולה האחרונה בוטלה');
+}
+function askConfirm(msg){return S.settings.confirm?confirm(msg):true;}
+
+/* ---------- locking ---------- */
+function toggleLock(name){
+  snapshot();
+  if(isLocked(name)){
+    S.locks=S.locks.filter(x=>x!==name);
+    toast(`🔓 ${name} שוחרר — אפשר להזיז אותו`);
+  }else if(S.assign[name]){
+    S.locks.push(name);
+    toast(`🔒 ${name} ננעל בחדר ${S.assign[name]}`);
+  }
+  save();render();
+}
+
+/* ---------- assignment ---------- */
+function assignBoy(name,num){
+  if(!S.boys.includes(name)) return;
+  if(isLocked(name)&&S.assign[name]){
+    toast(`🔒 ${name} נעול בחדר ${S.assign[name]} — לחצו על המנעול לשחרור`);
+    selected=null;render();return;
+  }
+  if(num){
+    const room=roomBy(num); if(!room) return;
+    if(S.assign[name]===num){selected=null;render();return;}
+    if(occupants(num).length>=room.beds){
+      toast(`חדר ${num} מלא — ${room.beds} מיטות בלבד`);
+      const el=document.querySelector(`.room[data-num="${num}"]`);
+      if(el){el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),450);}
+      selected=null;render();return;
+    }
+  }
+  const before=evaluate(S.assign);
+  snapshot();
+  if(num) S.assign[name]=num; else delete S.assign[name];
+  S.activeSim=null; selected=null; save(); render();
+  const after=evaluate(S.assign);
+  const fresh=after.list.filter(x=>x.st==='violated'&&x.rule.level==='hard'
+    &&!before.list.some(y=>y.rule.id===x.rule.id&&y.st==='violated'));
+  if(fresh.length) alarm(fresh.map(f=>ruleText(f.rule)).join(' · '));
+}
+
+/* ---------- rules evaluation ---------- */
+function ruleStatus(rule,asg){
+  if(rule.enabled===false) return {st:'off',detail:'',bad:[],rooms:[]};
+  if(rule.type==='separate'||rule.type==='together'){
+    const mem=rule.members||[];
+    const asgd=mem.filter(m=>asg[m]);
+    if(rule.type==='separate'){
+      const byRoom={};
+      for(const m of asgd)(byRoom[asg[m]]=byRoom[asg[m]]||[]).push(m);
+      const clash=Object.entries(byRoom).filter(([,v])=>v.length>1);
+      if(clash.length) return {st:'violated',
+        detail:clash.map(([rm,v])=>`${v.join(' ו־')} יחד בחדר ${rm}`).join(' · '),
+        bad:clash.flatMap(([,v])=>v), rooms:clash.map(([rm])=>rm)};
+      if(asgd.length<mem.length) return {st:'pending',detail:pendWho(mem,asg),bad:[],rooms:[]};
+      return {st:'ok',detail:'',bad:[],rooms:[]};
+    }else{
+      const roomsSet=[...new Set(asgd.map(m=>asg[m]))];
+      if(roomsSet.length>1) return {st:'violated',
+        detail:'מפוצלים: '+asgd.map(m=>`${m} (${asg[m]})`).join(', '),
+        bad:[...asgd], rooms:roomsSet};
+      if(asgd.length<mem.length) return {st:'pending',detail:pendWho(mem,asg),bad:[],rooms:[]};
+      return {st:'ok',detail:'',bad:[],rooms:[]};
+    }
+  }
+  const ra=asg[rule.a]||null;
+  if(rule.type==='inRoom'){
+    if(!ra) return {st:'pending',detail:`${rule.a} עדיין לא שובץ`,bad:[],rooms:[]};
+    return ra===rule.room
+      ?{st:'ok',detail:'',bad:[],rooms:[]}
+      :{st:'violated',detail:`נמצא בחדר ${ra} במקום ${rule.room}`,bad:[rule.a],rooms:[ra]};
+  }
+  if(rule.type==='notInRoom'){
+    if(!ra) return {st:'pending',detail:`${rule.a} עדיין לא שובץ`,bad:[],rooms:[]};
+    return ra===rule.room
+      ?{st:'violated',detail:`נמצא בחדר ${rule.room}`,bad:[rule.a],rooms:[rule.room]}
+      :{st:'ok',detail:'',bad:[],rooms:[]};
+  }
+  return {st:'off',detail:'',bad:[],rooms:[]};
+}
+function pendWho(mem,asg){
+  return `ממתין לשיבוץ של ${mem.filter(m=>!asg[m]).join(', ')}`;
+}
+function evaluate(asg){
+  let hard=0,soft=0;
+  const list=[],badHard=new Set(),badSoft=new Set(),badRooms=new Map();
+  for(const r of S.rules){
+    const res=ruleStatus(r,asg);
+    list.push({rule:r,...res});
+    if(res.st==='violated'){
+      if(r.level==='hard')hard++;else soft++;
+      const bag=r.level==='hard'?badHard:badSoft;
+      for(const b of res.bad)bag.add(b);
+      for(const m of res.rooms)if(m){
+        const cur=badRooms.get(m);
+        if(r.level==='hard'||!cur)badRooms.set(m,r.level==='hard'?'hard':(cur||'soft'));
+      }
+    }
+  }
+  return {list,hard,soft,badHard,badSoft,badRooms};
+}
+const scoreOf=asg=>{const ev=evaluate(asg);return ev.hard*1000+ev.soft;};
+function ruleText(r){
+  const ico={separate:'🚫',together:'🤝',inRoom:'📍',notInRoom:'🚷'}[r.type]||'';
+  if(r.type==='separate')  return `${ico} ${r.members.join(' · ')} — לא באותו חדר`;
+  if(r.type==='together')  return `${ico} ${r.members.join(' · ')} — ביחד באותו חדר`;
+  if(r.type==='inRoom')    return `${ico} ${r.a} — בחדר ${r.room}`;
+  if(r.type==='notInRoom') return `${ico} ${r.a} — לא בחדר ${r.room}`;
+  return '';
+}
+
+/* ---------- suggestions ---------- */
+function computeSuggestions(){
+  const base=evaluate(S.assign);
+  const baseScore=base.hard*1000+base.soft;
+  if(baseScore===0) return [];
+  const found=[];
+  const consider=(asg,text)=>{
+    const ev=evaluate(asg);
+    const sc=ev.hard*1000+ev.soft;
+    if(sc<baseScore) found.push({score:sc,text,asg,gain:gainTxt(base,ev)});
+  };
+  const movable=S.boys.filter(b=>S.assign[b]&&!isLocked(b));
+  for(const b of movable){
+    for(const r of S.rooms){
+      if(r.num===S.assign[b]) continue;
+      if(occupants(r.num).length<r.beds)
+        consider({...S.assign,[b]:r.num},`להעביר את ${b} לחדר ${r.num}`);
+    }
+  }
+  for(let i=0;i<movable.length;i++)for(let j=i+1;j<movable.length;j++){
+    const a=movable[i],b=movable[j];
+    if(S.assign[a]===S.assign[b]) continue;
+    const asg={...S.assign};
+    [asg[a],asg[b]]=[asg[b],asg[a]];
+    consider(asg,`להחליף בין ${a} (${S.assign[a]}) ל־${b} (${S.assign[b]})`);
+  }
+  found.sort((x,y)=>x.score-y.score);
+  return found.slice(0,3);
+}
+function gainTxt(base,ev){
+  const f=(n,s,p)=>`−${n} ${n===1?s:p}`;
+  const dh=base.hard-ev.hard, ds=base.soft-ev.soft, out=[];
+  if(dh>0)out.push(f(dh,'חמורה','חמורות'));
+  if(ds>0)out.push(f(ds,'קלה','קלות'));
+  if(ds<0)out.push(`+${-ds} קלות`);
+  return out.join(' · ')||'שיפור';
+}
+function renderSuggestions(ev){
+  const box=$('#suggBox'),list=$('#suggList');
+  const suggs=(S.settings.suggest&&ev.hard+ev.soft>0)?computeSuggestions():[];
+  if(!suggs.length){box.hidden=true;return;}
+  box.hidden=false; list.innerHTML='';
+  for(const sg of suggs){
+    const row=document.createElement('div'); row.className='sugg';
+    const tx=document.createElement('span'); tx.className='stext'; tx.textContent='💡 '+sg.text;
+    const gn=document.createElement('span'); gn.className='gain'; gn.textContent=sg.gain;
+    const bt=document.createElement('button'); bt.className='btn mini accent'; bt.textContent='בצע ✓';
+    bt.addEventListener('click',()=>{
+      snapshot();
+      S.assign={...sg.asg}; S.activeSim=null; selected=null;
+      save(); render(); toast('ההצעה בוצעה ✓ — Ctrl+Z לביטול');
+    });
+    row.append(tx,gn,bt); list.appendChild(row);
+  }
+}
+
+/* ---------- rendering ---------- */
+function chipEl(name,ev,inRoom){
+  const el=document.createElement('div');
+  const locked=inRoom&&isLocked(name);
+  const bad=ev.badHard.has(name)?' bad-hard':ev.badSoft.has(name)?' bad-soft':'';
+  const find=Q.board?(hits(name,Q.board)?' hit':' dim'):'';
+  el.className='chip'+(inRoom?' inroom':'')+(locked?' locked':'')+bad+find+(selected===name?' sel':'');
+  el.draggable=!locked;
+  if(!inRoom) el.style.setProperty('--rot',(((nameHash(name)%9)-4)*0.55)+'deg');
+  const av=document.createElement('span');
+  av.className='av'; av.style.background=avColor(name); av.textContent=name[0];
+  const sp=document.createElement('span'); sp.textContent=name;
+  el.append(av,sp);
+  if(inRoom){
+    const lk=document.createElement('button');
+    lk.className='lock'; lk.textContent=locked?'🔒':'🔓';
+    lk.title=locked?'שחרור נעילה':'נעילה בחדר — לא יזוז בגרירה';
+    lk.addEventListener('click',e=>{e.stopPropagation();toggleLock(name);});
+    el.appendChild(lk);
+  }
+  el.title=locked?'נעול בחדר — לחצו על המנעול לשחרור'
+    :inRoom?'גרירה לחדר אחר · לחיצה כפולה מחזירה לממתינים'
+    :'גרירה לחדר, או לחיצה ואז לחיצה על חדר';
+  el.addEventListener('dragstart',e=>{
+    if(locked){e.preventDefault();return;}
+    e.dataTransfer.setData('text/plain',name);
+    e.dataTransfer.effectAllowed='move';
+    selected=null; el.classList.add('dragging');
+  });
+  el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  el.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(locked){toast(`🔒 ${name} נעול — לחצו על המנעול לשחרור`);return;}
+    selected=(selected===name)?null:name;
+    render();
+  });
+  el.addEventListener('dblclick',e=>{
+    e.stopPropagation();
+    if(locked)return;
+    assignBoy(name,null);
+  });
+  return el;
+}
+
+function render(){
+  const ev=evaluate(S.assign);
+  renderStats(ev); renderPool(ev); renderRooms(ev); renderRules(ev);
+  renderSuggestions(ev); renderSims(); renderWelcome();
+}
+
+function renderStats(ev){
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
+  const wingsTxt=S.wings.length>1?`${S.wings.length} אגפים`:S.wings[0].name;
+  $('#overline').textContent=`🏢 פנימייה · ${wingsTxt} · ${S.rooms.length} חדרים · ${beds} מיטות`;
+  const st=$('#stats'); st.innerHTML='';
+  const add=(txt,cls='')=>{const d=document.createElement('span');d.className='stat '+cls;d.textContent=txt;st.appendChild(d);};
+  add(`משובצים ${placed} מתוך ${S.boys.length}`, placed===S.boys.length?'good':'');
+  const lockedN=S.locks.filter(b=>S.assign[b]).length;
+  if(lockedN>0) add(`🔒 נעולים: ${lockedN}`,'gold');
+  if(ev.hard>0) add(`⛔ בלתי מתפשר מופר: ${ev.hard}`,'bad');
+  if(ev.soft>0) add(`⚠️ הפרות קלות: ${ev.soft}`,'warn');
+  if(ev.hard===0&&ev.soft===0&&S.rules.some(r=>r.enabled!==false)) add('✓ אין הפרות','good');
+}
+
+function renderPool(ev){
+  const box=$('#poolChips'); box.innerHTML='';
+  const waiting=S.boys.filter(b=>!S.assign[b]);
+  $('#poolCount').textContent=waiting.length;
+  const shown=waiting.filter(b=>hits(b,Q.board));
+  if(!waiting.length){
+    const d=document.createElement('div');d.className='empty-note';d.textContent='כולם משובצים 🎉';
+    box.appendChild(d);
+  }else if(!shown.length){
+    const d=document.createElement('div');d.className='empty-note';
+    d.textContent=`אף אחד מהממתינים לא תואם ל"${Q.board}" — אולי הוא כבר משובץ בחדר (מודגש למטה)`;
+    box.appendChild(d);
+  }
+  for(const b of shown) box.appendChild(chipEl(b,ev,false));
+  // board-wide hit counter
+  const el=$('#boardHits');
+  if(!Q.board){el.textContent='';el.classList.remove('none');}
+  else{
+    const all=S.boys.filter(b=>hits(b,Q.board));
+    const placed=all.filter(b=>S.assign[b]);
+    el.classList.toggle('none',!all.length);
+    el.textContent=!all.length?'לא נמצא אף בחור'
+      :all.length===1
+        ?(placed.length?`נמצא — בחדר ${S.assign[all[0]]}`:'נמצא — ממתין לשיבוץ')
+        :`${all.length} תואמים · ${placed.length} בחדרים · ${all.length-placed.length} ממתינים`;
+  }
+}
+
+function renderRooms(ev){
+  const wrap=$('#rooms'); wrap.innerHTML='';
+  let ci=0;
+  for(const w of S.wings){
+    const rooms=S.rooms.filter(r=>r.wing===w.id);
+    const head=document.createElement('div'); head.className='wing-head';
+    head.innerHTML=`<span>${w.name}</span><span class="whcnt">${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות</span>`;
+    wrap.appendChild(head);
+    const grid=document.createElement('div'); grid.className='wing-grid';
+    for(const room of rooms){
+      grid.appendChild(roomCard(room,ev,ROOM_COLORS[ci%ROOM_COLORS.length]));
+      ci++;
+    }
+    if(!rooms.length){
+      const d=document.createElement('div'); d.className='empty-note'; d.textContent='אין חדרים באגף הזה — הוסיפו דרך ✏️ עריכה';
+      grid.appendChild(d);
+    }
+    wrap.appendChild(grid);
+  }
+}
+function roomCard(room,ev,color){
+  const occ=occupants(room.num);
+  const card=document.createElement('div');
+  const warn=ev.badRooms.get(room.num);
+  const hasHit=Q.board&&occ.some(b=>hits(b,Q.board));
+  card.className='room'+(warn==='hard'?' warn-hard':warn==='soft'?' warn-soft':'')+(hasHit?' hasHit':'');
+  card.dataset.num=room.num;
+  card.style.setProperty('--ac',color);
+
+  const head=document.createElement('div'); head.className='rhead';
+  const plate=document.createElement('div'); plate.className='plate';
+  const no=document.createElement('span'); no.className='no'; no.textContent=room.num;
+  const lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent='חדר';
+  plate.append(no,lbl);
+  const oc=document.createElement('span'); oc.className='occ'+(occ.length>=room.beds?' fullr':'');
+  oc.textContent=`${occ.length}/${room.beds}`;
+  head.append(plate,oc);
+
+  const slots=document.createElement('div'); slots.className='slots';
+  for(const b of occ) slots.appendChild(chipEl(b,ev,true));
+  for(let k=occ.length;k<room.beds;k++){
+    const bed=document.createElement('div'); bed.className='bed';
+    bed.innerHTML=BED_SVG+'<span>פנוי</span>';
+    slots.appendChild(bed);
+  }
+  card.append(head,slots);
+
+  card.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const full=occupants(room.num).length>=room.beds;
+    card.classList.add(full?'full-over':'over');
+  });
+  card.addEventListener('dragleave',()=>card.classList.remove('over','full-over'));
+  card.addEventListener('drop',e=>{
+    e.preventDefault(); card.classList.remove('over','full-over');
+    const name=e.dataTransfer.getData('text/plain');
+    if(name) assignBoy(name,room.num);
+  });
+  card.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(selected) assignBoy(selected,room.num);
+  });
+  return card;
+}
+
+function renderRules(ev){
+  const box=$('#rulesList'); box.innerHTML='';
+  $('#rulesFilterRow').hidden=S.rules.length<4;
+  if(S.rules.length<4&&Q.rules){Q.rules='';$('#rulesSearch').value='';$('#rulesSearchClr').hidden=true;}
+  if(!S.rules.length){
+    const d=document.createElement('div'); d.className='empty-note';
+    d.textContent='עדיין אין כללים — בחרו סוג כלל למעלה והוסיפו. בכללי "באותו חדר" אפשר לסמן כמה בחורים שרוצים. כלל "בלתי מתפשר" שיופר יפעיל אזעקה.';
+    box.appendChild(d); return;
+  }
+  const shown=ev.list.filter(it=>hits(ruleText(it.rule)+' '+(it.rule.level==='hard'?'בלתי מתפשר':'עדיף'),Q.rules));
+  const hc=$('#rulesHits');
+  hc.classList.toggle('none',!shown.length);
+  hc.textContent=Q.rules?(shown.length?`${shown.length} מתוך ${ev.list.length}`:'אין כלל תואם'):'';
+  if(!shown.length){
+    const d=document.createElement('div'); d.className='empty-note';
+    d.textContent=`אין כלל שתואם ל"${Q.rules}".`;
+    box.appendChild(d); return;
+  }
+  for(const item of shown){
+    const r=item.rule;
+    const row=document.createElement('div');
+    row.className='rule'
+      +(item.st==='violated'?(r.level==='hard'?' viol-hard':' viol-soft'):'')
+      +(r.enabled===false?' off':'');
+
+    const sw=document.createElement('label'); sw.className='sw'; sw.title='הפעלה / השבתה של הכלל';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=r.enabled!==false;
+    cb.addEventListener('change',()=>{snapshot();r.enabled=cb.checked;save();render();});
+    const ii=document.createElement('i'); sw.append(cb,ii);
+
+    const lvl=document.createElement('span');
+    lvl.className='lvl '+r.level;
+    lvl.textContent=r.level==='hard'?'בלתי מתפשר':'עדיף';
+
+    const txt=document.createElement('div'); txt.className='rtext';
+    txt.textContent=ruleText(r);
+    if(item.detail){
+      const dt=document.createElement('div'); dt.className='rdetail'; dt.textContent=item.detail;
+      txt.appendChild(dt);
+    }
+
+    const stat=document.createElement('span');
+    if(r.enabled===false){stat.className='rstat pend';stat.textContent='כבוי';}
+    else if(item.st==='ok'){stat.className='rstat ok';stat.textContent='✓ מתקיים';}
+    else if(item.st==='violated'){stat.className='rstat '+(r.level==='hard'?'vh':'vs');stat.textContent='✗ מופר';}
+    else {stat.className='rstat pend';stat.textContent='ממתין';}
+
+    const del=document.createElement('button'); del.className='rbtn del'; del.textContent='✕'; del.title='מחיקת הכלל';
+    del.addEventListener('click',()=>{
+      snapshot();
+      if(editingRule===r.id)cancelRuleEdit();
+      S.rules=S.rules.filter(x=>x.id!==r.id);save();render();
+      toast('הכלל נמחק — Ctrl+Z לביטול');
+    });
+
+    const edit=document.createElement('button');
+    edit.className='rbtn edit'; edit.textContent='✏️'; edit.title='עריכת הכלל';
+    edit.addEventListener('click',()=>startRuleEdit(r.id));
+
+    if(editingRule===r.id)row.classList.add('editing');
+    row.append(sw,lvl,txt,stat,edit,del);
+    box.appendChild(row);
+  }
+}
+
+function simTitle(asg){
+  return S.rooms.map(r=>{
+    const occ=S.boys.filter(b=>asg[b]===r.num);
+    return `${r.num}: ${occ.length?occ.join(', '):'—'}`;
+  }).join('\n');
+}
+function renderSims(){
+  const bar=$('#simsBar'); bar.innerHTML='';
+  if(!S.sims.length){
+    const d=document.createElement('div'); d.className='empty-note';
+    d.textContent='אין עדיין סימולציות שמורות. שבצו, תנו שם ושמרו — ואז אפשר לעבור בין גרסאות ולהשוות במבט אחד.';
+    bar.appendChild(d); return;
+  }
+  S.sims.forEach((sim,idx)=>{
+    const ev=evaluate(sim.assign);
+    const placed=S.boys.filter(b=>sim.assign[b]).length;
+    const card=document.createElement('div');
+    card.className='sim'+(S.activeSim===sim.id?' active':'');
+    card.style.setProperty('--rot',(((idx*7)%5)-2)*0.7+'deg');
+    card.title=simTitle(sim.assign);
+
+    const nm=document.createElement('div'); nm.className='sname'; nm.textContent=sim.name;
+    nm.addEventListener('dblclick',e=>{
+      e.stopPropagation();
+      const nn=prompt('שם חדש לסימולציה:',sim.name);
+      if(nn&&nn.trim()){sim.name=nn.trim();save();render();}
+    });
+
+    const st=document.createElement('div'); st.className='sstats';
+    let vh='';
+    if(ev.hard>0) vh+=`<b class="h">⛔${ev.hard}</b> `;
+    if(ev.soft>0) vh+=`<b class="s">⚠️${ev.soft}</b> `;
+    if(ev.hard===0&&ev.soft===0) vh+=`<b class="g">✓ נקי</b> `;
+    st.innerHTML=`${placed}/${S.boys.length} משובצים · ${vh}`;
+
+    const btns=document.createElement('div'); btns.className='sbtns';
+    const bLoad=document.createElement('button'); bLoad.className='btn mini'; bLoad.textContent='טעינה';
+    bLoad.addEventListener('click',e=>{e.stopPropagation();loadSim(sim);});
+    const bUpd=document.createElement('button'); bUpd.className='btn mini'; bUpd.textContent='עדכון'; bUpd.title='דריסת הסימולציה במצב הנוכחי';
+    bUpd.addEventListener('click',e=>{
+      e.stopPropagation();
+      sim.assign={...S.assign}; sim.ts=Date.now(); S.activeSim=sim.id;
+      save();render();toast(`"${sim.name}" עודכנה למצב הנוכחי`);
+    });
+    const bDel=document.createElement('button'); bDel.className='btn mini danger'; bDel.textContent='✕';
+    bDel.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(confirm(`למחוק את הסימולציה "${sim.name}"?`)){
+        S.sims=S.sims.filter(x=>x.id!==sim.id);
+        if(S.activeSim===sim.id)S.activeSim=null;
+        save();render();
+      }
+    });
+    btns.append(bLoad,bUpd,bDel);
+    card.append(nm,st,btns);
+    card.addEventListener('click',()=>loadSim(sim));
+    bar.appendChild(card);
+  });
+}
+function loadSim(sim){
+  snapshot();
+  const asg={};
+  for(const[b,rm]of Object.entries(sim.assign))
+    if(S.boys.includes(b)&&roomBy(rm)) asg[b]=rm;
+  S.assign=asg; S.activeSim=sim.id; selected=null;
+  S.locks=S.locks.filter(b=>asg[b]);
+  save();render();toast(`נטענה: "${sim.name}"`);
+}
+
+/* ---------- rule form ---------- */
+function fillSelect(sel,items,labelFn){
+  sel.innerHTML='';
+  for(const it of items){
+    const o=document.createElement('option');
+    o.value=typeof it==='string'?it:it.num;
+    o.textContent=labelFn?labelFn(it):it;
+    sel.appendChild(o);
+  }
+}
+function wingName(id){const w=S.wings.find(x=>x.id===id);return w?w.name:'';}
+function repopulateForm(){
+  const keep=$('#rboyA').value;
+  const boys=S.boys.filter(b=>hits(b,Q.rule));
+  fillSelect($('#rboyA'),boys.length?boys:S.boys);
+  if(keep&&[...$('#rboyA').options].some(o=>o.value===keep))$('#rboyA').value=keep;
+  fillSelect($('#rroom'),S.rooms,r=>S.wings.length>1?`חדר ${r.num} · ${wingName(r.wing)}`:`חדר ${r.num}`);
+  formMembers=new Set([...formMembers].filter(b=>S.boys.includes(b)));
+  syncFormKind();
+}
+function renderPicker(){
+  const box=$('#memberPick'); box.innerHTML='';
+  const hint=document.createElement('span'); hint.className='hint';
+  hint.textContent=formMembers.size?`נבחרו ${formMembers.size}:`:'סמנו את הבחורים שהכלל חל עליהם:';
+  box.appendChild(hint);
+  // selected boys stay visible even when filtered out, so nothing is lost while searching
+  const list=S.boys.filter(b=>formMembers.has(b)||hits(b,Q.rule));
+  for(const b of list){
+    const t=document.createElement('span');
+    t.className='mp'+(formMembers.has(b)?' on':'');
+    t.textContent=b;
+    t.addEventListener('click',()=>{
+      formMembers.has(b)?formMembers.delete(b):formMembers.add(b);
+      renderPicker();
+    });
+    box.appendChild(t);
+  }
+  if(!list.length){
+    const e=document.createElement('span'); e.className='hint';
+    e.textContent=`אין שם שתואם ל"${Q.rule}"`;
+    box.appendChild(e);
+  }
+}
+function syncFormKind(){
+  const t=$('#rtype').value;
+  const pair=(t==='separate'||t==='together');
+  $('#memberPick').hidden=!pair;
+  $('#rboyA').hidden=pair;
+  $('#rroom').hidden=pair;
+  if(pair)renderPicker();
+}
+$('#rtype').addEventListener('change',syncFormKind);
+
+/* ---------- add / edit a rule (same form, two modes) ---------- */
+let editingRule=null;
+function startRuleEdit(id){
+  const r=S.rules.find(x=>x.id===id); if(!r)return;
+  editingRule=id;
+  $('#rtype').value=r.type;
+  $('#rlevel').value=r.level;
+  formMembers=new Set(r.members||[]);
+  Q.rule='';$('#ruleSearch').value='';$('#ruleSearchClr').hidden=true;
+  repopulateForm();
+  if(r.a)$('#rboyA').value=r.a;
+  if(r.room)$('#rroom').value=r.room;
+  paintRuleForm();
+  render();
+  $('#ruleForm').scrollIntoView({block:'center'});
+}
+function cancelRuleEdit(){
+  editingRule=null;formMembers.clear();
+  Q.rule='';$('#ruleSearch').value='';$('#ruleSearchClr').hidden=true;
+  repopulateForm();paintRuleForm();render();
+}
+function paintRuleForm(){
+  const on=!!editingRule;
+  $('#ruleForm').classList.toggle('editmode',on);
+  $('#btnAddRule').textContent=on?'💾 עדכון הכלל':'+ הוספת כלל';
+  $('#btnCancelRule').hidden=!on;
+  $('#editBanner').hidden=!on;
+}
+function readRuleForm(){
+  const type=$('#rtype').value,level=$('#rlevel').value;
+  const rule={type,level};
+  if(type==='separate'||type==='together'){
+    const members=S.boys.filter(b=>formMembers.has(b));
+    if(members.length<2){toast('סמנו לפחות שני בחורים');return null;}
+    rule.members=members;
+  }else{
+    rule.a=$('#rboyA').value;
+    rule.room=$('#rroom').value;
+    if(!rule.a||!rule.room){toast('בחרו בחור וחדר');return null;}
+  }
+  return rule;
+}
+const ruleSig=r=>r.members
+  ? r.type+'|'+r.members.slice().sort().join(',')
+  : r.type+'|'+r.a+'|'+r.room;
+$('#btnAddRule').addEventListener('click',()=>{
+  const draft=readRuleForm(); if(!draft)return;
+  const sig=ruleSig(draft);
+  const clash=S.rules.some(r=>r.id!==editingRule&&ruleSig(r)===sig);
+  if(clash){toast('כלל כזה כבר קיים');return;}
+  snapshot();
+  if(editingRule){
+    const r=S.rules.find(x=>x.id===editingRule);
+    if(r){
+      delete r.members;delete r.a;delete r.room;
+      Object.assign(r,draft);
+    }
+    editingRule=null;
+    toast('הכלל עודכן ✓');
+  }else{
+    S.rules.push(Object.assign({id:uid(),enabled:true},draft));
+    toast('הכלל נוסף ✓');
+  }
+  formMembers.clear();
+  Q.rule='';$('#ruleSearch').value='';$('#ruleSearchClr').hidden=true;
+  repopulateForm();paintRuleForm();save();render();
+});
+$('#btnCancelRule').addEventListener('click',cancelRuleEdit);
+
+/* ---------- pool as drop target / click ---------- */
+const poolSec=$('#pool');
+poolSec.addEventListener('dragover',e=>{e.preventDefault();poolSec.classList.add('over');});
+poolSec.addEventListener('dragleave',()=>poolSec.classList.remove('over'));
+poolSec.addEventListener('drop',e=>{
+  e.preventDefault();poolSec.classList.remove('over');
+  const name=e.dataTransfer.getData('text/plain');
+  if(name)assignBoy(name,null);
+});
+poolSec.addEventListener('click',e=>{
+  e.stopPropagation();
+  if(selected)assignBoy(selected,null);
+});
+document.body.addEventListener('click',()=>{if(selected){selected=null;render();}});
+
+/* ---------- clear board ---------- */
+function doClear(mode){
+  snapshot();
+  if(mode==='keep'){
+    const keep={};
+    for(const b of S.locks) if(S.assign[b]) keep[b]=S.assign[b];
+    S.assign=keep;
+    toast('הלוח נוקה — הנעולים נשארו במקומם');
+  }else{
+    S.assign={};
+    if(mode==='all'){S.locks=[];toast('הלוח נוקה לגמרי — כולל הנעולים 🔓');}
+    else toast('הלוח נוקה');
+  }
+  S.activeSim=null;selected=null;save();render();
+}
+$('#btnClear').addEventListener('click',()=>{
+  if(!Object.keys(S.assign).length){toast('הלוח כבר ריק');return;}
+  const lockedN=S.locks.filter(b=>S.assign[b]).length;
+  if(!lockedN){
+    if(askConfirm('לנקות את הלוח ולהתחיל סימולציה חדשה?\n(הכללים והסימולציות השמורות נשארים)'))doClear('plain');
+    return;
+  }
+  $('#clearLead').textContent=lockedN===1
+    ?'יש בחור אחד נעול 🔒 על הלוח. מה לעשות איתו?'
+    :`יש ${lockedN} בחורים נעולים 🔒 על הלוח. מה לעשות איתם?`;
+  const box=$('#clearOpts'); box.innerHTML='';
+  const opt=(ico,title,sub,fn,danger)=>{
+    const b=document.createElement('button');
+    b.className='opt'+(danger?' danger-opt':'');
+    b.innerHTML=`<span class="oi">${ico}</span><span class="ot"><b>${title}</b><small>${sub}</small></span>`;
+    b.addEventListener('click',()=>{$('#dlgClear').close();fn();});
+    box.appendChild(b);
+  };
+  opt('🔒','להשאיר את הנעולים במקומם',
+      `${lockedN} הבחורים הנעולים יישארו בחדריהם, כל השאר יתפנו`,()=>doClear('keep'));
+  opt('🔓','לנקות הכול — כולל הנעולים',
+      'הלוח יתרוקן לגמרי וכל הנעילות יוסרו — התחלה נקייה מאפס',()=>doClear('all'),true);
+  $('#dlgClear').showModal();
+});
+$('#clearCancel').addEventListener('click',()=>$('#dlgClear').close());
+
+/* ---------- auto-assign by rules ---------- */
+function optimize(locked){
+  if(!S.boys.length||!S.rooms.length)return null;   // nothing to solve
+  const lockedAsg={};
+  for(const b of locked) if(S.assign[b]) lockedAsg[b]=S.assign[b];
+  const hardIn=S.rules.filter(r=>r.enabled!==false&&r.type==='inRoom'&&r.level==='hard');
+  let best=null,bestScore=Infinity;
+  for(let t=0;t<40;t++){
+    const asg={...lockedAsg},cap={};
+    S.rooms.forEach(r=>{
+      cap[r.num]=r.beds-Object.values(lockedAsg).filter(v=>v===r.num).length;
+      if(cap[r.num]<0)cap[r.num]=0;
+    });
+    for(const r of hardIn) if(!asg[r.a]&&cap[r.room]>0){asg[r.a]=r.room;cap[r.room]--;}
+    const rest=S.boys.filter(b=>!asg[b]).sort(()=>Math.random()-.5);
+    let ok=true;
+    for(const b of rest){
+      const opts=S.rooms.filter(r=>cap[r.num]>0);
+      if(!opts.length){ok=false;break;}
+      const pick=opts[(Math.random()*opts.length)|0];
+      asg[b]=pick.num;cap[pick.num]--;
+    }
+    if(!ok)continue;
+    let sc=scoreOf(asg),improved=true;
+    while(improved&&sc>0){
+      improved=false;
+      const free=S.boys.filter(b=>!locked.has(b)&&asg[b]);
+      for(let i=0;i<free.length;i++)for(let j=i+1;j<free.length;j++){
+        const a=free[i],b=free[j];
+        if(asg[a]===asg[b])continue;
+        [asg[a],asg[b]]=[asg[b],asg[a]];
+        const s2=scoreOf(asg);
+        if(s2<sc){sc=s2;improved=true;}
+        else [asg[a],asg[b]]=[asg[b],asg[a]];
+      }
+      const capNow={};
+      S.rooms.forEach(r=>capNow[r.num]=r.beds-S.boys.filter(x=>asg[x]===r.num).length);
+      for(const b of free)for(const r of S.rooms){
+        if(capNow[r.num]>0&&asg[b]!==r.num){
+          const old=asg[b];asg[b]=r.num;
+          const s2=scoreOf(asg);
+          if(s2<sc){sc=s2;improved=true;capNow[r.num]--;capNow[old]++;}
+          else asg[b]=old;
+        }
+      }
+    }
+    if(sc<bestScore){bestScore=sc;best={...asg};}
+    if(bestScore===0)break;
+  }
+  return best?{asg:best,score:bestScore,ev:evaluate(best)}:null;
+}
+$('#btnAuto').addEventListener('click',()=>{
+  let locked=new Set(S.locks.filter(b=>S.assign[b]));
+  const unlockedPlaced=Object.keys(S.assign).filter(b=>!locked.has(b));
+  if(unlockedPlaced.length){
+    const note=locked.size?'\n(בחורים נעולים 🔒 נשארים במקומם בכל מקרה)':'';
+    if(confirm(`לשמור על הבחורים שכבר משובצים ולהשלים רק את החסרים?${note}\n\nאישור — להשלים סביב הקיימים\nביטול — לשבץ מחדש מאפס`))
+      locked=new Set([...locked,...unlockedPlaced]);
+  }
+  const res=optimize(locked);
+  if(!res){toast('אין מספיק מיטות לכולם');return;}
+  S.assign=res.asg;S.activeSim=null;selected=null;save();render();
+  if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
+  else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
+});
+
+/* ---------- sims save ---------- */
+$('#simName').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();$('#btnSaveSim').click();}
+});
+$('#btnSaveSim').addEventListener('click',()=>{
+  const inp=$('#simName');
+  const name=(inp.value.trim())||`סימולציה ${S.sims.length+1}`;
+  const sim={id:uid(),name,ts:Date.now(),assign:{...S.assign}};
+  S.sims.push(sim);S.activeSim=sim.id;inp.value='';
+  save();render();toast(`נשמרה: "${name}"`);
+});
+
+/* ---------- export / import ---------- */
+$('#btnExport').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  a.download=`גיבוי-שיבוץ-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+  a.click();URL.revokeObjectURL(a.href);
+  toast('קובץ גיבוי ירד למחשב');
+});
+$('#btnImport').addEventListener('click',()=>$('#fileImport').click());
+$('#fileImport').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const s=JSON.parse(rd.result);
+      if(!s||!Array.isArray(s.boys)||!Array.isArray(s.rooms))throw 0;
+      S=migrate(s);save();initDynamic();render();toast('הגיבוי שוחזר ✓');
+    }catch(err){toast('הקובץ לא תקין');}
+  };
+  rd.readAsText(f);
+  e.target.value='';
+});
+
+/* ---------- visual editor ---------- */
+let ED=null;
+$('#btnEdit').addEventListener('click',()=>{
+  ED={
+    boys:S.boys.map(n=>({orig:n,name:n})),
+    wings:S.wings.map(w=>({id:w.id,name:w.name})),
+    rooms:S.rooms.map(r=>({orig:r.num,num:r.num,beds:r.beds,wing:r.wing}))
+  };
+  Q.edit='';$('#edSearch').value='';$('#edSearchClr').hidden=true;
+  renderEdit();
+  $('#dlgEdit').showModal();
+});
+const closeEdit=()=>{$('#dlgEdit').close();ED=null;};
+$('#btnEditCancel').addEventListener('click',closeEdit);
+$('#editX').addEventListener('click',closeEdit);
+
+function renderEdit(){
+  // boys
+  const bl=$('#edBoysList'); bl.innerHTML='';
+  let shownB=0;
+  ED.boys.forEach((b,i)=>{
+    if(!hits(b.name,Q.edit))return;
+    shownB++;
+    const row=document.createElement('span'); row.className='ed-boy';
+    const inp=document.createElement('input'); inp.value=b.name;
+    inp.addEventListener('input',()=>{b.name=inp.value;});
+    const x=document.createElement('button'); x.className='ed-x'; x.textContent='✕'; x.title='הסרה';
+    x.addEventListener('click',()=>{ED.boys.splice(i,1);renderEdit();});
+    row.append(inp,x); bl.appendChild(row);
+  });
+  if(!shownB){
+    const d=document.createElement('span'); d.className='empty-note';
+    d.textContent=`אין שם שתואם ל"${Q.edit}"`;
+    bl.appendChild(d);
+  }
+  const eh=$('#edHits');
+  eh.classList.toggle('none',!shownB);
+  eh.textContent=Q.edit?`${shownB} מתוך ${ED.boys.length}`:'';
+  $('#edBoysCnt').textContent=ED.boys.length;
+  $('#edRoomsCnt').textContent=`${ED.rooms.length} חדרים · ${ED.rooms.reduce((a,r)=>a+(+r.beds||0),0)} מיטות`;
+  // wings
+  const wbox=$('#edWings'); wbox.innerHTML='';
+  ED.wings.forEach((w,wi)=>{
+    const sec=document.createElement('div'); sec.className='ed-wing';
+    const head=document.createElement('div'); head.className='ed-wing-head';
+    const ic=document.createElement('span'); ic.className='wicon'; ic.textContent='🏢';
+    const nm=document.createElement('input'); nm.value=w.name; nm.placeholder='שם האגף…';
+    nm.addEventListener('input',()=>{w.name=nm.value;});
+    const dx=document.createElement('button'); dx.className='ed-x'; dx.textContent='✕'; dx.title='מחיקת האגף וכל חדריו';
+    dx.addEventListener('click',()=>{
+      ED.rooms=ED.rooms.filter(r=>r.wing!==w.id);
+      ED.wings.splice(wi,1);
+      renderEdit();
+    });
+    head.append(ic,nm,dx);
+    sec.appendChild(head);
+
+    const rl=document.createElement('div'); rl.className='ed-rooms';
+    ED.rooms.forEach((r,ri)=>{
+      if(r.wing!==w.id)return;
+      const row=document.createElement('div'); row.className='ed-room';
+      const lb1=document.createElement('span'); lb1.className='rlabel'; lb1.textContent='חדר';
+      const num=document.createElement('input'); num.className='rnum'; num.type='text'; num.value=r.num;
+      num.addEventListener('input',()=>{r.num=num.value;});
+      const lb2=document.createElement('span'); lb2.className='rlabel'; lb2.textContent='מיטות:';
+      const step=document.createElement('span'); step.className='step';
+      const minus=document.createElement('button'); minus.textContent='−';
+      const val=document.createElement('span'); val.className='val'; val.textContent=r.beds;
+      const plus=document.createElement('button'); plus.textContent='+';
+      minus.addEventListener('click',()=>{r.beds=Math.max(1,(+r.beds||1)-1);val.textContent=r.beds;$('#edRoomsCnt').textContent=`${ED.rooms.length} חדרים · ${ED.rooms.reduce((a,x)=>a+(+x.beds||0),0)} מיטות`;});
+      plus.addEventListener('click',()=>{r.beds=Math.min(12,(+r.beds||1)+1);val.textContent=r.beds;$('#edRoomsCnt').textContent=`${ED.rooms.length} חדרים · ${ED.rooms.reduce((a,x)=>a+(+x.beds||0),0)} מיטות`;});
+      step.append(minus,val,plus);
+      const x=document.createElement('button'); x.className='ed-x'; x.textContent='✕'; x.title='מחיקת החדר';
+      x.addEventListener('click',()=>{ED.rooms.splice(ri,1);renderEdit();});
+      row.append(lb1,num,lb2,step,x);
+      rl.appendChild(row);
+    });
+    sec.appendChild(rl);
+
+    const addR=document.createElement('button'); addR.className='btn mini'; addR.textContent='+ חדר';
+    addR.addEventListener('click',()=>{
+      ED.rooms.push({orig:null,num:'',beds:2,wing:w.id});
+      renderEdit();
+    });
+    sec.appendChild(addR);
+    wbox.appendChild(sec);
+  });
+}
+$('#edAddBoy').addEventListener('click',()=>{
+  const inp=$('#edNewBoy'); const n=inp.value.trim();
+  if(!n)return;
+  if(ED.boys.some(b=>b.name.trim()===n)){toast('השם כבר קיים');return;}
+  ED.boys.push({orig:null,name:n});
+  inp.value=''; renderEdit(); inp.focus();
+});
+$('#edNewBoy').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();$('#edAddBoy').click();}
+});
+$('#edAddWing').addEventListener('click',()=>{
+  ED.wings.push({id:'w'+uid(),name:'אגף חדש'});
+  renderEdit();
+});
+$('#btnEditApply').addEventListener('click',()=>{
+  // validate boys
+  const names=ED.boys.map(b=>b.name.trim()).filter(Boolean);
+  if(names.length!==new Set(names).size){toast('יש שמות כפולים ברשימת הבחורים');return;}
+  // validate wings/rooms
+  if(!ED.wings.length){toast('צריך לפחות אגף אחד');return;}
+  const nums=[];
+  for(const r of ED.rooms){
+    r.num=String(r.num).trim();
+    if(!r.num){toast('יש חדר בלי מספר');return;}
+    r.beds=Math.max(1,Math.min(12,+r.beds||1));
+    nums.push(r.num);
+  }
+  if(nums.length!==new Set(nums).size){toast('יש מספרי חדרים כפולים');return;}
+  // rename maps
+  snapshot();
+  const renB={},renR={};
+  ED.boys.forEach(b=>{const n=b.name.trim();if(b.orig&&n&&b.orig!==n)renB[b.orig]=n;});
+  ED.rooms.forEach(r=>{if(r.orig&&r.orig!==r.num)renR[r.orig]=r.num;});
+  const mapB=n=>renB[n]||n, mapR=n=>renR[n]||n;
+  // commit
+  S.boys=names;
+  S.wings=ED.wings.map(w=>({id:w.id,name:w.name.trim()||'אגף'}));
+  S.rooms=ED.rooms.map(r=>({num:r.num,beds:r.beds,wing:r.wing}));
+  const remapAsg=old=>{
+    const out={};
+    for(const[b,rm]of Object.entries(old)){
+      const nb=mapB(b),nr=mapR(rm);
+      if(S.boys.includes(nb)&&S.rooms.some(x=>x.num===nr)) out[nb]=nr;
+    }
+    for(const r of S.rooms){
+      const occ=S.boys.filter(b=>out[b]===r.num);
+      occ.slice(r.beds).forEach(b=>delete out[b]);
+    }
+    return out;
+  };
+  S.assign=remapAsg(S.assign);
+  S.locks=[...new Set(S.locks.map(mapB))].filter(b=>S.assign[b]);
+  S.sims.forEach(s=>s.assign=remapAsg(s.assign));
+  S.rules=S.rules.map(r=>{
+    const n={...r};
+    if(n.members)n.members=[...new Set(n.members.map(mapB))].filter(b=>S.boys.includes(b));
+    if(n.a)n.a=mapB(n.a);
+    if(n.room)n.room=mapR(n.room);
+    return n;
+  }).filter(r=>{
+    if(r.type==='separate'||r.type==='together')return r.members&&r.members.length>=2;
+    return S.boys.includes(r.a)&&S.rooms.some(x=>x.num===r.room);
+  });
+  save();initDynamic();render();
+  $('#dlgEdit').close();toast('העריכה נשמרה ✓');
+});
+
+/* ---------- Excel export (.xlsx built from scratch, zero deps) ---------- */
+function crc32(u8){
+  let tbl=crc32._t;
+  if(!tbl){
+    tbl=crc32._t=new Int32Array(256);
+    for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);tbl[n]=c;}
+  }
+  let crc=-1;
+  for(let i=0;i<u8.length;i++)crc=(crc>>>8)^tbl[(crc^u8[i])&0xFF];
+  return (crc^-1)>>>0;
+}
+function makeZip(files){
+  const chunks=[],central=[];let offset=0;
+  const le16=n=>[n&255,(n>>8)&255], le32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255];
+  for(const f of files){
+    const nameB=new TextEncoder().encode(f.name), crc=crc32(f.data), sz=f.data.length;
+    const head=new Uint8Array([0x50,0x4B,0x03,0x04,...le16(20),...le16(0x0800),...le16(0),...le16(0),...le16(0),
+      ...le32(crc),...le32(sz),...le32(sz),...le16(nameB.length),...le16(0)]);
+    chunks.push(head,nameB,f.data);
+    central.push({nameB,crc,sz,off:offset});
+    offset+=head.length+nameB.length+sz;
+  }
+  const cdStart=offset;
+  for(const c of central){
+    const rec=new Uint8Array([0x50,0x4B,0x01,0x02,...le16(20),...le16(20),...le16(0x0800),...le16(0),...le16(0),...le16(0),
+      ...le32(c.crc),...le32(c.sz),...le32(c.sz),...le16(c.nameB.length),...le16(0),...le16(0),...le16(0),...le16(0),
+      ...le32(0),...le32(c.off)]);
+    chunks.push(rec,c.nameB);
+    offset+=rec.length+c.nameB.length;
+  }
+  chunks.push(new Uint8Array([0x50,0x4B,0x05,0x06,...le16(0),...le16(0),...le16(central.length),...le16(central.length),
+    ...le32(offset-cdStart),...le32(cdStart),...le16(0)]));
+  let total=0;chunks.forEach(c=>total+=c.length);
+  const out=new Uint8Array(total);let p=0;
+  for(const c of chunks){out.set(c,p);p+=c.length;}
+  return out;
+}
+const xmlEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const colL=i=>{let s='',n=i+1;while(n){n--;s=String.fromCharCode(65+n%26)+s;n=(n/26)|0;}return s;};
+function xlsxStyles(){
+  const tint=(hex,f)=>{
+    const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;
+    const m=x=>Math.round(x+(255-x)*f).toString(16).padStart(2,'0').toUpperCase();
+    return 'FF'+m(r)+m(g)+m(b);
+  };
+  const fonts=[
+    '<font><sz val="11"/><color rgb="FF1F2937"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="11"/><color rgb="FF1F2937"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="15"/><color rgb="FF233150"/><name val="Segoe UI"/></font>',
+    '<font><sz val="10"/><color rgb="FF9AA5B8"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="11"/><color rgb="FF15803D"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="11"/><color rgb="FFB91C1C"/><name val="Segoe UI"/></font>',
+    '<font><b/><sz val="11"/><color rgb="FFB45309"/><name val="Segoe UI"/></font>',
+    '<font><sz val="10"/><color rgb="FF6B7688"/><name val="Segoe UI"/></font>'
+  ];
+  const fills=[
+    '<fill><patternFill patternType="none"/></fill>',
+    '<fill><patternFill patternType="gray125"/></fill>',
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF233150"/></patternFill></fill>',
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFEDF1F9"/></patternFill></fill>',
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF7F8FB"/></patternFill></fill>'
+  ];
+  for(const c of ROOM_COLORS){
+    fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="${tint(c,0.55)}"/></patternFill></fill>`);
+    fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="${tint(c,0.86)}"/></patternFill></fill>`);
+  }
+  const borders=[
+    '<border><left/><right/><top/><bottom/><diagonal/></border>',
+    '<border><left style="thin"><color rgb="FFC5CEE0"/></left><right style="thin"><color rgb="FFC5CEE0"/></right><top style="thin"><color rgb="FFC5CEE0"/></top><bottom style="thin"><color rgb="FFC5CEE0"/></bottom><diagonal/></border>'
+  ];
+  const xf=(f,l,b,al)=>`<xf numFmtId="0" fontId="${f}" fillId="${l}" borderId="${b}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${al}" vertical="center"/></xf>`;
+  const xfs=[
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>',
+    xf(3,0,0,'center'),  // 1 title
+    xf(1,3,1,'right'),   // 2 wing row
+    xf(2,2,1,'center'),  // 3 column header
+    xf(4,0,1,'center'),  // 4 empty bed
+    xf(1,0,0,'right'),   // 5 summary
+    xf(6,0,1,'center'),  // 6 level hard
+    xf(7,0,1,'center'),  // 7 level soft
+    xf(5,0,1,'center'),  // 8 status ok
+    xf(6,0,1,'center'),  // 9 status violated
+    xf(4,0,1,'center'),  // 10 status pending
+    xf(0,0,1,'right'),   // 11 rule text
+    xf(2,2,1,'right'),   // 12 section header
+    xf(8,0,0,'center'),  // 13 subtitle (unused index guard)
+    xf(4,0,0,'center'),  // 14 subtitle line
+    xf(0,4,1,'center'),  // 15 non-existent bed (greyed)
+    xf(5,0,1,'center'),  // 16 occupancy full
+    xf(7,0,1,'center'),  // 17 occupancy partial
+    xf(4,0,1,'center'),  // 18 occupancy empty
+    xf(0,3,1,'right')    // 19 waiting-list name
+  ];
+  ROOM_COLORS.forEach((c,i)=>{
+    xfs.push(xf(1,4+2*i,1,'center')); // 13+2i room number
+    xfs.push(xf(0,5+2*i,1,'right'));  // 14+2i occupant
+  });
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs></styleSheet>`;
+}
+function xlsxSheet(){
+  const maxBeds=Math.max(...S.rooms.map(r=>r.beds),1);
+  const totalCols=Math.max(2+maxBeds,5);      // room | beds… | occupancy
+  const lastCol=colL(totalCols-1);
+  const occCol=totalCols-1;
+  const rows=[],merges=[];
+  let R=0;
+  const push=(cells,ht)=>{rows.push({cells,ht});R++;};
+  const mergeRow=(from=0)=>merges.push(`${colL(from)}${R}:${lastCol}${R}`);
+  const ev=evaluate(S.assign);
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+
+  // ---- title block ----
+  push([{c:0,v:`שיבוץ חדרים · ${S.zman}`,s:1}],34); mergeRow();
+  push([{c:0,v:`${S.rooms.length} חדרים · ${beds} מיטות · ${placed} מתוך ${S.boys.length} בחורים שובצו`
+        +`   |   הופק ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`,s:14}],20); mergeRow();
+  push([]);
+
+  // ---- one block per wing ----
+  let ci=0;
+  for(const w of S.wings){
+    const wr=S.rooms.filter(r=>r.wing===w.id);
+    if(!wr.length)continue;
+    const wBeds=wr.reduce((a,r)=>a+r.beds,0);
+    const wOcc=wr.reduce((a,r)=>a+occupants(r.num).length,0);
+    push([{c:0,v:`${w.name}  —  ${wr.length} חדרים, ${wOcc}/${wBeds} מיטות תפוסות`,s:2}],24); mergeRow();
+    const head=[{c:0,v:'חדר',s:3}];
+    for(let b=0;b<maxBeds;b++)head.push({c:1+b,v:`מיטה ${b+1}`,s:3});
+    head.push({c:occCol,v:'תפוסה',s:3});
+    push(head,22);
+    for(const room of wr){
+      const color=ci%ROOM_COLORS.length;ci++;
+      const occ=occupants(room.num);
+      const cells=[{c:0,v:room.num,s:13+2*color}];
+      for(let b=0;b<maxBeds;b++){
+        if(b<room.beds)
+          cells.push(occ[b]
+            ?{c:1+b,v:occ[b]+(isLocked(occ[b])?'  🔒':''),s:14+2*color}
+            :{c:1+b,v:'פנוי',s:4});
+        else
+          cells.push({c:1+b,v:'',s:15});          // room has fewer beds — greyed out
+      }
+      cells.push({c:occCol,v:`${occ.length}/${room.beds}`,
+                  s:occ.length===room.beds?16:occ.length?17:18});
+      push(cells,21);
+    }
+    push([]);
+  }
+
+  // ---- waiting list ----
+  const waiting=S.boys.filter(b=>!S.assign[b]);
+  if(waiting.length){
+    push([{c:0,v:`ממתינים לשיבוץ (${waiting.length})`,s:12}],22); mergeRow();
+    for(let i=0;i<waiting.length;i+=maxBeds){
+      const chunk=waiting.slice(i,i+maxBeds);
+      push([{c:0,v:'',s:0},...chunk.map((n,j)=>({c:1+j,v:n,s:19}))],21);
+    }
+    push([]);
+  }
+
+  // ---- rules ----
+  if(S.rules.length){
+    push([{c:0,v:'תנאים וכללים',s:12}],22); mergeRow();
+    push([{c:0,v:'חשיבות',s:3},{c:1,v:'מצב',s:3},{c:2,v:'הכלל',s:3}],21);
+    merges.push(`C${R}:${lastCol}${R}`);
+    for(const it of ev.list){
+      const r=it.rule;
+      const stS=it.st==='ok'?8:it.st==='violated'?9:10;
+      const stT=it.st==='ok'?'מתקיים ✓':it.st==='violated'?'מופר ✗':it.st==='off'?'כבוי':'ממתין';
+      push([
+        {c:0,v:r.level==='hard'?'בלתי מתפשר':'עדיף',s:r.level==='hard'?6:7},
+        {c:1,v:stT,s:stS},
+        {c:2,v:ruleText(r)+(it.detail?'  —  '+it.detail:''),s:11}
+      ],21);
+      merges.push(`C${R}:${lastCol}${R}`);
+    }
+    push([]);
+    push([{c:0,v:`סה״כ הפרות — בלתי מתפשר: ${ev.hard} · עדיף: ${ev.soft}`,
+           s:ev.hard?6:ev.soft?7:5}],21); mergeRow();
+  }
+
+  let sd='';
+  rows.forEach((row,i)=>{
+    const rn=i+1;
+    if(!row.cells.length){sd+=`<row r="${rn}" ht="8" customHeight="1"/>`;return;}
+    sd+=`<row r="${rn}"${row.ht?` ht="${row.ht}" customHeight="1"`:''}>`;
+    for(const cell of row.cells)
+      sd+=`<c r="${colL(cell.c)}${rn}" s="${cell.s||0}"${cell.v===''?'':' t="inlineStr"'}>`
+        +(cell.v===''?'':`<is><t xml:space="preserve">${xmlEsc(cell.v)}</t></is>`)+'</c>';
+    sd+='</row>';
+  });
+  const cols=`<cols><col min="1" max="1" width="11" customWidth="1"/>`
+    +`<col min="2" max="${totalCols-1}" width="19" customWidth="1"/>`
+    +`<col min="${totalCols}" max="${totalCols}" width="10" customWidth="1"/></cols>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0" showGridLines="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="20"/>${cols}<sheetData>${sd}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>`:''}<pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+}
+/* small helper used for the downloadable template */
+function simpleSheetXlsx(rows,sheetName){
+  const enc=new TextEncoder();
+  let sd='';
+  rows.forEach((row,i)=>{
+    const rn=i+1;
+    sd+=`<row r="${rn}"${i===0?' ht="24" customHeight="1"':''}>`;
+    row.forEach((v,c)=>{
+      if(v==='')return;
+      sd+=`<c r="${colL(c)}${rn}" s="${i===0?3:0}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+    });
+    sd+='</row>';
+  });
+  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="19"/><cols><col min="1" max="1" width="26" customWidth="1"/><col min="2" max="4" width="14" customWidth="1"/></cols><sheetData>${sd}</sheetData></worksheet>`;
+  const CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+  const RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const WB=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xmlEsc(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const WBRELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  return makeZip([
+    {name:'[Content_Types].xml',data:enc.encode(CT)},
+    {name:'_rels/.rels',data:enc.encode(RELS)},
+    {name:'xl/workbook.xml',data:enc.encode(WB)},
+    {name:'xl/_rels/workbook.xml.rels',data:enc.encode(WBRELS)},
+    {name:'xl/styles.xml',data:enc.encode(xlsxStyles())},
+    {name:'xl/worksheets/sheet1.xml',data:enc.encode(sheet)}
+  ]);
+}
+function buildXlsxBytes(){
+  const enc=new TextEncoder();
+  const CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+  const RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const WB='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="שיבוץ" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  const WBRELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  return makeZip([
+    {name:'[Content_Types].xml',data:enc.encode(CT)},
+    {name:'_rels/.rels',data:enc.encode(RELS)},
+    {name:'xl/workbook.xml',data:enc.encode(WB)},
+    {name:'xl/_rels/workbook.xml.rels',data:enc.encode(WBRELS)},
+    {name:'xl/styles.xml',data:enc.encode(xlsxStyles())},
+    {name:'xl/worksheets/sheet1.xml',data:enc.encode(xlsxSheet())}
+  ]);
+}
+$('#btnXlsx').addEventListener('click',()=>{
+  try{
+    const blob=new Blob([buildXlsxBytes()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=safeFile(`שיבוץ-חדרים-${S.zman}`)+'.xlsx';
+    a.click();URL.revokeObjectURL(a.href);
+    toast('קובץ אקסל ירד למחשב 📊');
+  }catch(e){toast('שגיאה בייצוא אקסל');}
+});
+
+/* ---------- paste-import of name lists ---------- */
+function parseNameList(txt){
+  return [...new Set(
+    txt.split(/[\n,;]+/)
+      .map(s=>s.replace(/^[\s\d.\-)(*•·–—]+/,'').trim())
+      .filter(Boolean)
+  )];
+}
+function importNames(replace){
+  const names=parseNameList($('#edPaste').value);
+  if(!names.length){toast('לא נמצאו שמות בהדבקה');return;}
+  if(replace){
+    ED.boys=names.map(n=>({orig:S.boys.includes(n)?n:null,name:n}));
+  }else{
+    let added=0;
+    for(const n of names){
+      if(!ED.boys.some(b=>b.name.trim()===n)){ED.boys.push({orig:S.boys.includes(n)?n:null,name:n});added++;}
+    }
+    if(!added){toast('כל השמות כבר ברשימה');return;}
+  }
+  $('#edPaste').value='';
+  renderEdit();
+  toast(replace?`הרשימה הוחלפה — ${names.length} שמות`:'השמות נוספו ✓');
+}
+$('#edPasteAdd').addEventListener('click',()=>importNames(false));
+$('#edPasteReplace').addEventListener('click',()=>importNames(true));
+
+/* ---------- read names from a file (xlsx / docx / csv / txt / json) ---------- */
+async function unzipEntries(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(buf), td=new TextDecoder();
+  // locate End Of Central Directory
+  let eocd=-1;
+  for(let i=u8.length-22;i>=0&&i>u8.length-66000;i--)
+    if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  if(eocd<0)throw new Error('הקובץ אינו ZIP תקין');
+  const count=dv.getUint16(eocd+10,true);
+  let p=dv.getUint32(eocd+16,true);
+  const out={};
+  for(let i=0;i<count;i++){
+    if(dv.getUint32(p,true)!==0x02014b50)break;
+    const method=dv.getUint16(p+10,true);
+    const csize=dv.getUint32(p+20,true);
+    const nlen=dv.getUint16(p+28,true), elen=dv.getUint16(p+30,true), clen=dv.getUint16(p+32,true);
+    const lho=dv.getUint32(p+42,true);
+    const name=td.decode(u8.slice(p+46,p+46+nlen));
+    const lnlen=dv.getUint16(lho+26,true), lelen=dv.getUint16(lho+28,true);
+    const start=lho+30+lnlen+lelen;
+    const raw=u8.slice(start,start+csize);
+    if(method===0)out[name]=td.decode(raw);
+    else if(method===8){
+      if(typeof DecompressionStream==='undefined')throw new Error('הדפדפן הזה לא יודע לפתוח קובצי xlsx/docx — נסו CSV או הדבקה');
+      const ds=new DecompressionStream('deflate-raw');
+      const stream=new Blob([raw]).stream().pipeThrough(ds);
+      out[name]=await new Response(stream).text();
+    }
+    p+=46+nlen+elen+clen;
+  }
+  return out;
+}
+function textOfXml(xml,tagSel){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  return [...doc.getElementsByTagName(tagSel)];
+}
+async function sheetRows(buf){
+  const files=await unzipEntries(buf);
+  const sheetName=Object.keys(files).find(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n));
+  if(!sheetName)throw new Error('לא נמצא גיליון בקובץ');
+  let shared=[];
+  if(files['xl/sharedStrings.xml']){
+    const doc=new DOMParser().parseFromString(files['xl/sharedStrings.xml'],'application/xml');
+    shared=[...doc.getElementsByTagName('si')].map(si=>
+      [...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  }
+  const doc=new DOMParser().parseFromString(files[sheetName],'application/xml');
+  const rows=[];
+  for(const r of doc.getElementsByTagName('row')){
+    const cells=[];
+    for(const c of r.getElementsByTagName('c')){
+      const ref=(c.getAttribute('r')||'').match(/^([A-Z]+)/);
+      let idx=cells.length;
+      if(ref){idx=0;for(const ch of ref[1])idx=idx*26+(ch.charCodeAt(0)-64);idx--;}
+      const t=c.getAttribute('t');
+      let val='';
+      if(t==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');
+      else{
+        const v=c.getElementsByTagName('v')[0];
+        if(v)val=(t==='s')?(shared[+v.textContent]||''):v.textContent;
+      }
+      while(cells.length<idx)cells.push('');
+      cells[idx]=val;
+    }
+    if(cells.length)rows.push(cells);
+  }
+  return rows;
+}
+async function namesFromXlsx(buf){ return pickNameColumn(await sheetRows(buf)); }
+async function namesFromDocx(buf){
+  const files=await unzipEntries(buf);
+  const xml=files['word/document.xml'];
+  if(!xml)throw new Error('לא נמצא תוכן במסמך');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  return [...doc.getElementsByTagName('w:p')].map(p=>
+    [...p.getElementsByTagName('w:t')].map(t=>t.textContent).join('').trim());
+}
+function namesFromJson(txt){
+  const data=JSON.parse(txt);
+  if(Array.isArray(data))
+    return data.map(x=>typeof x==='string'?x:(x&&(x.name||x.boy||x.שם))||'');
+  if(data&&Array.isArray(data.boys))return data.boys;
+  throw new Error('ה־JSON לא מכיל רשימת שמות');
+}
+function cleanNames(arr){
+  const out=[],seen=new Set();
+  for(let raw of arr){
+    if(raw==null)continue;
+    let n=String(raw).replace(/^[\s\d.\-)(*•·–—]+/,'').replace(/\s+/g,' ').trim();
+    if(!n||n.length>40)continue;
+    if(/^\d+$/.test(n))continue;                      // pure numbers = row indexes
+    if(/^(שם|שמות|בחור|בחורים|מס|מספר|#|name|names)$/i.test(n))continue;  // headers
+    if(seen.has(n))continue;
+    seen.add(n);out.push(n);
+  }
+  return out;
+}
+/* a table can be "1,לוי,כיתה א" — pick the column that actually holds names */
+function pickNameColumn(rows){
+  if(!rows.length)return [];
+  const width=Math.max(...rows.map(r=>r.length));
+  if(width<=1)return rows.map(r=>r[0]);
+  if(rows.length===1)return rows[0];   // one line of comma-separated names, not a table
+  let best=0,bestScore=-1;
+  for(let c=0;c<width;c++){
+    let score=0;
+    for(const r of rows){
+      const v=(r[c]||'').trim();
+      if(!v||/^\d+([.,]\d+)?$/.test(v))continue;   // empty or numeric — no signal
+      if(v.length>40)continue;                     // long free text, probably a note
+      score+=/[א-תA-Za-z]/.test(v)?1:0;
+    }
+    if(score>bestScore){bestScore=score;best=c;}
+  }
+  return rows.map(r=>r[best]);
+}
+function parseDelimited(txt){
+  const rows=txt.split(/\r?\n/).filter(l=>l.trim());
+  const delim=(txt.match(/\t/g)||[]).length>(txt.match(/,/g)||[]).length?'\t'
+             :(txt.match(/;/g)||[]).length>(txt.match(/,/g)||[]).length?';':',';
+  return rows.map(l=>l.split(delim).map(c=>c.replace(/^"(.*)"$/,'$1')));
+}
+/* ---- structured setup import: boys + rooms + beds + wings in one table ---- */
+const COL_ALIASES={
+  boy:['בחורים','בחור','שמות','שם','תלמידים','תלמיד','name','names','boys'],
+  room:['חדר','חדרים','מספר חדר','room','rooms'],
+  beds:['מיטות','מיטה','מספר מיטות','beds','bed'],
+  wing:['אגף','אגפים','בניין','קומה','wing']
+};
+function detectColumns(row){
+  const map={};
+  row.forEach((cell,i)=>{
+    const v=norm(cell);
+    if(!v)return;
+    for(const [key,names] of Object.entries(COL_ALIASES))
+      if(map[key]===undefined&&names.some(n=>norm(n)===v))map[key]=i;
+  });
+  return map;
+}
+/* returns {boys,rooms} when the table has recognisable headers, else null */
+function parseSetupTable(rows){
+  for(let h=0;h<Math.min(rows.length,8);h++){
+    const map=detectColumns(rows[h]);
+    if(map.boy===undefined&&map.room===undefined)continue;
+    const boys=[],rooms=[],seenR=new Set();
+    for(let i=h+1;i<rows.length;i++){
+      const row=rows[i]||[];
+      if(map.boy!==undefined){
+        const b=String(row[map.boy]||'').trim();
+        if(b)boys.push(b);
+      }
+      if(map.room!==undefined){
+        const rn=String(row[map.room]||'').trim();
+        if(rn&&!seenR.has(rn)){
+          seenR.add(rn);
+          rooms.push({num:rn,
+            beds:Math.max(1,Math.min(12,parseInt(row[map.beds],10)||2)),
+            wingName:map.wing!==undefined?String(row[map.wing]||'').trim():''});
+        }
+      }
+    }
+    if(boys.length||rooms.length)return {boys:cleanNames(boys),rooms};
+  }
+  return null;
+}
+async function readTableFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(ext==='xlsx'||ext==='xlsm')return sheetRows(await file.arrayBuffer());
+  if(ext==='json'||ext==='docx')return null;
+  return parseDelimited(await file.text());
+}
+async function readNamesFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  let raw;
+  if(ext==='xlsx'||ext==='xlsm')      raw=await namesFromXlsx(await file.arrayBuffer());
+  else if(ext==='docx')               raw=await namesFromDocx(await file.arrayBuffer());
+  else{
+    const txt=await file.text();
+    if(ext==='json')                  raw=namesFromJson(txt);
+    else                              raw=pickNameColumn(parseDelimited(txt));
+  }
+  return cleanNames(raw);
+}
+/* applies a full setup (boys + rooms + wings) straight into the app */
+function applySetup(setup,replace){
+  snapshot();
+  if(setup.boys.length){
+    S.boys=replace?[...setup.boys]
+      :[...new Set([...S.boys,...setup.boys])];
+  }
+  if(setup.rooms.length){
+    const wingIdOf=name=>{
+      const nm=(name||'').trim()||'אגף ראשי';
+      let w=S.wings.find(x=>norm(x.name)===norm(nm));
+      if(!w){w={id:'w'+uid(),name:nm};S.wings.push(w);}
+      return w.id;
+    };
+    const rooms=setup.rooms.map(r=>({num:r.num,beds:r.beds,wing:wingIdOf(r.wingName)}));
+    if(replace){
+      S.rooms=[];S.assign={};S.locks=[];
+      const keep=new Set(rooms.map(r=>r.wing));
+      S.wings=S.wings.filter(w=>keep.has(w.id));
+      if(!S.wings.length)S.wings=[{id:'w1',name:'אגף ראשי'}];
+    }
+    for(const r of rooms) if(!roomBy(r.num)) S.rooms.push(r);
+  }
+  S=migrate(S);
+  save();initDynamic();applySettings();render();
+}
+async function handleNamesFile(file){
+  if(!file)return;
+  try{
+    // first try to read it as a full setup table
+    const rows=await readTableFile(file);
+    const setup=rows?parseSetupTable(rows):null;
+    if(setup&&(setup.rooms.length||setup.boys.length)){
+      const parts=[];
+      if(setup.boys.length)parts.push(`${setup.boys.length} בחורים`);
+      if(setup.rooms.length)parts.push(`${setup.rooms.length} חדרים`);
+      const empty=!S.boys.length&&!S.rooms.length;
+      const msg=`נמצאו בקובץ: ${parts.join(' ו־')}.\n\n`
+        +(empty?'לייבא הכול?':'אישור — להחליף את הרשימות הקיימות\nביטול — להוסיף למה שכבר קיים');
+      const replace=empty?true:confirm(msg);
+      if(!empty&&!replace&&!confirm('להוסיף את הנתונים לרשימות הקיימות?'))return;
+      applySetup(setup,replace);
+      if($('#dlgEdit').open){$('#dlgEdit').close();ED=null;}
+      toast(`יובאו ${parts.join(' ו־')} ✓`);
+      return;
+    }
+    // otherwise fall back to a plain list of names
+    const names=await readNamesFile(file);
+    if(!names.length){toast('לא נמצאו שמות בקובץ');return;}
+    if(!$('#dlgEdit').open)$('#btnEdit').click();
+    $('#edPaste').value=names.join('\n');
+    const det=$('.ed-import'); if(det)det.open=true;
+    toast(`נקראו ${names.length} שמות מ"${file.name}" — בדקו ולחצו הוספה או החלפה`);
+  }catch(e){
+    toast('שגיאה בקריאת הקובץ: '+(e.message||e));
+  }
+}
+
+/* ---- downloadable template ---- */
+function templateRows(){
+  return [
+    ['בחורים','חדר','מיטות','אגף'],
+    ['ישראל ישראלי','405','4','אגף 400'],
+    ['משה כהן','406','4','אגף 400'],
+    ['יעקב לוי','407','2','אגף 400'],
+    ['אברהם פרידמן','408','3','אגף 400'],
+    ['יצחק שוורץ','409','2','אגף 400'],
+    ['דוד רוזנברג','','',''],
+    ['שלמה גולדשטיין','','','']
+  ];
+}
+function downloadTemplate(){
+  const rows=templateRows();
+  const bytes=simpleSheetXlsx(rows,'רשימות');
+  const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='תבנית-שיבוץ-חדרים.xlsx';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('קובץ התבנית ירד — מלאו אותו וייבאו חזרה');
+}
+$('#edPickFile').addEventListener('click',()=>$('#fileNames').click());
+$('#edTemplate').addEventListener('click',downloadTemplate);
+$('#fileNames').addEventListener('change',e=>{
+  handleNamesFile(e.target.files[0]);
+  e.target.value='';
+});
+(()=>{
+  const dz=$('#edDrop');
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();dz.classList.add('over');
+  }));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();dz.classList.remove('over');
+  }));
+  dz.addEventListener('drop',e=>handleNamesFile(e.dataTransfer.files[0]));
+})();
+
+/* ---------- Gemini AI advisor ---------- */
+const GKEY='dorm-gemini-key', GMODEL='dorm-gemini-model', GLIST='dorm-gemini-models';
+/* "-latest" aliases are hot-swapped by Google on every release, so this list
+   never goes stale; the ↻ button replaces it with whatever the account really has. */
+/* deliberately short: three roles, not a catalogue. "-latest" aliases are
+   hot-swapped by Google, so these stay current without edits. */
+const FALLBACK_MODELS=[
+  {id:'gemini-flash-latest',      note:'מומלץ — מהיר וחכם'},
+  {id:'gemini-flash-lite-latest', note:'הקל ביותר — מכסה חינמית גדולה'},
+  {id:'gemini-pro-latest',        note:'החזק ביותר — איטי, לרוב בתשלום'}
+];
+const MODEL_ROLES=[
+  {re:/^gemini-flash-latest$/,       note:'מומלץ — מהיר וחכם'},
+  {re:/^gemini-flash-lite-latest$/,  note:'הקל ביותר — מכסה חינמית גדולה'},
+  {re:/^gemini-pro-latest$/,         note:'החזק ביותר — איטי, לרוב בתשלום'}
+];
+const DEF_MODEL='gemini-flash-latest';
+const AIH=[];
+/* what each action needs; anything marked 'full' is off-limits below that level */
+const ACT_LEVEL={
+  // board
+  move:'act',swap:'act',auto:'act',clear:'act',lock:'act',unlock:'act',
+  // rules
+  addRule:'act',editRule:'act',toggleRule:'act',
+  deleteRule:'full',deleteAllRules:'full',
+  // simulations
+  saveSim:'act',loadSim:'act',renameSim:'act',deleteSim:'full',
+  // lists
+  renameBoy:'full',addBoy:'full',removeBoy:'full',
+  addRoom:'full',editRoom:'full',removeRoom:'full',
+  addWing:'full',renameWing:'full',removeWing:'full',
+  // app
+  setZman:'act',display:'act',setting:'full',clearAll:'full',reset:'full'
+};
+const ACT_HE={move:'שיבוץ',swap:'החלפה',auto:'שיבוץ אוטומטי',clear:'ניקוי לוח',lock:'נעילה',unlock:'שחרור',
+  addRule:'הוספה',editRule:'עריכה',toggleRule:'הפעלה/כיבוי',deleteRule:'מחיקה',deleteAllRules:'מחיקת הכול',
+  saveSim:'שמירה',loadSim:'טעינה',renameSim:'שינוי שם',deleteSim:'מחיקה',
+  renameBoy:'שינוי שם בחור',addBoy:'הוספת בחור',removeBoy:'הסרת בחור',
+  addRoom:'הוספת חדר',editRoom:'עריכת חדר',removeRoom:'מחיקת חדר',
+  addWing:'הוספת אגף',renameWing:'שינוי שם אגף',removeWing:'מחיקת אגף',
+  setZman:'שם הזמן',display:'שינוי תצוגה',setting:'הגדרות מערכת',clearAll:'ניקוי מלא',reset:'איפוס'};
+const DESTRUCTIVE=new Set(['deleteRule','deleteAllRules','deleteSim','clearAll','reset',
+                           'removeBoy','removeRoom','removeWing']);
+const LEVEL_NOTE={
+  advise:'היועץ ייעץ וימליץ בלבד — הוא לא נוגע בלוח. כל שינוי תבצעו בעצמכם.',
+  act:'היועץ יכול לשבץ, לנעול, להוסיף כללים ולשמור סימולציות. אינו מוחק ואינו מאפס.',
+  full:'היועץ יכול גם למחוק כללים וסימולציות, לנקות הכול ולאפס את התוכנה. מומלץ להשאיר את האישור המקדים דלוק.'
+};
+const LEVEL_SHORT={advise:'ייעוץ בלבד',act:'פעולות רגילות',full:'ללא הגבלה'};
+const aiCfg=()=>S.settings.ai;
+function aiProtocol(){
+  const lvl=aiCfg().level;
+  if(lvl==='advise')
+    return 'אינך מורשה לבצע פעולות בתוכנה כלל. אל תחזיר בלוק actions בשום מצב.\n'
+      +'אם מבקשים ממך לבצע — הסבר בקצרה מה לעשות ידנית, וציין שאתה במצב "ייעוץ בלבד" ושאפשר לשנות זאת בהגדרות שלך (⚙️).';
+  let p='כדי לבצע פעולות, צרף בסוף התשובה בלוק ```json (רק פעולות שנתבקשת):\n'
+    +'{"actions":[\n'
+    +' {"type":"move","boy":"שם מדויק","room":"405"}   ← שיבוץ לחדר. room:null מחזיר לממתינים\n'
+    +' {"type":"swap","a":"שם","b":"שם"}                ← החלפת מקומות בין שניים (עובד גם כשהחדר מלא)\n'
+    +' {"type":"auto"}                                  ← שיבוץ אוטומטי לפי הכללים\n'
+    +' {"type":"clear"}                                 ← ניקוי הלוח (נעולים נשארים)\n'
+    +' {"type":"addRule","ruleType":"separate","members":["א","ב"],"level":"hard"}  ← גם together; level: hard/soft\n'
+    +' {"type":"addRule","ruleType":"inRoom","boy":"שם","room":"405","level":"soft"} ← גם notInRoom\n'
+    +' {"type":"lock","boy":"שם"}  {"type":"unlock","boy":"שם"}\n'
+    +' {"type":"saveSim","name":"שם"}  {"type":"loadSim","name":"שם"}\n';
+  p+=' {"type":"editRule","index":2,"level":"soft"}      ← שינוי כלל קיים (אפשר גם members/boy/room/ruleType)\n'
+    +' {"type":"toggleRule","index":2,"on":false}         ← כיבוי/הפעלה של כלל\n'
+    +' {"type":"renameSim","name":"ישן","newName":"חדש"}\n'
+    +' {"type":"setZman","value":"זמן חורף תשפ״ז"}        ← שם התקופה בכותרת\n'
+    +' {"type":"display","theme":"light"}                 ← תצוגה: theme dark/light/auto, accent, text 90-125,\n'
+    +'                                                       density compact/regular/roomy, roomW, emptyBeds,\n'
+    +'                                                       tilt, grid, motion (בוליאני)\n';
+  if(lvl==='full')
+    p+=' {"type":"deleteRule","index":2}     ← מחיקת כלל לפי המספר שברשימת הכללים\n'
+      +' {"type":"deleteAllRules"}            ← מחיקת כל הכללים\n'
+      +' {"type":"deleteSim","name":"שם"}     ← מחיקת סימולציה\n'
+      +' {"type":"renameBoy","boy":"ישן","newName":"חדש"}\n'
+      +' {"type":"addBoy","name":"שם"}   {"type":"removeBoy","boy":"שם"}\n'
+      +' {"type":"addRoom","room":"410","beds":3,"wing":"אגף 400"}\n'
+      +' {"type":"editRoom","room":"410","newRoom":"411","beds":4,"wing":"אגף 500"}\n'
+      +' {"type":"removeRoom","room":"410"}\n'
+      +' {"type":"addWing","name":"אגף 700"}  {"type":"renameWing","wing":"ישן","newName":"חדש"}\n'
+      +' {"type":"removeWing","wing":"שם"}    ← מוחק גם את כל חדריו\n'
+      +' {"type":"setting","key":"sound","value":false}   ← sound/flash/pulse/suggest/confirm/aiFab\n'
+      +' {"type":"clearAll"}                  ← ניקוי הלוח כולל שחרור הנעולים\n'
+      +' {"type":"reset"}                     ← איפוס מלא של התוכנה\n';
+  p+=']}\n';
+  p+=lvl==='full'
+    ? 'יש לך הרשאה מלאה, כולל פעולות הרסניות. השתמש בהן רק בבקשה מפורשת וחד־משמעית, ואמור מראש מה אתה עומד למחוק.\n'
+    : 'אין לך הרשאה למחוק כללים או סימולציות, לנקות נעולים או לאפס את התוכנה. אם יבקשו — הסבר שההרשאה שלך מוגבלת ושאפשר לשנות זאת בהגדרות שלך (⚙️).\n';
+  return p;
+}
+function aiSystem(){
+  const c=aiCfg();
+  return `שמך "${c.name}" ואתה יועץ שיבוץ חדרים בפנימיית ישיבה, משולב בתוך אפליקציית שיבוץ. ענה בעברית, קצר ותכליתי.\n`
+    +`רמת ההרשאה שלך: ${LEVEL_SHORT[c.level]}.\n`
+    +'תפקידך: לייעץ, להציע שיבוצים ולזהות בעיות בשיבוץ הנוכחי.\n'
+    +aiProtocol()
+    +'\n=== כללי עבודה חשובים ===\n'
+    +'1. חדר מלא: אי אפשר להוסיף אליו בחור. יש שתי דרכים — swap (החלפה בין שניים), '
+    +'או קודם move של מישהו מהחדר החוצה ואז move פנימה. תכנן את סדר הפעולות בעצמך.\n'
+    +'2. בחור נעול 🔒 לא זז. כדי להזיז אותו צריך unlock קודם — ורק אם המשתמש ביקש זאת.\n'
+    +'3. אל תכתוב שביצעת משהו לפני שהוא בוצע. נסח את התשובה כתוכנית ("אעביר…", "אחליף…") — '
+    +'המערכת תדווח מיד אחריך מה באמת קרה, והדיווח שלה הוא הקובע.\n'
+    +'4. אם תקבל הודעת "[דיווח מערכת]" עם כישלון — תקן מיד בעצמך: הבן מהשגיאה מה חסם, '
+    +'והצע/בצע פעולות מתוקנות. אל תחזור על אותה פעולה בדיוק.\n'
+    +'5. אם אינך בטוח שהמהלך הוא מה שהמשתמש רצה (למשל מי לפנות מחדר מלא) — שאל אותו קודם, בלי בלוק פעולות.\n'
+    +'השתמש אך ורק בשמות ובמספרי חדרים המדויקים מהמצב הנוכחי. אל תמציא. אם רק שואלים — ענה בלי בלוק פעולות.';
+}
+function stateBrief(){
+  const lines=['בחורים: '+S.boys.join(', ')];
+  for(const w of S.wings)
+    for(const r of S.rooms.filter(x=>x.wing===w.id)){
+      const occ=occupants(r.num);
+      lines.push(`חדר ${r.num} (${w.name}, ${r.beds} מיטות): ${occ.length?occ.join(', '):'ריק'}`);
+    }
+  const waiting=S.boys.filter(b=>!S.assign[b]);
+  lines.push('ממתינים לשיבוץ: '+(waiting.join(', ')||'אין'));
+  lines.push('נעולים בחדרם: '+(S.locks.filter(b=>S.assign[b]).join(', ')||'אין'));
+  const ev=evaluate(S.assign);
+  if(S.rules.length){
+    lines.push('כללים:');
+    ev.list.forEach((it,i)=>lines.push(`${i+1}. ${ruleText(it.rule)} [${it.rule.level==='hard'?'בלתי מתפשר':'עדיף'}] — ${it.st==='violated'?'מופר!':it.st==='ok'?'מתקיים':it.st==='off'?'כבוי':'ממתין'}`));
+  }else lines.push('כללים: אין');
+  lines.push('סימולציות שמורות: '+(S.sims.map(s=>s.name).join(', ')||'אין'));
+  return lines.join('\n');
+}
+function addMsg(role,text){
+  const box=$('#aiMsgs');
+  const m=document.createElement('div');
+  m.className='ai-m '+role;
+  if(text==='…'){m.classList.add('typing');m.innerHTML='<i>●</i><i>●</i><i>●</i>';}
+  else m.textContent=text;
+  box.appendChild(m);
+  box.scrollTop=box.scrollHeight;
+  return m;
+}
+function actionLabel(a){
+  return {
+    move:`שיבוץ ${a.boy}${a.room?' לחדר '+a.room:' לממתינים'}`,
+    swap:`החלפה בין ${a.a} ל־${a.b}`,
+    auto:'שיבוץ אוטומטי',clear:'ניקוי הלוח',
+    lock:`נעילת ${a.boy}`,unlock:`שחרור ${a.boy}`,
+    addRule:'הוספת כלל',editRule:`עריכת כלל מספר ${a.index}`,
+    toggleRule:`${a.on===false?'כיבוי':'הפעלת'} כלל מספר ${a.index}`,
+    deleteRule:`מחיקת כלל מספר ${a.index}`,deleteAllRules:'מחיקת כל הכללים',
+    saveSim:`שמירת הסימולציה "${a.name||''}"`,loadSim:`טעינת הסימולציה "${a.name||''}"`,
+    renameSim:`שינוי שם הסימולציה "${a.name}" ל"${a.newName}"`,
+    deleteSim:`מחיקת הסימולציה "${a.name}"`,
+    renameBoy:`שינוי שם: "${a.boy}" ← "${a.newName}"`,
+    addBoy:`הוספת הבחור "${a.name}"`,removeBoy:`הסרת הבחור "${a.boy}" מהרשימה`,
+    addRoom:`הוספת חדר ${a.room}`,editRoom:`עריכת חדר ${a.room}`,
+    removeRoom:`מחיקת חדר ${a.room} וכל יושביו`,
+    addWing:`הוספת האגף "${a.name}"`,
+    renameWing:`שינוי שם האגף "${a.wing}" ל"${a.newName}"`,
+    removeWing:`מחיקת האגף "${a.wing}" וכל חדריו`,
+    setZman:`שינוי שם הזמן ל"${a.value}"`,
+    display:'שינוי הגדרות תצוגה',
+    setting:`שינוי ההגדרה ${a.key}`,
+    clearAll:'ניקוי הלוח כולל שחרור נעולים',
+    reset:'איפוס מלא של התוכנה'
+  }[a.type]||a.type;
+}
+function runActions(acts){
+  const done=[],fail=[],blocked=[],declined=[];
+  const cfg=aiCfg();
+  for(const a of acts){
+    // ----- permission gate -----
+    if(cfg.level==='advise'){blocked.push(actionLabel(a));continue;}
+    const need=ACT_LEVEL[a.type];
+    if(!need){fail.push('פעולה לא מוכרת: '+a.type);continue;}
+    if(need==='full'&&cfg.level!=='full'){blocked.push(actionLabel(a));continue;}
+    if(DESTRUCTIVE.has(a.type)&&cfg.askFirst&&
+       !confirm(`${cfg.name} מבקש לבצע פעולה הרסנית:\n\n${actionLabel(a)}\n\nלאשר?`)){
+      declined.push(actionLabel(a));continue;
+    }
+    try{
+      if(a.type==='move'){
+        if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
+        const want=a.room?String(a.room):null;
+        if(want&&!roomBy(want))throw new Error('חדר לא קיים: '+want);
+        // explain precisely why a move can't happen, so the model can fix it itself
+        if(isLocked(a.boy)&&S.assign[a.boy])
+          throw new Error(`${a.boy} נעול בחדר ${S.assign[a.boy]} — יש לשחרר אותו קודם (unlock)`);
+        if(want){
+          const room=roomBy(want),occ=occupants(want);
+          if(S.assign[a.boy]!==want&&occ.length>=room.beds){
+            const free=occ.filter(b=>!isLocked(b));
+            throw new Error(`חדר ${want} מלא (${occ.length}/${room.beds}). בפנים: ${occ.join(', ')}. `
+              +(free.length
+                ? `כדי לשבץ אליו — או swap עם אחד מהם, או קודם להוציא אחד מ: ${free.join(', ')}`
+                : 'כל היושבים בו נעולים'));
+          }
+        }
+        assignBoy(a.boy,want);
+        const now=S.assign[a.boy]||null;
+        if(now===want)done.push(want?`${a.boy} ← חדר ${want}`:`${a.boy} ← ממתינים`);
+        else fail.push(`${a.boy}: השיבוץ לא נקלט`);
+      }
+      else if(a.type==='swap'){
+        const {a:x,b:y}=a;
+        for(const n of [x,y]) if(!S.boys.includes(n))throw new Error('שם לא קיים: '+n);
+        if(isLocked(x)&&S.assign[x])throw new Error(`${x} נעול — יש לשחרר קודם`);
+        if(isLocked(y)&&S.assign[y])throw new Error(`${y} נעול — יש לשחרר קודם`);
+        const rx=S.assign[x]||null, ry=S.assign[y]||null;
+        if(rx===ry)throw new Error(`${x} ו־${y} כבר באותו מקום`);
+        snapshot();
+        if(ry)S.assign[x]=ry; else delete S.assign[x];
+        if(rx)S.assign[y]=rx; else delete S.assign[y];
+        S.activeSim=null;save();render();
+        done.push(`הוחלפו: ${x} (${rx||'ממתינים'}) ↔ ${y} (${ry||'ממתינים'})`);
+      }
+      else if(a.type==='auto'){
+        const res=optimize(new Set(S.locks.filter(b=>S.assign[b])));
+        if(res){S.assign=res.asg;S.activeSim=null;save();render();done.push(`שיבוץ אוטומטי (${res.ev.hard} חמורות, ${res.ev.soft} קלות)`);}
+        else fail.push('שיבוץ אוטומטי נכשל — אין מספיק מיטות');
+      }
+      else if(a.type==='clear'){
+        const keep={};for(const b of S.locks)if(S.assign[b])keep[b]=S.assign[b];
+        S.assign=keep;S.activeSim=null;save();render();done.push('הלוח נוקה');
+      }
+      else if(a.type==='addRule'){
+        const level=a.level==='soft'?'soft':'hard';
+        let rule;
+        if(a.ruleType==='separate'||a.ruleType==='together'){
+          const mem=(a.members||[]).filter(b=>S.boys.includes(b));
+          if(mem.length<2)throw new Error('כלל עם פחות משני שמות תקינים');
+          rule={id:uid(),type:a.ruleType,members:mem,level,enabled:true};
+        }else if(a.ruleType==='inRoom'||a.ruleType==='notInRoom'){
+          if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
+          if(!roomBy(String(a.room)))throw new Error('חדר לא קיים: '+a.room);
+          rule={id:uid(),type:a.ruleType,a:a.boy,room:String(a.room),level,enabled:true};
+        }else throw new Error('סוג כלל לא מוכר: '+a.ruleType);
+        S.rules.push(rule);save();render();done.push('נוסף כלל: '+ruleText(rule));
+      }
+      else if(a.type==='lock'){
+        if(S.assign[a.boy]){if(!isLocked(a.boy))S.locks.push(a.boy);save();render();done.push(`🔒 ${a.boy}`);}
+        else fail.push(`נעילה: ${a.boy} לא משובץ`);
+      }
+      else if(a.type==='unlock'){S.locks=S.locks.filter(x=>x!==a.boy);save();render();done.push(`🔓 ${a.boy}`);}
+      else if(a.type==='saveSim'){
+        const sim={id:uid(),name:a.name||`סימולציה ${S.sims.length+1}`,ts:Date.now(),assign:{...S.assign}};
+        S.sims.push(sim);S.activeSim=sim.id;save();render();done.push(`נשמרה סימולציה "${sim.name}"`);
+      }
+      else if(a.type==='loadSim'){
+        const sim=S.sims.find(s=>s.name===a.name);
+        if(!sim)throw new Error('אין סימולציה בשם '+a.name);
+        loadSim(sim);done.push(`נטענה "${sim.name}"`);
+      }
+      else if(a.type==='deleteRule'){
+        const i=(+a.index)-1;
+        if(!(i>=0&&i<S.rules.length))throw new Error('אין כלל מספר '+a.index);
+        snapshot();
+        const txt=ruleText(S.rules[i]);
+        S.rules.splice(i,1);save();render();done.push('נמחק כלל: '+txt);
+      }
+      else if(a.type==='deleteAllRules'){
+        if(!S.rules.length)throw new Error('אין כללים למחוק');
+        snapshot();
+        const n=S.rules.length;S.rules=[];save();render();
+        done.push(n===1?'נמחק הכלל היחיד':`נמחקו ${n} כללים`);
+      }
+      else if(a.type==='deleteSim'){
+        const sim=S.sims.find(s=>s.name===a.name);
+        if(!sim)throw new Error('אין סימולציה בשם '+a.name);
+        S.sims=S.sims.filter(s=>s.id!==sim.id);
+        if(S.activeSim===sim.id)S.activeSim=null;
+        save();render();done.push(`נמחקה הסימולציה "${sim.name}"`);
+      }
+      else if(a.type==='clearAll'){
+        snapshot();
+        S.assign={};S.locks=[];S.activeSim=null;save();render();
+        done.push('הלוח נוקה כולל שחרור הנעולים');
+      }
+      else if(a.type==='reset'){
+        localStorage.removeItem(KEY);
+        S=loadState();selected=null;formMembers.clear();UNDO.length=0;ED=null;
+        clearSearches();save();initDynamic();applySettings();render();
+        done.push('התוכנה אופסה למצב התחלתי');
+      }
+      /* ---------- rules ---------- */
+      else if(a.type==='editRule'||a.type==='toggleRule'){
+        const i=(+a.index)-1;
+        if(!(i>=0&&i<S.rules.length))throw new Error('אין כלל מספר '+a.index);
+        snapshot();
+        const r=S.rules[i];
+        if(a.type==='toggleRule'){
+          r.enabled=a.on!==false;
+          done.push(`${r.enabled?'הופעל':'כובה'} כלל: ${ruleText(r)}`);
+        }else{
+          if(a.ruleType)r.type=a.ruleType;
+          if(a.level)r.level=a.level==='soft'?'soft':'hard';
+          if(Array.isArray(a.members)){
+            const m=a.members.filter(b=>S.boys.includes(b));
+            if(m.length<2)throw new Error('כלל קבוצתי דורש שני שמות תקינים לפחות');
+            r.members=m;delete r.a;delete r.room;
+          }
+          if(a.boy){
+            if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
+            r.a=a.boy;delete r.members;
+          }
+          if(a.room){
+            if(!roomBy(String(a.room)))throw new Error('חדר לא קיים: '+a.room);
+            r.room=String(a.room);delete r.members;
+          }
+          done.push('עודכן כלל: '+ruleText(r));
+        }
+        save();render();
+      }
+      /* ---------- simulations ---------- */
+      else if(a.type==='renameSim'){
+        const sim=S.sims.find(s=>s.name===a.name);
+        if(!sim)throw new Error('אין סימולציה בשם '+a.name);
+        if(!a.newName)throw new Error('חסר שם חדש');
+        sim.name=String(a.newName);save();render();
+        done.push(`הסימולציה שונתה ל"${sim.name}"`);
+      }
+      /* ---------- boys ---------- */
+      else if(a.type==='renameBoy'){
+        const i=S.boys.indexOf(a.boy);
+        if(i<0)throw new Error('שם לא קיים: '+a.boy);
+        const nn=String(a.newName||'').trim();
+        if(!nn)throw new Error('חסר שם חדש');
+        if(S.boys.includes(nn))throw new Error('השם "'+nn+'" כבר קיים');
+        snapshot();
+        S.boys[i]=nn;
+        if(S.assign[a.boy]){S.assign[nn]=S.assign[a.boy];delete S.assign[a.boy];}
+        S.locks=S.locks.map(b=>b===a.boy?nn:b);
+        S.sims.forEach(s=>{if(s.assign[a.boy]){s.assign[nn]=s.assign[a.boy];delete s.assign[a.boy];}});
+        S.rules.forEach(r=>{
+          if(r.members)r.members=r.members.map(b=>b===a.boy?nn:b);
+          if(r.a===a.boy)r.a=nn;
+        });
+        save();initDynamic();render();
+        done.push(`"${a.boy}" שונה ל"${nn}"`);
+      }
+      else if(a.type==='addBoy'){
+        const nn=String(a.name||'').trim();
+        if(!nn)throw new Error('חסר שם');
+        if(S.boys.includes(nn))throw new Error('השם כבר קיים');
+        snapshot();S.boys.push(nn);save();initDynamic();render();
+        done.push(`נוסף "${nn}"`);
+      }
+      else if(a.type==='removeBoy'){
+        if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
+        snapshot();
+        S.boys=S.boys.filter(b=>b!==a.boy);
+        delete S.assign[a.boy];
+        S.locks=S.locks.filter(b=>b!==a.boy);
+        S.sims.forEach(s=>delete s.assign[a.boy]);
+        S.rules=S.rules.map(r=>{
+          if(r.members)r.members=r.members.filter(b=>b!==a.boy);
+          return r;
+        }).filter(r=>r.members?r.members.length>=2:r.a!==a.boy);
+        save();initDynamic();render();
+        done.push(`"${a.boy}" הוסר מהרשימה`);
+      }
+      /* ---------- rooms & wings ---------- */
+      else if(a.type==='addRoom'){
+        const num=String(a.room||'').trim();
+        if(!num)throw new Error('חסר מספר חדר');
+        if(roomBy(num))throw new Error('חדר '+num+' כבר קיים');
+        const w=a.wing?S.wings.find(x=>x.name===a.wing||x.id===a.wing):S.wings[0];
+        if(!w)throw new Error('אגף לא קיים: '+a.wing);
+        snapshot();
+        S.rooms.push({num,beds:Math.max(1,Math.min(12,+a.beds||2)),wing:w.id});
+        save();initDynamic();render();
+        done.push(`נוסף חדר ${num} (${w.name})`);
+      }
+      else if(a.type==='editRoom'){
+        const r=roomBy(String(a.room));
+        if(!r)throw new Error('חדר לא קיים: '+a.room);
+        snapshot();
+        const old=r.num;
+        if(a.newRoom){
+          const nn=String(a.newRoom).trim();
+          if(nn!==old&&roomBy(nn))throw new Error('חדר '+nn+' כבר קיים');
+          r.num=nn;
+          for(const b of Object.keys(S.assign))if(S.assign[b]===old)S.assign[b]=nn;
+          S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(s.assign[b]===old)s.assign[b]=nn;});
+          S.rules.forEach(x=>{if(x.room===old)x.room=nn;});
+        }
+        if(a.beds!=null)r.beds=Math.max(1,Math.min(12,+a.beds||1));
+        if(a.wing){
+          const w=S.wings.find(x=>x.name===a.wing||x.id===a.wing);
+          if(!w)throw new Error('אגף לא קיים: '+a.wing);
+          r.wing=w.id;
+        }
+        // trim occupants over the new bed count
+        occupants(r.num).slice(r.beds).forEach(b=>{delete S.assign[b];S.locks=S.locks.filter(x=>x!==b);});
+        save();initDynamic();render();
+        done.push(`חדר ${old} עודכן (${r.num}, ${r.beds} מיטות)`);
+      }
+      else if(a.type==='removeRoom'){
+        const r=roomBy(String(a.room));
+        if(!r)throw new Error('חדר לא קיים: '+a.room);
+        if(S.rooms.length<2)throw new Error('חייב להישאר לפחות חדר אחד');
+        snapshot();
+        occupants(r.num).forEach(b=>{delete S.assign[b];S.locks=S.locks.filter(x=>x!==b);});
+        S.rooms=S.rooms.filter(x=>x.num!==r.num);
+        S.rules=S.rules.filter(x=>x.room!==r.num);
+        S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(s.assign[b]===r.num)delete s.assign[b];});
+        save();initDynamic();render();
+        done.push(`חדר ${r.num} נמחק`);
+      }
+      else if(a.type==='addWing'){
+        const nn=String(a.name||'').trim();
+        if(!nn)throw new Error('חסר שם אגף');
+        snapshot();S.wings.push({id:'w'+uid(),name:nn});save();initDynamic();render();
+        done.push(`נוסף אגף "${nn}"`);
+      }
+      else if(a.type==='renameWing'){
+        const w=S.wings.find(x=>x.name===a.wing||x.id===a.wing);
+        if(!w)throw new Error('אגף לא קיים: '+a.wing);
+        const nn=String(a.newName||'').trim();
+        if(!nn)throw new Error('חסר שם חדש');
+        snapshot();const old=w.name;w.name=nn;save();initDynamic();render();
+        done.push(`האגף "${old}" שונה ל"${nn}"`);
+      }
+      else if(a.type==='removeWing'){
+        const w=S.wings.find(x=>x.name===a.wing||x.id===a.wing);
+        if(!w)throw new Error('אגף לא קיים: '+a.wing);
+        if(S.wings.length<2)throw new Error('חייב להישאר לפחות אגף אחד');
+        snapshot();
+        const rooms=S.rooms.filter(r=>r.wing===w.id);
+        rooms.forEach(r=>occupants(r.num).forEach(b=>{delete S.assign[b];S.locks=S.locks.filter(x=>x!==b);}));
+        const nums=new Set(rooms.map(r=>r.num));
+        S.rooms=S.rooms.filter(r=>r.wing!==w.id);
+        S.rules=S.rules.filter(x=>!nums.has(x.room));
+        S.wings=S.wings.filter(x=>x.id!==w.id);
+        save();initDynamic();render();
+        done.push(`האגף "${w.name}" נמחק על ${rooms.length} חדריו`);
+      }
+      /* ---------- app-level ---------- */
+      else if(a.type==='setZman'){
+        const v=String(a.value||'').trim();
+        if(!v)throw new Error('חסר ערך');
+        S.zman=v;save();$('#zman').textContent=v;render();
+        done.push(`שם הזמן: "${v}"`);
+      }
+      else if(a.type==='display'){
+        const d=S.settings.display,changed=[];
+        const bools={emptyBeds:'מיטות פנויות',tilt:'תגים מוטים',grid:'רקע משובץ',motion:'אנימציות'};
+        if(a.theme&&['dark','light','auto'].includes(a.theme)){d.theme=a.theme;changed.push('ערכת נושא: '+a.theme);}
+        if(a.accent&&ACCENTS[a.accent]){d.accent=a.accent;changed.push('צבע: '+a.accent);}
+        if(a.text&&+a.text>=80&&+a.text<=140){d.text=+a.text;changed.push('טקסט: '+a.text+'%');}
+        if(a.density&&['compact','regular','roomy'].includes(a.density)){d.density=a.density;changed.push('צפיפות: '+a.density);}
+        if(a.roomW){d.roomW=String(a.roomW);changed.push('רוחב חדרים: '+a.roomW);}
+        for(const k of Object.keys(bools))
+          if(typeof a[k]==='boolean'){d[k]=a[k];changed.push(bools[k]+': '+(a[k]?'דלוק':'כבוי'));}
+        if(!changed.length)throw new Error('לא צוין שינוי תצוגה תקין');
+        save();applyDisplay();paintDisplayUI();
+        done.push('תצוגה — '+changed.join(', '));
+      }
+      else if(a.type==='setting'){
+        const allowed=['sound','flash','pulse','suggest','confirm','aiFab'];
+        if(!allowed.includes(a.key))throw new Error('הגדרה לא מוכרת: '+a.key);
+        S.settings[a.key]=!!a.value;save();applySettings();render();
+        done.push(`הגדרה ${a.key}: ${a.value?'דלוקה':'כבויה'}`);
+      }
+    }catch(e){fail.push(e.message||String(e));}
+  }
+  lastRunFailed=fail.length>0||blocked.length>0||declined.length>0;
+  const parts=[];
+  if(done.length)parts.push('בוצע: '+done.join(' · '));
+  if(fail.length)parts.push('נכשל: '+fail.join(' · '));
+  if(declined.length)parts.push('לא אישרתם: '+declined.join(' · '));
+  if(blocked.length){
+    const why=cfg.level==='advise'
+      ? 'היועץ במצב "ייעוץ בלבד"'
+      : 'חורג מרמת ההרשאה שלו';
+    parts.push(`נחסם (${why}): ${blocked.join(' · ')}`);
+  }
+  return parts.length?'🤖 '+parts.join(' | '):'🤖 לא בוצעו פעולות';
+}
+/* runActions reports what really happened; keep that flag so the chat can self-correct */
+let lastRunFailed=false;
+async function askModel(){
+  const key=localStorage.getItem(GKEY);
+  const model=localStorage.getItem(GMODEL)||DEF_MODEL;
+  const body={
+    systemInstruction:{parts:[{text:aiSystem()+'\n\n===== המצב הנוכחי בתוכנה =====\n'+stateBrief()}]},
+    contents:AIH.slice(-14).map(m=>({role:m.role,parts:[{text:m.text}]})),
+    generationConfig:{temperature:0.4,maxOutputTokens:4096}
+  };
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+    {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok)throw new Error(await apiErr(res));
+  const data=await res.json();
+  return ((data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts)||[])
+    .map(p=>p.text||'').join('').trim();
+}
+/* one model turn: show the reply, run its actions, report the truth */
+async function aiTurn(){
+  const typing=addMsg('model','…');
+  let raw='';
+  try{ raw=await askModel(); }
+  catch(err){ typing.remove(); addMsg('sys','⚠️ '+(err.message||'שגיאת רשת — בדקו חיבור לאינטרנט')); return false; }
+  let display=raw||'(תשובה ריקה)', acts=null;
+  const m=raw.match(/```json\s*([\s\S]*?)```/);
+  if(m){
+    try{acts=JSON.parse(m[1]).actions;}catch(e){}
+    display=raw.replace(m[0],'').trim()||'מבצע…';
+  }
+  AIH.push({role:'model',text:raw});
+  typing.remove();
+  const bubble=addMsg('model',display);
+  if(Array.isArray(acts)&&acts.length){
+    lastRunFailed=false;
+    const rep=runActions(acts);
+    addMsg('sys',rep);
+    AIH.push({role:'user',text:'[דיווח מערכת] '+rep});
+    // the model wrote its message before the actions ran — if they failed, its
+    // wording is now wrong, so mark it and let the model correct itself
+    if(lastRunFailed){
+      bubble.classList.add('stale');
+      bubble.title='חלק מהפעולות לא בוצעו — ראו את הדיווח מתחת';
+      return true;
+    }
+  }
+  return false;
+}
+async function sendAI(){
+  const key=localStorage.getItem(GKEY);
+  if(!key){openAiSettings();toast('קודם צריך להגדיר מפתח API');return;}
+  const inp=$('#aiInput'), q=inp.value.trim();
+  if(!q)return;
+  inp.value='';
+  AIH.push({role:'user',text:q});
+  addMsg('user',q);
+  $('#aiSend').disabled=true;
+  let needsFix=await aiTurn();
+  // give it exactly one shot at fixing its own failure, then stop
+  if(needsFix){
+    addMsg('sys','↻ מתקן…');
+    await aiTurn();
+  }
+  $('#aiSend').disabled=false;
+  $('#aiInput').focus();
+}
+/* ---- identity & capability UI ---- */
+function applyAiIdentity(){
+  const c=aiCfg();
+  $('#aiAvatar').textContent=c.emoji||'✨';
+  $('#aiNameLbl').textContent=c.name||'יועץ שיבוץ';
+  $('#aiFab').textContent=c.emoji||'✨';
+  $('#aiFab').title=c.name||'יועץ שיבוץ';
+  const model=localStorage.getItem(GMODEL)||DEF_MODEL;
+  $('#aiSubLbl').textContent=`${LEVEL_SHORT[c.level]} · ${model.replace('gemini-','')}`;
+}
+function greet(){
+  const c=aiCfg();
+  addMsg('model',`שלום, אני ${c.name}. אני רואה את הלוח, הכללים והסימולציות בזמן אמת.`);
+  if(!localStorage.getItem(GKEY)){
+    const w=addMsg('sys','כדי שאוכל לענות צריך מפתח API חינמי של Google Gemini.');
+    const b=document.createElement('button');
+    b.className='btn mini accent'; b.style.marginTop='7px'; b.textContent='פתיחת ההגדרות ⚙️';
+    b.addEventListener('click',()=>openAiSettings());
+    w.appendChild(document.createElement('br')); w.appendChild(b);
+    return;
+  }
+  const box=document.createElement('div'); box.className='ai-quick';
+  const asks=c.level==='advise'
+    ? ['מה הבעיות בשיבוץ הנוכחי?','הצע לי חלוקה טובה','סכם לי את המצב']
+    : ['בדוק את השיבוץ','השלם את החסרים','הצע שיפור'];
+  for(const t of asks){
+    const b=document.createElement('button'); b.textContent=t;
+    b.addEventListener('click',()=>{$('#aiInput').value=t;sendAI();box.remove();});
+    box.appendChild(b);
+  }
+  $('#aiMsgs').appendChild(box);
+}
+/* the chat has no settings of its own any more — everything lives in the settings dialog */
+function openAiSettings(){
+  openSettings();
+  document.querySelector('#setTabs [data-t="ai"]').click();
+}
+$('#aiFab').addEventListener('click',()=>{
+  const p=$('#aiPanel');
+  p.hidden=!p.hidden;
+  if(!p.hidden){
+    applyAiIdentity();
+    if(!$('#aiMsgs').children.length)greet();
+    $('#aiInput').focus();
+  }
+});
+$('#aiClose').addEventListener('click',()=>{$('#aiPanel').hidden=true;});
+$('#aiSettings').addEventListener('click',openAiSettings);
+async function apiErr(res){
+  let extra='';
+  try{const j=await res.json();extra=(j.error&&j.error.message)?' — '+j.error.message:'';}catch(e){}
+  const hint={400:' (בקשה שגויה — אולי המודל לא נתמך במפתח הזה)',
+              401:' (המפתח לא תקין)',403:' (המפתח נדחה — בדקו שהעתקתם אותו במלואו)',
+              404:' (המודל לא קיים — לחצו ↻ לטעינת הרשימה מהחשבון)',
+              429:' (חריגה זמנית ממכסה — נסו שוב עוד רגע)'}[res.status]||'';
+  return 'שגיאה '+res.status+hint+extra;
+}
+function fillModelSelect(){
+  const sel=$('#setAiModel');
+  const saved=localStorage.getItem(GMODEL)||DEF_MODEL;
+  let list;
+  try{list=JSON.parse(localStorage.getItem(GLIST)||'null');}catch(e){}
+  if(!Array.isArray(list)||!list.length)list=FALLBACK_MODELS;
+  sel.innerHTML='';
+  const seen=new Set();
+  for(const m of list){
+    if(seen.has(m.id))continue;
+    seen.add(m.id);
+    const o=document.createElement('option');
+    o.value=m.id;
+    o.textContent=m.id+(m.note?' — '+m.note:'');
+    sel.appendChild(o);
+  }
+  if(!seen.has(saved)){
+    const o=document.createElement('option');
+    o.value=saved;o.textContent=saved;
+    sel.insertBefore(o,sel.firstChild);
+  }
+  sel.value=saved;
+}
+$('#setAiFetch').addEventListener('click',async()=>{
+  const key=($('#setAiKey').value.trim())||localStorage.getItem(GKEY);
+  if(!key){toast('קודם הדביקו מפתח');return;}
+  const lnk=$('#setAiFetch'); lnk.textContent='↻ טוען…';
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key));
+    if(!res.ok)throw new Error(await apiErr(res));
+    const data=await res.json();
+    const ids=new Set((data.models||[])
+      .filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'))
+      .map(m=>(m.name||'').replace(/^models\//,'')));
+    // keep only the three roles, and only if this account actually has them
+    const models=MODEL_ROLES.filter(r=>[...ids].some(id=>r.re.test(id)))
+      .map(r=>({id:[...ids].find(id=>r.re.test(id)),note:r.note}));
+    if(!models.length)throw new Error('החשבון לא מחזיר את המודלים המומלצים');
+    localStorage.setItem(GLIST,JSON.stringify(models));
+    fillModelSelect();
+    toast(`אומתו ${models.length} מודלים בחשבון ✓`);
+  }catch(e){toast(e.message||'טעינת המודלים נכשלה');}
+  lnk.textContent='↻ טעינת הרשימה מהחשבון';
+});
+$('#setAiTest').addEventListener('click',async()=>{
+  const key=($('#setAiKey').value.trim())||localStorage.getItem(GKEY);
+  if(!key){toast('הדביקו מפתח לבדיקה');return;}
+  const model=$('#setAiModel').value||DEF_MODEL;
+  const btn=$('#setAiTest'); btn.disabled=true; btn.textContent='בודק…';
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({contents:[{role:'user',parts:[{text:'ענה במילה אחת: שלום'}]}],
+                            generationConfig:{maxOutputTokens:2048}})});
+    if(!res.ok)throw new Error(await apiErr(res));
+    await res.json();
+    toast('✓ החיבור תקין — המודל עונה');
+  }catch(e){toast('✗ '+(e.message||'החיבור נכשל'));}
+  btn.disabled=false; btn.textContent='🔌 בדיקת חיבור';
+});
+$('#setAiKeyDel').addEventListener('click',()=>{
+  if(!askConfirm('למחוק את מפתח ה־API מהמחשב?'))return;
+  localStorage.removeItem(GKEY);localStorage.removeItem(GLIST);
+  $('#setAiKey').value='';fillModelSelect();applyAiIdentity();renderSetStats();
+  toast('המפתח נמחק');
+});
+/* Never guess the vendor's key format — formats change and false alarms are worse
+   than none. Save what the user pasted, then let the server be the judge. */
+function setKeyStatus(state,msg){
+  const el=$('#keyStatus');
+  el.className='keystat '+state;
+  el.textContent=msg;
+  el.hidden=!msg;
+}
+async function verifyKey(k,quiet){
+  setKeyStatus('busy','בודק את המפתח מול גוגל…');
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key='+encodeURIComponent(k));
+    if(!res.ok){
+      if([400,401,403].includes(res.status)){
+        let why='';try{const j=await res.json();why=(j.error&&j.error.message)||'';}catch(e){}
+        throw new Error('גוגל דחתה את המפתח'+(why?' — '+why:' — ודאו שהעתקתם אותו במלואו'));
+      }
+      throw new Error(await apiErr(res));
+    }
+    setKeyStatus('ok','✓ המפתח תקין ופעיל');
+    return true;
+  }catch(e){
+    const off=/Failed to fetch|NetworkError/i.test(e.message||'');
+    setKeyStatus('bad',off?'⚠️ אין חיבור לאינטרנט — לא ניתן לאמת כרגע. המפתח נשמר.':'✗ '+(e.message||'המפתח נדחה'));
+    return false;
+  }
+}
+$('#setAiKey').addEventListener('change',async()=>{
+  const k=$('#setAiKey').value.trim();
+  if(!k){localStorage.removeItem(GKEY);setKeyStatus('','');applyAiIdentity();renderSetStats();return;}
+  localStorage.setItem(GKEY,k);
+  applyAiIdentity();renderSetStats();
+  toast('המפתח נשמר — בודק…');
+  await verifyKey(k);
+  refreshGreeting();
+});
+/* the opening message differs with/without a key — redraw it when that changes */
+function refreshGreeting(){
+  if(AIH.length)return;              // a real conversation is in progress; leave it alone
+  $('#aiMsgs').innerHTML='';
+  if(!$('#aiPanel').hidden)greet();
+}
+$('#setAiModel').addEventListener('change',()=>{
+  localStorage.setItem(GMODEL,$('#setAiModel').value);
+  applyAiIdentity();renderSetStats();
+});
+$('#setAiName').addEventListener('input',()=>{
+  aiCfg().name=$('#setAiName').value.trim()||'יועץ שיבוץ';save();applyAiIdentity();
+});
+$('#setAiEmoji').addEventListener('input',()=>{
+  aiCfg().emoji=$('#setAiEmoji').value.trim()||'✨';save();applyAiIdentity();
+});
+$('#setAiAsk').addEventListener('change',()=>{
+  aiCfg().askFirst=$('#setAiAsk').checked;save();
+});
+$('#setAiLevel').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  const prev=aiCfg().level;
+  aiCfg().level=b.dataset.l;save();
+  paintAiLevel();applyAiIdentity();renderSetStats();
+  if(prev!==b.dataset.l&&!$('#aiPanel').hidden)
+    addMsg('sys',`🛡️ ההרשאה שונתה ל"${LEVEL_SHORT[b.dataset.l]}"`);
+});
+function paintAiLevel(){
+  const lvl=aiCfg().level;
+  document.querySelectorAll('#setAiLevel button').forEach(b=>b.classList.toggle('on',b.dataset.l===lvl));
+  $('#setAiLevelNote').textContent=LEVEL_NOTE[lvl];
+  $('#setAiAsk').closest('label').style.opacity=lvl==='full'?'1':'.45';
+  const box=$('#aiPowers');
+  box.innerHTML='';
+  if(lvl==='advise'){box.innerHTML='<div class="hint">אין לו הרשאות פעולה.</div>';return;}
+  const groups=[
+    ['שיבוץ',['move','auto','clear','lock','unlock']],
+    ['כללים',['addRule','editRule','toggleRule','deleteRule','deleteAllRules']],
+    ['סימולציות',['saveSim','loadSim','renameSim','deleteSim']],
+    ['רשימות',['renameBoy','addBoy','removeBoy','addRoom','editRoom','removeRoom','addWing','renameWing','removeWing']],
+    ['תוכנה',['setZman','display','setting','clearAll','reset']]
+  ];
+  for(const [title,keys] of groups){
+    const allowed=keys.filter(k=>ACT_LEVEL[k]&&(ACT_LEVEL[k]==='act'||lvl==='full'));
+    if(!allowed.length)continue;
+    const d=document.createElement('div'); d.className='pgrp';
+    d.innerHTML=`<b>${title}</b> <span>${allowed.map(k=>ACT_HE[k]||k).join(' · ')}</span>`;
+    box.appendChild(d);
+  }
+}
+$('#aiClear').addEventListener('click',()=>{
+  AIH.length=0;$('#aiMsgs').innerHTML='';greet();
+});
+$('#aiSend').addEventListener('click',sendAI);
+$('#aiInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}
+});
+
+/* ---------- search wiring ---------- */
+wireSearch('#boardSearch','#boardSearchClr','board',render);
+wireSearch('#ruleSearch','#ruleSearchClr','rule',()=>{repopulateForm();});
+wireSearch('#rulesSearch','#rulesSearchClr','rules',()=>renderRules(evaluate(S.assign)));
+wireSearch('#edSearch','#edSearchClr','edit',()=>{if(ED)renderEdit();});
+
+/* ---------- first-run welcome ---------- */
+function renderWelcome(){
+  const empty=!S.boys.length&&!S.rooms.length;
+  $('#welcome').hidden=!empty;
+  $('#pool').hidden=empty;
+  $('#roomsWrap').hidden=empty;
+  document.querySelectorAll('section.panel').forEach(s=>{
+    if(s.id==='welcome'||s.id==='pool')return;
+    s.hidden=empty;
+  });
+  $('#btnAuto').disabled=empty;
+  $('#btnClear').disabled=empty;
+  $('#btnXlsx').disabled=empty;
+}
+$('#welImport').addEventListener('click',()=>$('#fileNames').click());
+$('#welTemplate').addEventListener('click',downloadTemplate);
+$('#welRestore').addEventListener('click',()=>$('#fileImport').click());
+$('#welManual').addEventListener('click',()=>$('#btnEdit').click());
+
+/* ---------- settings panel ---------- */
+const SET_MAP={sound:'#setSound',flash:'#setFlash',pulse:'#setPulse',
+               suggest:'#setSuggest',confirm:'#setConfirm',aiFab:'#setAiFab'};
+function applySettings(){
+  document.body.classList.toggle('nopulse',!S.settings.pulse);
+  document.body.classList.toggle('nofab',!S.settings.aiFab);
+  applyDisplay();
+}
+const prefersDark=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+function applyDisplay(){
+  const d=S.settings.display,root=document.documentElement,b=document.body;
+  const theme=d.theme==='auto'?((prefersDark&&!prefersDark.matches)?'light':'dark'):d.theme;
+  root.setAttribute('data-theme',theme);
+  const ac=ACCENTS[d.accent]||ACCENTS.cyan;
+  root.style.setProperty('--acc',theme==='light'?ac.la:ac.a);
+  root.style.setProperty('--acc2',theme==='light'?ac.lb:ac.b);
+  root.style.setProperty('--roomMin',d.roomW||'220px');
+  root.style.zoom=(d.text||100)/100;
+  b.classList.toggle('d-compact',d.density==='compact');
+  b.classList.toggle('d-roomy',d.density==='roomy');
+  b.classList.toggle('nobeds',!d.emptyBeds);
+  b.classList.toggle('notilt',!d.tilt);
+  b.classList.toggle('nogrid',!d.grid);
+  b.classList.toggle('nomotion',!d.motion);
+}
+if(prefersDark&&prefersDark.addEventListener)
+  prefersDark.addEventListener('change',()=>{if(S.settings.display.theme==='auto')applyDisplay();});
+function renderSetStats(){
+  const ev=evaluate(S.assign);
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const cells=[
+    ['בחורים',S.boys.length,''],
+    ['חדרים',S.rooms.length,''],
+    ['מיטות',S.rooms.reduce((a,r)=>a+r.beds,0),''],
+    ['משובצים',`${placed}/${S.boys.length}`,placed===S.boys.length?'okv':''],
+    ['נעולים',S.locks.filter(b=>S.assign[b]).length,''],
+    ['כללים',S.rules.length,''],
+    ['סימולציות',S.sims.length,''],
+    ['הפרות',ev.hard+ev.soft,(ev.hard+ev.soft)?'warnv':'okv']
+  ];
+  $('#setStats').innerHTML=cells.map(([k,v,c])=>
+    `<div class="sg ${c}"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+  const hasKey=!!localStorage.getItem(GKEY);
+  const model=localStorage.getItem(GMODEL)||DEF_MODEL;
+  const c=aiCfg();
+  const lvlCls=c.level==='full'?'warnv':c.level==='advise'?'':'okv';
+  $('#aiStatus').innerHTML=
+    `<div class="sg"><div class="v">${c.emoji}</div><div class="k">${c.name}</div></div>`+
+    `<div class="sg ${lvlCls}"><div class="v" style="font-size:12.5px;line-height:1.85">${LEVEL_SHORT[c.level]}</div><div class="k">הרשאה</div></div>`+
+    `<div class="sg ${hasKey?'okv':'warnv'}"><div class="v">${hasKey?'✓':'✗'}</div><div class="k">${hasKey?'מפתח מוגדר':'אין מפתח'}</div></div>`+
+    `<div class="sg"><div class="v" style="font-size:12px;line-height:1.9">${model}</div><div class="k">מודל פעיל</div></div>`;
+}
+/* ---- display tab ---- */
+const DISP_SEG={theme:'#setTheme',text:'#setText',density:'#setDensity',roomW:'#setRoomW'};
+const DISP_SW={emptyBeds:'#setEmptyBeds',tilt:'#setTilt',grid:'#setGrid',motion:'#setMotion'};
+function buildSwatches(){
+  const box=$('#setAccent'); box.innerHTML='';
+  for(const [k,v] of Object.entries(ACCENTS)){
+    const b=document.createElement('button');
+    b.className='sw-dot'; b.dataset.v=k; b.title=v.he;
+    b.style.background=`linear-gradient(135deg,${v.a},${v.b})`;
+    b.addEventListener('click',()=>{
+      S.settings.display.accent=k;save();applyDisplay();paintDisplayUI();
+    });
+    box.appendChild(b);
+  }
+}
+function paintDisplayUI(){
+  const d=S.settings.display;
+  for(const [k,sel] of Object.entries(DISP_SEG))
+    document.querySelectorAll(sel+' button').forEach(b=>
+      b.classList.toggle('on',String(b.dataset.v)===String(d[k])));
+  for(const [k,sel] of Object.entries(DISP_SW)) $(sel).checked=!!d[k];
+  document.querySelectorAll('#setAccent .sw-dot').forEach(b=>
+    b.classList.toggle('on',b.dataset.v===d.accent));
+}
+for(const [key,sel] of Object.entries(DISP_SEG)){
+  $(sel).addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    S.settings.display[key]=(key==='text')?+b.dataset.v:b.dataset.v;
+    save();applyDisplay();paintDisplayUI();
+  });
+}
+for(const [key,sel] of Object.entries(DISP_SW)){
+  $(sel).addEventListener('change',()=>{
+    S.settings.display[key]=$(sel).checked;
+    save();applyDisplay();
+  });
+}
+$('#setDispReset').addEventListener('click',()=>{
+  S.settings.display=Object.assign({},DEFAULT_DISPLAY);
+  save();applyDisplay();paintDisplayUI();toast('התצוגה הוחזרה לברירת המחדל');
+});
+function openSettings(){
+  $('#setZman').value=S.zman||'';
+  for(const [k,sel] of Object.entries(SET_MAP)) $(sel).checked=!!S.settings[k];
+  paintDisplayUI();
+  const c=aiCfg();
+  $('#setAiName').value=c.name;
+  $('#setAiEmoji').value=c.emoji;
+  $('#setAiAsk').checked=c.askFirst!==false;
+  $('#setAiKey').value=localStorage.getItem(GKEY)||'';
+  fillModelSelect();
+  paintAiLevel();
+  renderSetStats();
+  $('#dlgSettings').showModal();
+}
+$('#btnSettings').addEventListener('click',openSettings);
+$('#setClose').addEventListener('click',()=>$('#dlgSettings').close());
+$('#setX').addEventListener('click',()=>$('#dlgSettings').close());
+$('#clearX').addEventListener('click',()=>$('#dlgClear').close());
+$('#setTabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t)return;
+  document.querySelectorAll('#setTabs .tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('on',p.dataset.p===t.dataset.t));
+});
+for(const [k,sel] of Object.entries(SET_MAP)){
+  $(sel).addEventListener('change',()=>{
+    S.settings[k]=$(sel).checked;
+    save();applySettings();render();
+  });
+}
+$('#setZman').addEventListener('input',()=>{
+  S.zman=$('#setZman').value.trim()||'הזמן הבא';
+  $('#zman').textContent=S.zman;save();
+});
+$('#setExport').addEventListener('click',()=>$('#btnExport').click());
+$('#setImport').addEventListener('click',()=>$('#btnImport').click());
+$('#setXlsx').addEventListener('click',()=>$('#btnXlsx').click());
+$('#setOpenAi').addEventListener('click',()=>{
+  $('#dlgSettings').close();
+  refreshGreeting();
+  if($('#aiPanel').hidden)$('#aiFab').click();
+  $('#aiInput').focus();
+});
+$('#rstAssign').addEventListener('click',()=>{
+  if(!askConfirm('לנקות את כל השיבוץ (כולל נעילות)?'))return;
+  snapshot();S.assign={};S.locks=[];S.activeSim=null;save();render();renderSetStats();
+  toast('השיבוץ נוקה');
+});
+$('#rstRules').addEventListener('click',()=>{
+  if(!S.rules.length){toast('אין כללים למחוק');return;}
+  if(!askConfirm(`למחוק את כל ${S.rules.length} הכללים?`))return;
+  snapshot();S.rules=[];save();render();renderSetStats();
+  toast('הכללים נמחקו');
+});
+$('#rstSims').addEventListener('click',()=>{
+  if(!S.sims.length){toast('אין סימולציות למחוק');return;}
+  if(!askConfirm(`למחוק את כל ${S.sims.length} הסימולציות השמורות?`))return;
+  S.sims=[];S.activeSim=null;save();render();renderSetStats();
+  toast('הסימולציות נמחקו');
+});
+$('#rstAll').addEventListener('click',()=>{
+  if(!confirm('איפוס מלא!\n\nיימחקו: רשימת הבחורים, האגפים והחדרים, השיבוץ, הנעילות, הכללים, הסימולציות, ההגדרות ומפתח היועץ.\nהתוכנה תחזור למצב של התקנה חדשה.\n\nלהמשיך?'))return;
+  if(!confirm('אישור אחרון — הפעולה אינה הפיכה.\nאם לא שמרתם גיבוי, בטלו עכשיו ושמרו קודם.\n\nלאפס הכול?'))return;
+  localStorage.removeItem(KEY);
+  localStorage.removeItem(GKEY);
+  localStorage.removeItem(GMODEL);
+  localStorage.removeItem(GLIST);
+  S=loadState();
+  selected=null;formMembers.clear();UNDO.length=0;ED=null;
+  clearSearches();
+  AIH.length=0;$('#aiMsgs').innerHTML='';$('#aiPanel').hidden=true;
+  save();initDynamic();applySettings();render();renderSetStats();
+  $('#dlgSettings').close();
+  toast('התוכנה אופסה למצב התחלתי 🔄');
+});
+
+/* ---------- keyboard shortcuts ---------- */
+document.addEventListener('keydown',e=>{
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable;
+  const dlgOpen=!!document.querySelector('dialog[open]');
+  if(e.ctrlKey&&(e.key==='z'||e.key==='Z')&&!typing&&!dlgOpen){e.preventDefault();undo();return;}
+  if(e.ctrlKey&&(e.key==='s'||e.key==='S')){
+    e.preventDefault();
+    if(!dlgOpen)$('#btnSaveSim').click();
+    return;
+  }
+  if(typing||dlgOpen)return;   // board shortcuts must not reach through an open dialog
+  if(e.key==='/'||e.key==='f'&&e.ctrlKey){
+    e.preventDefault();$('#boardSearch').focus();$('#boardSearch').select();return;
+  }
+  if(e.key==='Escape'&&selected){selected=null;render();}
+  if((e.key==='Delete'||e.key==='Backspace')&&selected){e.preventDefault();assignBoy(selected,null);}
+});
+
+/* ---------- zman title ---------- */
+$('#zman').addEventListener('blur',()=>{
+  const v=$('#zman').textContent.trim();
+  S.zman=v||'הזמן הבא';$('#zman').textContent=S.zman;save();
+});
+$('#zman').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();$('#zman').blur();}
+});
+
+/* ---------- init ---------- */
+function initDynamic(){
+  $('#verLbl').textContent='v'+APP_VERSION;
+  $('#zman').textContent=S.zman||'הזמן הבא';
+  repopulateForm();
+  paintRuleForm();
+  fillModelSelect();
+  applyAiIdentity();
+}
+buildSwatches();
+initDynamic();
+applySettings();
+render();
+</script>
+</body>
+</html>
