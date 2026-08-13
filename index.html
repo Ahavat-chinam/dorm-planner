@@ -1602,9 +1602,6 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
      listeners survive the view being re-rendered -->
 <span class="zman" id="zman" contenteditable="true" spellcheck="false" hidden></span>
 
-<!-- the old first-run welcome panel is gone: the numbered nav plus the guide
-     banner in each section do that job now, in the place the user actually works -->
-<section id="welcome" class="panel" hidden></section>
 
 <!-- the app is a numbered path: build the place, list the boys, set the rules,
      assign, compare. The nav itself teaches the order of work. -->
@@ -1683,6 +1680,34 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 </div>
 
 <div class="vpane on" data-v="board">
+  <!-- an empty project greets you here, with the big obvious ways in -->
+  <section id="welcome" class="panel" hidden>
+    <div class="wel">
+      <div class="wel-ico">🏠</div>
+      <h3>ברוכים הבאים — הפרויקט עדיין ריק</h3>
+      <p>כדי להתחיל צריך את רשימת הבחורים ואת החדרים. הדרך המהירה: קובץ אקסל אחד עם הכול.</p>
+      <div class="wel-btns">
+        <button class="btn accent" id="welImport">📥 ייבוא מקובץ</button>
+        <button class="btn" id="welWing">🧱 בניית אגף מתבנית</button>
+        <button class="btn" id="welTemplate">📄 הורדת קובץ תבנית</button>
+        <button class="btn" id="welManual">✏️ הזנת שמות ידנית</button>
+        <button class="btn" id="welRestore">📂 שחזור מגיבוי</button>
+      </div>
+      <div class="wel-how">
+        <b>מבנה הקובץ</b> — עמודה לבחורים, ולצידה עמודות לחדרים:
+        <table class="wel-tbl">
+          <tr><th>בחורים</th><th>חדר</th><th>מיטות</th><th>אגף</th></tr>
+          <tr><td>ישראל ישראלי</td><td>405</td><td>4</td><td>אגף 400</td></tr>
+          <tr><td>משה כהן</td><td>406</td><td>4</td><td>אגף 400</td></tr>
+        </table>
+        עמודת האגף אינה חובה. אפשר גם קובץ עם שמות בלבד, ולבנות את החדרים במדור המבנה.
+      </div>
+      <p class="wel-foot" id="welFoot" hidden>
+        עובדים מהאינטרנט? <span class="lnk" id="welDownload">הורידו את התוכנה למחשב</span> —
+        היא תעבוד בדיוק אותו דבר גם בלי חיבור.
+      </p>
+    </div>
+  </section>
   <div id="guideBoard"></div>
   <div id="view"></div>
 </div>
@@ -2813,7 +2838,9 @@ function openProject(id){
   clearSearches();
   V={level:'home',bld:null,wing:null};
   initDynamic(); applySettings(); paintDisplayUI();
-  setTab(landingSec());
+  /* a project always opens on the board — one predictable landing, and the
+     banner there points at whatever stage is still missing */
+  setTab('board');
   render();
   return true;
 }
@@ -2827,15 +2854,10 @@ function createProject(name,desc){
   UNDO.length=0; clearSel();
   V={level:'home',bld:null,wing:null};
   initDynamic(); applySettings();
-  setTab('struct');            /* a brand-new project starts at stage 1: the building */
+  /* always the same landing — the welcome panel there offers the ways in */
+  setTab('board');
   render();
   return id;
-}
-/* land on the first stage that still needs work — the app opens where the work is */
-function landingSec(){
-  if(!S.rooms.length)return 'struct';
-  if(!S.boys.length)return 'boys';
-  return 'board';
 }
 function deleteProject(id){
   try{localStorage.removeItem(pKey(id));}catch(e){}
@@ -3997,6 +4019,9 @@ function clearSel(){
   $('#assignBar').hidden=true;
 }
 function openAssign(name){
+  /* picking a boy from the rail always works — from any section it carries
+     you to the board, where the room drawer lives */
+  if(SEC!=='board')setTab('board');
   selected=name;
   document.body.classList.add('ab-open');
   $('#assignBar').hidden=false;
@@ -7882,22 +7907,33 @@ $('#btnCopyLink').addEventListener('click',async()=>{
 /* ---------- first-run welcome ---------- */
 /* single owner of "which chrome is on screen": the launch screen, a brand-new
    empty project, and a working board each show a different subset */
-/* which chrome is on screen: the guides replaced the old welcome panel, so the
-   nav is always there inside a project, and the rail belongs to שיבוץ only */
+/* which chrome is on screen. An empty project greets with the big welcome
+   buttons; the waiting rail stays visible in every section, like it always was */
 function renderWelcome(){
   const inProj=!!PID&&V.level!=='projects';
   const empty=!S.boys.length&&!S.rooms.length;
-  $('#welcome').hidden=true;
+  const wel=inProj&&SEC==='board'&&empty;
+  $('#welcome').hidden=!wel;
+  $('#guideBoard').style.display=wel?'none':'';
+  $('#view').style.display=wel?'none':'';
   $('#mainTabs').hidden=!inProj;
-  document.querySelector('footer').hidden=!inProj||SEC!=='board';
-  const railOff=!inProj||SEC!=='board'||!S.boys.length||S.settings.display.rail===false;
+  document.querySelector('footer').hidden=!inProj||SEC!=='board'||wel;
+  const railOff=!inProj||!S.boys.length||S.settings.display.rail===false;
   document.body.classList.toggle('rail-off',railOff);
-  $('#railToggle').hidden=!inProj||SEC!=='board'||!S.boys.length;
+  $('#railToggle').hidden=!inProj||!S.boys.length;
   $('#stats').hidden=!inProj||empty;
   $('#btnAuto').disabled=empty;
   $('#btnClear').disabled=empty;
   $('#btnXlsx').disabled=empty;
 }
+/* the welcome buttons: each one lands exactly where that path starts */
+$('#welFoot').hidden=location.protocol==='file:';
+$('#welDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
+$('#welImport').addEventListener('click',()=>$('#fileNames').click());
+$('#welTemplate').addEventListener('click',downloadTemplate);
+$('#welRestore').addEventListener('click',()=>$('#fileImport').click());
+$('#welManual').addEventListener('click',()=>{setTab('boys');$('#byNew').focus();});
+$('#welWing').addEventListener('click',()=>openWing(S.wings.length===1&&!S.rooms.length?S.wings[0].id:null));
 
 /* ---------- settings panel ---------- */
 const SET_MAP={sound:'#setSound',flash:'#setFlash',pulse:'#setPulse',
