@@ -1466,6 +1466,81 @@ body.nopulse .pb-room.warn-hard{animation:none}
 .blank .bi{font-size:38px;margin-bottom:9px;opacity:.75}
 .blank b{display:block;font-size:15.5px;color:var(--tx2);margin-bottom:5px}
 .blank p{font-size:13px;line-height:1.8;max-width:430px;margin:0 auto 14px}
+/* ---- help centre: topics on one side, the article on the other ---- */
+#dlgHelp{width:min(940px,96vw)}
+.hp-search{flex:0 1 260px;min-width:140px}
+.hp-body{display:grid;grid-template-columns:214px 1fr;gap:16px;align-items:start}
+.hp-nav{
+  display:flex;flex-direction:column;gap:3px;position:sticky;top:0;
+  border-inline-end:1px solid var(--line);padding-inline-end:12px;
+}
+.hp-nav button{
+  display:flex;align-items:center;gap:8px;text-align:start;width:100%;
+  background:none;border:1px solid transparent;color:var(--dim);
+  font:inherit;font-size:12.5px;font-weight:800;padding:7px 10px;border-radius:10px;
+  cursor:pointer;transition:.12s;
+}
+.hp-nav button:hover{color:var(--tx);background:var(--card2)}
+.hp-nav button.on{color:var(--tx);background:var(--card2);border-color:var(--line2)}
+.hp-nav .hn-i{font-size:14px;flex:none}
+.hp-nav .hn-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hp-doc{min-width:0;font-size:13.5px;line-height:1.85;color:var(--tx3)}
+.hp-doc h4{font-size:16px;font-weight:900;color:var(--tx);margin:0 0 4px;display:flex;gap:9px;align-items:center}
+.hp-doc .hp-lead{color:var(--dim);margin-bottom:14px}
+.hp-doc h5{font-size:13px;font-weight:900;color:var(--tx2);margin:16px 0 5px}
+.hp-doc p{margin:0 0 9px}
+.hp-doc ol,.hp-doc ul{margin:0 14px 11px 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.hp-doc li{line-height:1.8}
+.hp-doc b{color:var(--tx2)}
+.hp-doc .hp-tip{
+  background:color-mix(in srgb,var(--acc) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--acc) 26%,transparent);
+  border-radius:12px;padding:10px 13px;margin:12px 0;font-size:13px;
+}
+.hp-doc .hp-warn{
+  background:color-mix(in srgb,var(--amber) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--amber) 32%,transparent);
+  border-radius:12px;padding:10px 13px;margin:12px 0;font-size:13px;
+}
+.hp-none{color:var(--dim);padding:20px 4px}
+.hp-hit{background:color-mix(in srgb,var(--acc) 26%,transparent);border-radius:4px;padding:0 2px}
+/* the little ? that sits next to a heading and opens the right topic */
+.qmark{
+  background:none;border:1px solid var(--line2);color:var(--dim);cursor:pointer;
+  font:inherit;font-size:11px;font-weight:900;line-height:1;
+  width:20px;height:20px;border-radius:50%;flex:none;padding:0;transition:.12s;
+}
+.qmark:hover{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
+
+/* ---- about ---- */
+.ab-hero{display:flex;align-items:center;gap:15px;margin-bottom:16px}
+.ab-logo{
+  width:60px;height:60px;border-radius:18px;flex:none;display:grid;place-items:center;font-size:30px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 8px 22px var(--sh2);
+}
+.ab-id{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ab-id b{font-size:19px;font-weight:900}
+.ab-id small{font-size:12.5px;color:var(--dim);line-height:1.6}
+.ab-ver{
+  font-size:11px;font-weight:900;color:var(--acc);letter-spacing:1px;
+  background:var(--card2);border:1px solid var(--line);border-radius:999px;
+  padding:1px 9px;align-self:flex-start;
+}
+.keys-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px}
+.key-row{
+  display:flex;align-items:center;gap:10px;padding:8px 11px;
+  background:var(--sunk);border:1px solid var(--line);border-radius:11px;
+}
+.key-row .kk{flex:none;display:flex;gap:3px}
+.key-row .kd{font-size:12.5px;color:var(--tx3);font-weight:700;line-height:1.5}
+@media (max-width:760px){
+  .hp-body{grid-template-columns:1fr}
+  .hp-nav{flex-direction:row;flex-wrap:wrap;border-inline-end:none;padding-inline-end:0;
+    border-bottom:1px solid var(--line);padding-bottom:10px;position:static}
+  .hp-nav button{width:auto}
+  .hp-nav .hn-t{max-width:110px}
+}
+
 /* ---- notes ---- */
 .nbtn{
   background:none;border:none;cursor:pointer;font-size:13px;line-height:1;
@@ -1638,6 +1713,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
     <button class="btn" id="btnClear">🧹 נקה לוח</button>
     <button class="btn" id="btnXlsx">📊 אקסל</button>
+    <button class="btn" id="btnHelp" title="מדריך ההפעלה (F1)">❔ עזרה</button>
     <button class="btn" id="btnSettings">⚙️ הגדרות</button>
   </div>
 </div>
@@ -1866,6 +1942,98 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
   </div>
   <div class="ab-body" id="abRooms"></div>
 </div>
+
+<dialog id="dlgHelp">
+  <div class="dlg-in">
+    <div class="dlg-head">
+      <h3>❔ מדריך ההפעלה</h3>
+      <span class="search hp-search"><input type="text" id="hpSearch" placeholder="חיפוש במדריך — למשל: תבנית, קבוצה, אקסל…">
+        <button class="clr" id="hpSearchClr" hidden title="ניקוי">✕</button></span>
+      <button class="dlg-x" id="hpX" title="סגירה">✕</button>
+    </div>
+    <div class="dlg-body hp-body">
+      <nav class="hp-nav" id="hpNav"></nav>
+      <article class="hp-doc" id="hpDoc"></article>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="hpClose">סגירה</button>
+      <button class="btn" id="hpPrint">🖨️ הדפסת המדריך</button>
+      <span class="ab-sp"></span>
+      <button class="btn" id="hpAbout">ℹ️ אודות התוכנה</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgAbout">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>ℹ️ אודות</h3>
+      <button class="dlg-x" id="abX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <div class="ab-hero">
+        <div class="ab-logo">🛏️</div>
+        <div class="ab-id">
+          <b>שיבוץ חדרים לפנימייה</b>
+          <span class="ab-ver" id="abVer"></span>
+          <small>כלי לשיבוץ בחורים לחדרים — שרטוט המבנה, כללים, שיבוץ והשוואת גרסאות.</small>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>📦 מה זה</h4>
+        <p class="hint">קובץ HTML אחד עצמאי, בלי התקנה ובלי שרת. אפשר להוריד אותו למחשב
+          ולהפעיל בלחיצה כפולה — הוא עובד בדיוק אותו דבר גם בלי חיבור לאינטרנט.</p>
+      </div>
+      <div class="ed-sec">
+        <h4>🔒 פרטיות</h4>
+        <p class="hint">כל הנתונים — הבחורים, החדרים, הכללים והשיבוץ — נשמרים
+          <b>מקומית בדפדפן במחשב הזה בלבד</b>. שום דבר לא נשלח לשום שרת.<br>
+          היוצא היחיד מן הכלל הוא יועץ ה־AI, אם הפעלתם אותו: ההודעות ותמונת מצב הלוח נשלחות
+          ל־Google Gemini. מפתח ה־API נשמר רק בדפדפן ואינו נכלל בקובצי הגיבוי.</p>
+      </div>
+      <div class="ed-sec">
+        <h4>💾 הנתונים שלכם</h4>
+        <p class="hint">מכיוון שהכול מקומי — מחיקת נתוני הדפדפן תמחק גם את הפרויקטים.
+          שמרו גיבוי לקובץ מדי פעם: ⚙️ הגדרות ← נתונים ← שמירת גיבוי.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn" id="abBackup">💾 שמירת גיבוי עכשיו</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>⬇️ הורדה ושיתוף</h4>
+        <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור הזה:</p>
+        <div class="linkbox" id="abLinkBox"></div>
+        <div class="dlgbtns wrap">
+          <button class="btn accent" id="abDownload">⬇️ הורדת התוכנה למחשב</button>
+          <button class="btn" id="abCopyLink">🔗 העתקת הקישור</button>
+        </div>
+      </div>
+      <div class="ed-sec credits">
+        <h4>🙏 קרדיטים</h4>
+        <div class="cred-row">
+          <span class="cred-av">👤</span>
+          <span class="cred-txt"><b id="abCredUser">בנימין</b><small>רעיון, אפיון, ליווי ובדיקות</small></span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-av">🤖</span>
+          <span class="cred-txt"><b>Claude — Opus 5</b><small>תכנון ובנייה · Anthropic</small></span>
+        </div>
+        <p class="hint" style="margin:11px 0 0">נבנה בשיתוף, סבב אחר סבב, עד שהתאים בדיוק.</p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="abClose">סגירה</button>
+      <button class="btn" id="abHelp">❔ מדריך ההפעלה</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgKeys">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>⌨️ קיצורי מקלדת</h3>
+      <button class="dlg-x" id="kyX" title="סגירה">✕</button></div>
+    <div class="dlg-body"><div class="keys-grid" id="keysGrid"></div></div>
+    <div class="dlg-foot"><button class="btn accent" id="kyClose">סגירה</button></div>
+  </div>
+</dialog>
 
 <dialog id="dlgNote">
   <div class="dlg-in">
@@ -2297,17 +2465,18 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 
     <div class="tabpane" data-p="about">
       <div class="ed-sec">
-        <h4>🏠 שיבוץ חדרים לפנימייה <span class="cnt" id="verLbl"></span></h4>
-        <p class="hint">
-          קובץ HTML אחד עצמאי. כל הנתונים נשמרים מקומית בדפדפן במחשב הזה — שום דבר לא נשלח לשום מקום,
-          למעט הודעות שאתם שולחים ליועץ ה־AI (אם הפעלתם אותו).<br><br>
-          <b>קיצורי מקלדת:</b> <code>/</code> חיפוש · <code>Ctrl+S</code> שמירת סימולציה ·
-          <code>Ctrl+Z</code> ביטול הפעולה האחרונה (עד 60 צעדים) ·
-          <code>Delete</code> החזרת הבחור המסומן לממתינים · <code>Esc</code> ביטול סימון<br><br>
+        <h4>❔ עזרה ומידע <span class="cnt" id="verLbl"></span></h4>
+        <p class="hint">המדריך המלא, קיצורי המקלדת והפרטים על התוכנה נמצאים במקומם:</p>
+        <div class="dlgbtns wrap">
+          <button class="btn accent" id="setOpenHelp">❔ מדריך ההפעלה</button>
+          <button class="btn" id="setOpenKeys">⌨️ קיצורי מקלדת</button>
+          <button class="btn" id="setOpenAbout">ℹ️ אודות התוכנה</button>
+        </div>
+        <p class="hint" style="margin-top:11px">
           <b>טיפ:</b> נעלו 🔒 בחורים שכבר סגורים, ואז "שיבוץ אוטומטי" ישלים סביבם בלי לגעת בהם.
         </p>
       </div>
-
+      <!-- kept for the download/copy handlers wired elsewhere -->
       <div class="ed-sec">
         <h4>⬇️ הורדה ושיתוף</h4>
         <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור אחד. אפשר להוריד את הקובץ ולהפעיל
@@ -2318,7 +2487,6 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         </div>
         <div class="linkbox" id="appLinkBox"></div>
       </div>
-
       <div class="ed-sec credits">
         <h4>🙏 קרדיטים</h4>
         <div class="cred-row">
@@ -2329,7 +2497,6 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
           <span class="cred-av">🤖</span>
           <span class="cred-txt"><b>Claude — Opus 5</b><small>תכנון ובנייה · Anthropic</small></span>
         </div>
-        <p class="hint" style="margin:11px 0 0">נבנה בשיתוף, סבב אחר סבב, עד שהתאים בדיוק.</p>
       </div>
     </div>
 
@@ -2725,7 +2892,7 @@ const WING_TEMPLATES=[
 let S=loadState();
 let selected=null;
 let formMembers=new Set();
-const Q={board:'',rule:'',rules:'',edit:'',ab:'',grp:'',by:''};
+const Q={board:'',rule:'',rules:'',edit:'',ab:'',grp:'',by:'',help:''};
 
 /* Hebrew-friendly matching: ignores geresh/quotes, hyphens and double spaces */
 const norm=s=>String(s||'').toLowerCase()
@@ -2735,7 +2902,8 @@ function clearSearches(){
   for(const k of Object.keys(Q))Q[k]='';
   for(const [inp,clr] of [['#boardSearch','#boardSearchClr'],['#ruleSearch','#ruleSearchClr'],
                           ['#rulesSearch','#rulesSearchClr'],['#edSearch','#edSearchClr'],
-                          ['#abSearch','#abSearchClr'],['#grSearch','#grSearchClr']]){
+                          ['#abSearch','#abSearchClr'],['#grSearch','#grSearchClr'],
+                          ['#hpSearch','#hpSearchClr']]){
     const i=$(inp); if(i)i.value='';
     const c=$(clr); if(c)c.hidden=true;
   }
@@ -4620,7 +4788,7 @@ function paintSecnav(){
 /* ================= guide banners =================
    Each section explains itself in one breath and hands you the next step.
    Big while the stage is unfinished, one quiet line once it is done. */
-function guideEl(ico,title,text,btns,ok){
+function guideEl(ico,title,text,btns,ok,topic){
   const g=el('div','guide'+(ok?' ok slim':''));
   g.appendChild(el('span','gi',ico));
   const t=el('div','gt');
@@ -4631,6 +4799,8 @@ function guideEl(ico,title,text,btns,ok){
     b.addEventListener('click',fn);
     g.appendChild(b);
   });
+  /* every stage carries its own way into the manual */
+  if(topic)g.appendChild(qmark(topic,'הסבר על השלב הזה'));
   return g;
 }
 function paintGuides(){
@@ -4641,48 +4811,54 @@ function paintGuides(){
   const gs=$('#guideStruct'); gs.innerHTML='';
   gs.appendChild(hasRooms
     ? guideEl('✓','המבנה מוגדר.',`${S.wings.length} אגפים · ${S.rooms.length} חדרים. אפשר לחזור לכאן ולשנות בכל רגע.`,
-        [next({t:'לשלב הבא: הבחורים',v:'boys'})],true)
+        [next({t:'לשלב הבא: הבחורים',v:'boys'})],true,'struct')
     : guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
-        'מותחים קו על הרשת לכל אגף (אפשר גם כמה קומות), ואז לוחצים על האגף ובוחרים לו תבנית חדרים — הכול נבנה בבת אחת.',
-        [] ));
+        'מסמנים מלבן על הרשת לכל אגף — בגרירה, או בלחיצה על שתי פינות. אחר כך לוחצים על האגף ובוחרים לו תבנית חדרים.',
+        [['❔ איך משרטטים',()=>openHelp('struct'),false]],false,'struct'));
 
   const gb=$('#guideBoys'); gb.innerHTML='';
   gb.appendChild(hasBoys
     ? guideEl('✓',`${S.boys.length} בחורים ברשימה.`,'אפשר להוסיף, לתקן שם או לחלק לקבוצות בכל רגע.',
-        [next({t:'לשלב הבא: השיבוץ',v:'board'})],true)
+        [next({t:'לשלב הבא: השיבוץ',v:'board'})],true,'boys')
     : guideEl('👥','שלב 2 — רשימת הבחורים.',
         'הדרך המהירה: לגרור לכאן קובץ אקסל. אפשר גם להדביק רשימה שלמה או להקליד שם־שם.',
-        [] ));
+        [],false,'boys'));
 
   const gr=$('#guideRules'); gr.innerHTML='';
   gr.appendChild(S.rules.length
     ? guideEl('✓',`${S.rules.length} כללים פעילים.`,'הפרה של כלל "בלתי מתפשר" תופיע באדום בכל מקום.',
-        [next({t:'לשיבוץ',v:'board'})],true)
+        [next({t:'לשיבוץ',v:'board'})],true,'rules')
     : guideEl('⚖️','שלב 3 — כללים (לא חובה).',
         'למשל: פלוני ואלמוני לא באותו חדר, או שלישייה שחייבת להיות יחד. השיבוץ האוטומטי מכבד את הכללים.',
-        [['➡️ דלגו לשיבוץ',()=>setTab('board'),false]],false));
+        [['➡️ דלגו לשיבוץ',()=>setTab('board'),false]],false,'rules'));
 
   const go2=$('#guideBoard'); go2.innerHTML='';
   if(!hasRooms)
     go2.appendChild(guideEl('🏗️','עוד אין חדרים לשבץ אליהם.','קודם בונים את המבנה — אגפים וחדרים.',
-      [['🏗️ למדור המבנה',()=>setTab('struct'),true]],false));
+      [['🏗️ למדור המבנה',()=>setTab('struct'),true]],false,'struct'));
   else if(!hasBoys)
     go2.appendChild(guideEl('👥','עוד אין את מי לשבץ.','המבנה מוכן — עכשיו צריך את רשימת הבחורים.',
-      [['👥 למדור הבחורים',()=>setTab('boys'),true]],false));
+      [['👥 למדור הבחורים',()=>setTab('boys'),true]],false,'boys'));
   else if(!placed)
     go2.appendChild(guideEl('🛏️','שלב 4 — השיבוץ עצמו.',
       'לוחצים על שם ברשימה משמאל ואז על חדר — או נותנים לשיבוץ האוטומטי למלא הכול לפי הכללים.',
-      [['🤖 שיבוץ אוטומטי',()=>$('#btnAuto').click(),true]],false));
+      [['🤖 שיבוץ אוטומטי',()=>$('#btnAuto').click(),true]],false,'assign'));
   else if(placed<S.boys.length)
     go2.appendChild(guideEl('🛏️',`${placed} משובצים, ${S.boys.length-placed} ממתינים.`,
       'ממשיכים לשבץ מהרשימה משמאל, או משלימים אוטומטית.',
-      [['🤖 השלמה אוטומטית',()=>$('#btnAuto').click(),false]],true));
+      [['🤖 השלמה אוטומטית',()=>$('#btnAuto').click(),false],
+       ['🖨️ הדפסה',printAssignment,false]],true,'assign'));
+  else
+    go2.appendChild(guideEl('✓','כולם משובצים 🎉',
+      'אפשר להדפיס את הרשימה לתלייה, לייצא לאקסל, או לשמור את הגרסה ולנסות סידור אחר.',
+      [['🖨️ הדפסת השיבוץ',printAssignment,true],
+       ['📊 אקסל',()=>$('#btnXlsx').click(),false]],true,'assign'));
 
   const gm=$('#guideSims'); gm.innerHTML='';
   gm.appendChild(guideEl(S.sims.length?'✓':'🗂️',
     S.sims.length?`${S.sims.length} גרסאות שמורות.`:'שלב 5 — משווים גרסאות.',
     'שומרים את השיבוץ הנוכחי בשם, מנסים סידור אחר, ומשווים במבט — כל גרסה מראה כמה הפרות יש בה.',
-    [],!!S.sims.length));
+    [],!!S.sims.length,'sims'));
 }
 $('#railToggle').addEventListener('click',()=>{
   S.settings.display.rail=!S.settings.display.rail;
@@ -5081,6 +5257,332 @@ function trimOverfull(){
     });
   }
   S.locks=S.locks.filter(b=>S.assign[b]);
+}
+
+/* =====================================================================
+   ==========================  the help centre  ========================
+   =====================================================================
+   One place that explains the whole app, searchable, and reachable from
+   every screen — plus a ❔ next to the controls that need it most. */
+const KEYS=[
+  [['F1'],'פתיחת המדריך'],
+  [['?'],'קיצורי המקלדת (הרשימה הזו)'],
+  [['/'],'קפיצה לחיפוש בחור'],
+  [['Ctrl','Z'],'ביטול הפעולה האחרונה — עד 60 צעדים אחורה'],
+  [['Ctrl','S'],'שמירת המצב הנוכחי כסימולציה'],
+  [['1'],'מעבר למדור המבנה'],
+  [['2'],'מעבר לרשימת הבחורים'],
+  [['3'],'מעבר לכללים'],
+  [['4'],'מעבר לשיבוץ'],
+  [['5'],'מעבר להשוואה'],
+  [['Esc'],'ביטול סימון, סגירת חלון, ביטול פינה בשרטוט'],
+  [['Delete'],'החזרת הבחור המסומן לרשימת הממתינים'],
+  [['Backspace'],'חזרה שלב אחורה בניווט'],
+];
+const HELP=[
+  {id:'start',ico:'🚀',t:'איך מתחילים',lead:'שלושה מסלולים — בחרו את הקרוב אליכם.',
+   body:[
+    {h:'יש לכם קובץ אקסל עם השמות'},
+    {ol:['במסך הפתיחה של פרויקט ריק לוחצים <b>📥 ייבוא מקובץ</b>.',
+         'הקובץ יכול להכיל רק שמות, או גם עמודות של חדר, מיטות ואגף — ואז הכול נבנה בבת אחת.',
+         'לא בטוחים במבנה? <b>📄 הורדת קובץ תבנית</b> נותן לכם דוגמה מוכנה למילוי.']},
+    {h:'אין קובץ — בונים מאפס'},
+    {ol:['<b>🧱 בניית אגף מתבנית</b> — בוחרים פריסה מוכנה וקובעים כמה חדרים.',
+         'אחר כך מדור <b>2 בחורים</b> להזנת השמות.']},
+    {h:'ממשיכים עבודה קודמת'},
+    {ol:['<b>📂 שחזור מגיבוי</b> טוען קובץ גיבוי שנשמר בעבר.']},
+    {tip:'התוכנה בנויה כחמישה שלבים ממוספרים בסרגל העליון: מבנה ← בחורים ← כללים ← שיבוץ ← השוואה. אפשר לדלג ביניהם חופשי, והבאנר בכל מדור אומר מה חסר כדי להמשיך.'}
+   ]},
+  {id:'struct',ico:'🏗️',t:'1 · מבנה: בניין ואגפים',lead:'כאן משרטטים את הפנימייה כמו שהיא באמת.',
+   body:[
+    {p:'בניין מורכב מ<b>קומות</b>, וכל קומה מורכבת מ<b>אגפים</b>. אגף הוא מסדרון עם החדרים שסביבו.'},
+    {h:'לשרטט אגף'},
+    {ol:['בוחרים כלי <b>📐 שרטוט</b>.',
+         'גוררים מלבן על הרשת — <b>או</b> לוחצים על פינה אחת ואז על הפינה הנגדית. שתי הדרכים עובדות.',
+         'המלבן שנוצר הוא אגף. הוא מקבל שם, ואפשר לשנות אותו בשדה שמתחת לרשת.']},
+    {h:'אגף מפותל (ר׳, ח׳, ת׳)'},
+    {ol:['מסמנים את האגף (לחיצה עליו).',
+         'מציירים מלבן <b>נוסף</b> שמתחיל בתוכו — והשניים מתאחדים לצורה אחת.']},
+    {h:'הכלים'},
+    {ul:['<b>📐 שרטוט</b> — יוצר אגף חדש, או מרחיב את הנבחר.',
+         '<b>🖐️ הזזה</b> — גוררים אגף שלם למקום אחר.',
+         '<b>🧽 מחיקה</b> — מלבן שמוחק. מחיקת כל האגף שואלת אישור.']},
+    {tip:'קומות: כפתור <b>+ קומה</b> מוסיף קומה. לחיצה כפולה על שם קומה משנה אותו. כל קומה היא שרטוט נפרד.'}
+   ]},
+  {id:'plan',ico:'📐',t:'הפריסה בתוך אגף',lead:'מסדרון, חדרים, מקלחות — הכול על רשת אחת.',
+   body:[
+    {p:'לוחצים על אגף ← <b>🚪 בניית החדרים</b>. נפתח עורך הפריסה.'},
+    {h:'הסדר שעובד'},
+    {ol:['<b>👣 מסדרון</b> — מציירים קודם את המסדרון. הוא יכול להתפתל ולפנות.',
+         '<b>🚪 חדר</b> — מלבן צמוד למסדרון. <b>גודל המלבן הוא גודל החדר</b>: משבצת אחת = חדר קטן, 3×2 = חדר גדול.',
+         'שאר המשבצות: מקלחות, שירותים, כניסה, יציאת חירום, שטח מת ועוד.']},
+    {h:'לשנות אחרי הציור'},
+    {ul:['<b>🖐️ בחירה והזזה</b> ואז לחיצה על משבצת פותחת את עורך המשבצת מתחת לרשת.',
+         'שם משנים מספר חדר, מספר מיטות, כיתוב — וגם <b>רוחב וגובה</b> על השרטוט.']},
+    {tip:'הדלת של כל חדר מצוירת אוטומטית בצד שנוגע במסדרון. חדר שלא נוגע במסדרון פשוט לא יקבל דלת — סימן טוב שמשהו בפריסה לא מדויק.'}
+   ]},
+  {id:'templates',ico:'⭐',t:'תבניות קומה',lead:'רוב הקומות דומות — מציירים פעם אחת.',
+   body:[
+    {p:'בעורך האגף יש גלריית תבניות: קומה קלאסית, שירותים באמצע, חדרים בצד אחד ועוד. בוחרים אחת, קובעים כמה חדרים וכמה מיטות, ולוחצים <b>החלת התבנית</b> — הפריסה כולה נבנית.'},
+    {h:'תבנית משלכם'},
+    {ol:['מציירים קומה אחת בדיוק כמו שהיא.',
+         '<b>⭐ שמירה כתבנית חדשה</b>, נותנים שם — למשל "בניין חדש קלאסי".',
+         'בקומה הבאה בוחרים אותה, ומשנים רק את מה ששונה.']},
+    {p:'<b>📚 ניהול התבניות</b> מאפשר לערוך, לשכפל ולמחוק תבניות. שכפול הוא הדרך לבנות וריאציה בלי לפגוע במקור.'}
+   ]},
+  {id:'boys',ico:'👥',t:'2 · רשימת הבחורים',lead:'מי צריך מיטה.',
+   body:[
+    {ul:['הוספה ידנית: שדה השם למטה ברשימה, או <kbd>Enter</kbd> אחרי כל שם.',
+         'ייבוא: מאקסל, וורד, CSV או הדבקה של רשימה — שם בכל שורה.',
+         'שינוי שם: לוחצים על השם ברשימה ועורכים. השיבוץ, הכללים והקבוצות עוברים איתו.']},
+    {warn:'מחיקת בחור מסירה אותו גם מהחדר, מהכללים ומהקבוצות. <kbd>Ctrl</kbd>+<kbd>Z</kbd> מחזיר.'}
+   ]},
+  {id:'groups',ico:'🎓',t:'קבוצות',lead:'שיעור א׳, מחזור, קבוצת גיל.',
+   body:[
+    {p:'ברשימת הממתינים בצד יש ⚙️ לניהול קבוצות. לכל קבוצה שם וצבע, ובוחרים לה חברים.'},
+    {ul:['שם מקבל נקודת צבע לפי הקבוצה, בכל מקום שהוא מופיע.',
+         'אפשר לסנן את רשימת הממתינים לקבוצה אחת.',
+         'באגף יש <b>👥 מילוי מקבוצה</b> — כל הממתינים מהקבוצה נכנסים למיטות הפנויות בלחיצה.']},
+    {tip:'בחור שייך לקבוצה אחת בלבד. בחירה בקבוצה אחרת מעבירה אותו אליה.'}
+   ]},
+  {id:'rules',ico:'⚖️',t:'3 · כללים',lead:'מה מותר ומה אסור בשיבוץ.',
+   body:[
+    {ul:['<b>🚫 לא באותו חדר</b> — שניים או יותר שאסור להם יחד.',
+         '<b>🤝 ביחד באותו חדר</b> — קבוצה שרוצה להיות יחד.',
+         '<b>📍 שיבוץ לחדר</b> — פלוני חייב בחדר מסוים.',
+         '<b>🚷 הרחקה מחדר</b> — פלוני לא בחדר מסוים.']},
+    {p:'לכל כלל שתי רמות: <b>בלתי מתפשר</b> (הפרה מפעילה אזעקה אדומה) או <b>עדיף</b> (אזהרה כתומה).'},
+    {tip:'כשיש הפרה התוכנה מציעה מהלכים שמתקנים אותה, עם כפתור "בצע".'}
+   ]},
+  {id:'assign',ico:'🛏️',t:'4 · שיבוץ',lead:'להכניס בחורים לחדרים.',
+   body:[
+    {h:'הדרך הפשוטה'},
+    {ol:['לוחצים על שם ברשימת הממתינים.',
+         'נפתחת מגירה למטה עם <b>כל החדרים בכל האגפים</b>.',
+         'לוחצים על חדר — וזהו. בלי גלילה ובלי גרירה.']},
+    {p:'במגירה יש חיפוש, וכל חדר מסומן: ✨ מתקן הפרה קיימת · ⚠️ יפר כלל "עדיף" · ⛔ יפר כלל בלתי־מתפשר · דהוי = מלא.'},
+    {h:'דרכים נוספות'},
+    {ul:['גרירה של שם לחדר — עובדת גם בין אגפים, עם גלילה אוטומטית.',
+         'לחיצה כפולה על שם משובץ מחזירה אותו לממתינים.',
+         '🔓 על שם משובץ <b>נועל</b> אותו במקומו — שיבוץ אוטומטי לא יזיז אותו.']},
+    {tip:'<b>🤖 שיבוץ אוטומטי</b> ממלא את כל החדרים תוך כיבוד הכללים. נעלו קודם את מי שכבר סגור, והוא ישלים סביבם.'}
+   ]},
+  {id:'sims',ico:'🗂️',t:'5 · השוואת גרסאות',lead:'לשמור כמה אפשרויות ולבחור.',
+   body:[
+    {ol:['משבצים גרסה אחת ולוחצים <b>📌 שמירת המצב הנוכחי</b> עם שם.',
+         'משנים ומשבצים אחרת, ושומרים גם אותה.',
+         'כל גרסה מציגה כמה הפרות יש בה — עוברים ביניהן בלחיצה ומשווים.']},
+    {tip:'<kbd>Ctrl</kbd>+<kbd>S</kbd> שומר סימולציה מכל מקום בתוכנה.'}
+   ]},
+  {id:'notes',ico:'📝',t:'הערות',lead:'לזכור דברים במקום שבו הם רלוונטיים.',
+   body:[
+    {p:'כמעט לכל דבר בתוכנה אפשר לצרף הערה: לפרויקט, לאגף, לחדר, לבחור, לכלל, לקבוצה ולסימולציה. מחפשים את הכפתור 🗒️ ליד הפריט.'},
+    {p:'הערה קיימת מסומנת ב־📝 ומוצגת במקום שבו הפריט מופיע — למשל "מיטה שבורה ליד החלון" על חדר מסוים.'}
+   ]},
+  {id:'data',ico:'💾',t:'ייבוא, גיבוי והדפסה',lead:'איך הנתונים נכנסים ויוצאים.',
+   body:[
+    {h:'ייבוא'},
+    {p:'אקסל (xlsx), וורד (docx), CSV, TXT או JSON. עמודה של שמות מספיקה; אם יש גם חדר, מיטות ואגף — הכול נבנה יחד.'},
+    {h:'ייצוא'},
+    {ul:['<b>📊 אקסל</b> — טבלת שיבוץ מלאה ומעוצבת.',
+         '<b>💾 גיבוי</b> — קובץ JSON עם הכול, לשחזור מלא.',
+         '<b>🖨️ הדפסה</b> — דף נקי לתלייה על לוח המודעות.']},
+    {warn:'הנתונים נשמרים בדפדפן במחשב הזה בלבד. ניקוי נתוני הדפדפן ימחק אותם. שמרו גיבוי לקובץ מדי פעם.'}
+   ]},
+  {id:'projects',ico:'📁',t:'פרויקטים',lead:'כמה שיבוצים במקביל, בלי להתערבב.',
+   body:[
+    {p:'כל פרויקט הוא שיבוץ שלם ונפרד — זמן אחר, מחזור אחר, או ניסיון צדדי. עוברים ביניהם בכפתור <b>📁 פרויקטים</b>.'},
+    {ul:['<b>שכפול</b> — להתנסות בשיבוץ חלופי בלי לגעת במקור.',
+         '<b>גיבוי לקובץ</b> — לכל פרויקט בנפרד.',
+         '<b>מחיקה</b> — סופית, ולא ניתנת לביטול. גבו קודם.']}
+   ]},
+  {id:'ai',ico:'✨',t:'היועץ החכם',lead:'רשות — דורש מפתח Gemini חינמי.',
+   body:[
+    {p:'היועץ רואה את הלוח בזמן אמת, עונה על שאלות, ויכול גם לבצע פעולות בעצמו.'},
+    {h:'שלוש רמות הרשאה'},
+    {ul:['<b>ייעוץ בלבד</b> — מדבר, לא נוגע.',
+         '<b>פעולות רגילות</b> — משבץ, נועל, מוסיף כללים ושומר סימולציות.',
+         '<b>ללא הגבלה</b> — גם מוחק ומאפס. מומלץ להשאיר את האישור המקדים דלוק.']},
+    {p:'המפתח מתקבל חינם ב־aistudio.google.com/apikey, נשמר רק בדפדפן, ואינו נכלל בגיבויים.'}
+   ]},
+  {id:'keys',ico:'⌨️',t:'קיצורי מקלדת',lead:'',
+   body:[{keys:true}]},
+];
+let HP={topic:'start',q:''};
+function openHelp(topic){
+  HP.topic=topic&&HELP.some(h=>h.id===topic)?topic:HP.topic;
+  renderHelp();
+  if(!$('#dlgHelp').open)$('#dlgHelp').showModal();
+}
+function helpText(h){
+  /* everything the topic says, flattened — that is what search looks through */
+  const bits=[h.t,h.lead||''];
+  for(const b of h.body||[]){
+    if(b.h)bits.push(b.h);
+    if(b.p)bits.push(b.p);
+    if(b.tip)bits.push(b.tip);
+    if(b.warn)bits.push(b.warn);
+    for(const s of (b.ol||b.ul||[]))bits.push(s);
+  }
+  return bits.join(' ').replace(/<[^>]+>/g,'');
+}
+function renderHelp(){
+  const nav=$('#hpNav'); nav.innerHTML='';
+  const q=HP.q.trim();
+  const list=q?HELP.filter(h=>hits(helpText(h),q)):HELP;
+  if(!list.some(h=>h.id===HP.topic)&&list.length)HP.topic=list[0].id;
+  for(const h of list){
+    const b=el('button',h.id===HP.topic?'on':'');
+    b.append(el('span','hn-i',h.ico),el('span','hn-t',h.t));
+    b.addEventListener('click',()=>{HP.topic=h.id;renderHelp();});
+    nav.appendChild(b);
+  }
+  const doc=$('#hpDoc'); doc.innerHTML='';
+  if(!list.length){
+    doc.appendChild(el('div','hp-none',`לא נמצא במדריך שום דבר שתואם ל"${q}". נסו מילה אחרת — למשל: תבנית, קבוצה, אקסל, גיבוי.`));
+    return;
+  }
+  const h=HELP.find(x=>x.id===HP.topic)||list[0];
+  const head=el('h4'); head.append(el('span',null,h.ico),el('span',null,h.t));
+  doc.appendChild(head);
+  if(h.lead)doc.appendChild(el('div','hp-lead',h.lead));
+  for(const b of h.body||[]){
+    if(b.keys){doc.appendChild(keysTable());continue;}
+    if(b.h){doc.appendChild(el('h5',null,b.h));continue;}
+    if(b.p){const p=el('p');p.innerHTML=b.p;doc.appendChild(p);continue;}
+    if(b.tip){const d=el('div','hp-tip');d.innerHTML='💡 '+b.tip;doc.appendChild(d);continue;}
+    if(b.warn){const d=el('div','hp-warn');d.innerHTML='⚠️ '+b.warn;doc.appendChild(d);continue;}
+    if(b.ol||b.ul){
+      const L=el(b.ol?'ol':'ul');
+      for(const s of (b.ol||b.ul)){const li=el('li');li.innerHTML=s;L.appendChild(li);}
+      doc.appendChild(L);
+    }
+  }
+}
+function keysTable(){
+  const g=el('div','keys-grid');
+  for(const [combo,what] of KEYS){
+    const row=el('div','key-row');
+    const kk=el('span','kk');
+    combo.forEach((k,i)=>{
+      if(i)kk.appendChild(el('span',null,'+'));
+      const kbd=document.createElement('kbd'); kbd.textContent=k; kk.appendChild(kbd);
+    });
+    row.append(kk,el('span','kd',what));
+    g.appendChild(row);
+  }
+  return g;
+}
+$('#btnHelp').addEventListener('click',()=>openHelp(HELP_FOR_SEC[SEC]||'start'));
+$('#hpClose').addEventListener('click',()=>$('#dlgHelp').close());
+$('#hpX').addEventListener('click',()=>$('#dlgHelp').close());
+$('#hpAbout').addEventListener('click',()=>{$('#dlgHelp').close();openAbout();});
+$('#hpPrint').addEventListener('click',printHelp);
+/* which topic each section opens on */
+const HELP_FOR_SEC={struct:'struct',boys:'boys',rules:'rules',board:'assign',sims:'sims'};
+/* a ❔ button that drops next to a heading and opens the right topic */
+function qmark(topic,title){
+  const b=el('button','qmark','?');
+  b.title=title||'הסבר';
+  b.addEventListener('click',e=>{e.stopPropagation();openHelp(topic);});
+  return b;
+}
+function openKeys(){$('#keysGrid').innerHTML='';$('#keysGrid').appendChild(keysTable());
+  if(!$('#dlgKeys').open)$('#dlgKeys').showModal();}
+$('#kyClose').addEventListener('click',()=>$('#dlgKeys').close());
+$('#kyX').addEventListener('click',()=>$('#dlgKeys').close());
+
+/* ---------------- about ---------------- */
+function openAbout(){
+  $('#abVer').textContent='גרסה '+APP_VERSION;
+  $('#abLinkBox').textContent=APP_HOME;
+  $('#abCredUser').textContent=(S.settings&&S.settings.credUser)||'בנימין';
+  if(!$('#dlgAbout').open)$('#dlgAbout').showModal();
+}
+$('#abClose').addEventListener('click',()=>$('#dlgAbout').close());
+$('#abX').addEventListener('click',()=>$('#dlgAbout').close());
+$('#abHelp').addEventListener('click',()=>{$('#dlgAbout').close();openHelp('start');});
+$('#abDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
+$('#abCopyLink').addEventListener('click',()=>$('#btnCopyLink').click());
+$('#abBackup').addEventListener('click',()=>{$('#dlgAbout').close();$('#btnExport').click();});
+
+/* ---------------- print: the guide, and the assignment ---------------- */
+function printDoc(title,inner){
+  const w=window.open('','_blank');
+  if(!w){toast('הדפדפן חסם את חלון ההדפסה — אפשרו חלונות קופצים');return;}
+  w.document.write('<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8">'
+    +'<title>'+esc(title)+'</title><style>'
+    +'body{font-family:"Segoe UI","Noto Sans Hebrew",Arial,sans-serif;color:#111;margin:28px;line-height:1.7}'
+    +'h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:20px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}'
+    +'h3{font-size:13px;margin:12px 0 4px}p,li{font-size:12.5px}ul,ol{margin:0 18px 8px 0;padding:0}'
+    +'table{border-collapse:collapse;width:100%;margin:6px 0 14px}'
+    +'th,td{border:1px solid #bbb;padding:5px 8px;font-size:12px;text-align:right}'
+    +'th{background:#eee}.sub{color:#666;font-size:12px;margin:0 0 14px}'
+    +'.tip{background:#f4f7ff;border:1px solid #ccd;padding:7px 10px;border-radius:6px;margin:8px 0;font-size:12px}'
+    +'@media print{body{margin:12mm}}</style></head><body>'+inner+'</body></html>');
+  w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},250);
+}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function printHelp(){
+  let h='<h1>שיבוץ חדרים לפנימייה — מדריך ההפעלה</h1>'
+       +'<p class="sub">גרסה '+esc(APP_VERSION)+' · '+esc(APP_HOME)+'</p>';
+  for(const t of HELP){
+    h+='<h2>'+esc(t.ico+' '+t.t)+'</h2>';
+    if(t.lead)h+='<p class="sub">'+esc(t.lead)+'</p>';
+    for(const b of t.body||[]){
+      if(b.keys){
+        h+='<table><tr><th>קיצור</th><th>מה הוא עושה</th></tr>';
+        for(const [c,w2] of KEYS)h+='<tr><td>'+esc(c.join(' + '))+'</td><td>'+esc(w2)+'</td></tr>';
+        h+='</table>';
+        continue;
+      }
+      if(b.h)h+='<h3>'+esc(b.h)+'</h3>';
+      if(b.p)h+='<p>'+b.p+'</p>';
+      if(b.tip)h+='<div class="tip">💡 '+b.tip+'</div>';
+      if(b.warn)h+='<div class="tip">⚠️ '+b.warn+'</div>';
+      if(b.ol||b.ul){
+        h+=b.ol?'<ol>':'<ul>';
+        for(const s of (b.ol||b.ul))h+='<li>'+s+'</li>';
+        h+=b.ol?'</ol>':'</ul>';
+      }
+    }
+  }
+  printDoc('מדריך ההפעלה',h);
+}
+/* the assignment itself, ready for a noticeboard */
+function printAssignment(){
+  if(!S.rooms.length){toast('אין עדיין חדרים להדפיס');return;}
+  const ev=evaluate(S.assign);
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  let h='<h1>'+esc(S.zman||'שיבוץ חדרים')+'</h1>'
+       +'<p class="sub">'+esc(S.desc||'')+(S.desc?' · ':'')
+       +placed+' משובצים מתוך '+S.boys.length+' · '+S.rooms.length+' חדרים'
+       +' · הופק '+new Date().toLocaleDateString('he-IL')+'</p>';
+  for(const b of S.buildings){
+    const ws=wingsOf(b.id).filter(w=>roomsOf(w.id).length);
+    if(!ws.length)continue;
+    if(S.buildings.length>1)h+='<h2>'+esc((b.icon||'')+' '+b.name)+'</h2>';
+    for(const w of ws){
+      h+='<h2>'+esc(w.name)+'</h2><table><tr><th style="width:70px">חדר</th><th>הבחורים</th><th style="width:60px">תפוסה</th></tr>';
+      const order=planRoomNums(w.plan);
+      const seen=new Set(order);
+      const list=[...order.map(n=>roomBy(n)).filter(Boolean),
+                  ...roomsOf(w.id).filter(r=>!seen.has(r.num))];
+      for(const r of list){
+        const occ=occupants(r.num);
+        const note=noteOf('room',r.num);
+        h+='<tr><td><b>'+esc(r.num)+'</b>'+(note?'<br><span style="font-size:10px;color:#666">📝 '+esc(note)+'</span>':'')+'</td>'
+          +'<td>'+(occ.length?occ.map(esc).join(' · '):'<span style="color:#999">ריק</span>')+'</td>'
+          +'<td>'+occ.length+'/'+r.beds+'</td></tr>';
+      }
+      h+='</table>';
+    }
+  }
+  const waiting=S.boys.filter(b=>!S.assign[b]);
+  if(waiting.length)h+='<h2>ממתינים לשיבוץ ('+waiting.length+')</h2><p>'+waiting.map(esc).join(' · ')+'</p>';
+  if(ev.hard+ev.soft)h+='<div class="tip">שימו לב: '+ev.hard+' הפרות בלתי־מתפשרות ו־'+ev.soft+' הפרות קלות בשיבוץ הזה.</div>';
+  printDoc(S.zman||'שיבוץ חדרים',h);
 }
 
 /* =====================================================================
@@ -8258,6 +8760,10 @@ wireSearch('#rulesSearch','#rulesSearchClr','rules',()=>renderRules(evaluate(S.a
 wireSearch('#edSearch','#edSearchClr','edit',()=>{if(ED)renderEdit();});
 wireSearch('#abSearch','#abSearchClr','ab',()=>{if(selected)renderAssign();},120);
 wireSearch('#grSearch','#grSearchClr','grp',()=>{if($('#dlgGroups').open)renderGroups();},120);
+wireSearch('#hpSearch','#hpSearchClr','help',()=>{HP.q=Q.help;renderHelp();},120);
+$('#setOpenHelp').addEventListener('click',()=>{$('#dlgSettings').close();openHelp('start');});
+$('#setOpenKeys').addEventListener('click',()=>{$('#dlgSettings').close();openKeys();});
+$('#setOpenAbout').addEventListener('click',()=>{$('#dlgSettings').close();openAbout();});
 wireSearch('#bySearch','#bySearchClr','by',()=>{if(SEC==='boys')renderBoys();},150);
 
 /* ---------- download & share ---------- */
@@ -8543,6 +9049,9 @@ $('#rstAll').addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{
   const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable;
   const dlgOpen=!!document.querySelector('dialog[open]');
+  /* help is reachable from anywhere, even mid-dialog — that is the point of F1 */
+  if(e.key==='F1'){e.preventDefault();openHelp(HELP_FOR_SEC[SEC]||'start');return;}
+  if(e.key==='?'&&!typing){e.preventDefault();openKeys();return;}
   if(e.ctrlKey&&(e.key==='z'||e.key==='Z')&&!typing&&!dlgOpen){e.preventDefault();undo();return;}
   if(e.ctrlKey&&(e.key==='s'||e.key==='S')){
     e.preventDefault();
@@ -8552,6 +9061,11 @@ document.addEventListener('keydown',e=>{
   if(typing||dlgOpen)return;   // board shortcuts must not reach through an open dialog
   if(e.key==='/'||e.key==='f'&&e.ctrlKey){
     e.preventDefault();$('#boardSearch').focus();$('#boardSearch').select();return;
+  }
+  /* 1-5 jump between the numbered stages, the way the nav reads */
+  if(PID&&'12345'.includes(e.key)){
+    const to=['struct','boys','rules','board','sims'][+e.key-1];
+    if(to){e.preventDefault();setTab(to);render();return;}
   }
   if(e.key==='Escape'&&selected){clearSel();render();return;}
   if(e.key==='Delete'&&selected){e.preventDefault();assignBoy(selected,null);return;}
