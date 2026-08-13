@@ -1304,25 +1304,34 @@ body.nopulse .pb-room.warn-hard{animation:none}
 .le-tools>button:hover{color:var(--tx);border-color:var(--hover)}
 .le-tools>button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc);border-color:transparent}
 
-/* ---- free wing shapes on the building canvas ---- */
+/* ---- drafted wing shapes: walls traced around a floor ---- */
 .shape{position:absolute;inset:0;pointer-events:none}
-.scell{
-  position:absolute;width:24px;height:24px;box-sizing:border-box;pointer-events:auto;
-  background:color-mix(in srgb,var(--bc) 40%,var(--card));
-  border:1.5px solid var(--bc);cursor:grab;
+.shape svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.shape path{
+  fill:color-mix(in srgb,var(--bc) 22%,var(--card));
+  stroke:var(--bc);stroke-width:2.5;stroke-linejoin:round;
+  transition:fill .12s;
 }
-.shape.sel .scell{background:color-mix(in srgb,var(--bc) 58%,var(--card))}
+.shape.sel path{
+  fill:color-mix(in srgb,var(--bc) 40%,var(--card));
+  stroke-width:3.5;
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--bc) 60%,transparent));
+}
+.canvas.ro .shape path{pointer-events:visiblePainted;cursor:pointer}
+.canvas.ro .shape{pointer-events:auto}
 .slabel{
   position:absolute;transform:translate(-50%,-50%);pointer-events:none;direction:rtl;
   font-size:11.5px;font-weight:900;color:var(--tx);white-space:nowrap;
   background:color-mix(in srgb,var(--card) 82%,transparent);
   border-radius:7px;padding:1px 7px;text-shadow:0 1px 3px var(--sh2);
 }
-.gcell{
-  position:absolute;width:24px;height:24px;box-sizing:border-box;pointer-events:none;
-  background:color-mix(in srgb,var(--acc) 30%,transparent);
-  border:1.5px dashed var(--acc);border-radius:5px;
+/* the drag rectangle — the same rubber band every drawing tool has */
+.rband{
+  position:absolute;pointer-events:none;box-sizing:border-box;
+  border:2px dashed var(--acc);border-radius:8px;
+  background:color-mix(in srgb,var(--acc) 16%,transparent);
 }
+.rband.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
 .le-tool:hover{color:var(--tx);border-color:var(--hover)}
 .le-tool.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc);border-color:transparent}
 .le-more{
@@ -1351,6 +1360,14 @@ body.nopulse .pb-room.warn-hard{animation:none}
   background:var(--card2);border:1px solid var(--line2);
 }
 .le-grid.tool-move .le-c{pointer-events:auto;cursor:grab}
+/* the corridor floor: one traced region with walls, dotted like walked stone */
+.hallfloor{position:absolute;inset:0;pointer-events:none}
+.hallfloor svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hallfloor path{
+  fill:color-mix(in srgb,var(--muted) 16%,var(--card));
+  stroke:color-mix(in srgb,var(--muted) 70%,transparent);
+  stroke-width:2;stroke-linejoin:round;stroke-dasharray:none;
+}
 .le-c.hall{background:color-mix(in srgb,var(--muted) 30%,transparent);border-color:transparent;border-radius:0}
 .le-c.room{background:linear-gradient(160deg,color-mix(in srgb,var(--acc) 40%,var(--card)),var(--card2));border-color:color-mix(in srgb,var(--acc) 55%,transparent)}
 .le-c.dead{background:repeating-linear-gradient(45deg,var(--sunk2) 0 4px,transparent 4px 8px)}
@@ -1644,8 +1661,8 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     <div class="fl-tabs" id="bldFloors"></div>
     <div class="le-tools" id="bldTools" style="margin-bottom:9px"></div>
     <div class="canvas" id="bldCanvas"><div class="canvas-in" id="bldGrid"></div></div>
-    <div class="canvas-hint">✏️ מציירים את צורת האגף בגרירה — רחב, מתפתל, כל צורה שקיימת במציאות ·
-      ציור שמתחיל על אגף נבחר מרחיב אותו · 🖐️ הזזה · 🧽 מחיקת משבצות</div>
+    <div class="canvas-hint">📐 גוררים מלבן — וזה אגף. אגף מפותל? גוררים מלבן נוסף מתוך האגף הנבחר
+      והם מתחברים לצורה אחת · 🖐️ הזזת צורה שלמה · 🧽 מלבן מחיקה</div>
     <div class="bar-ed" id="bldBarEd" hidden>
       <div class="wiz-f" style="flex:1">
         <label>שם האגף שנבחר</label>
@@ -2448,6 +2465,78 @@ function geomFits(g,floorWings,skipId){
 }
 /* a straight strip, for auto-placing wings that were never drawn */
 const stripGeom=(x,y,len)=>normGeom({x,y,len,dir:'h'});
+
+/* ================= drafting helpers =================
+   The editors speak rectangles: a drag sweeps out a whole box, like any
+   drawing tool — never cell-by-cell painting. */
+const rectCells=(a,b)=>{
+  const out=[];
+  for(let y=Math.min(a.y,b.y);y<=Math.max(a.y,b.y);y++)
+    for(let x=Math.min(a.x,b.x);x<=Math.max(a.x,b.x);x++)out.push({x,y});
+  return out;
+};
+/* trace the outline of a cell set into SVG paths (unit = one cell), so a shape
+   renders as a drafted floor plan — walls around one body — not stacked tiles */
+function traceOutline(cells){
+  const set=new Set(cells.map(c=>c.x+','+c.y));
+  const segs=new Map();          /* "x,y" start → [end,...] directed, region on the left */
+  const addSeg=(x1,y1,x2,y2)=>{
+    const k=x1+','+y1;
+    (segs.get(k)||segs.set(k,[]).get(k)).push([x2,y2]);
+  };
+  for(const c of cells){
+    if(!set.has(c.x+','+(c.y-1)))addSeg(c.x,c.y,c.x+1,c.y);         /* top → right  */
+    if(!set.has((c.x+1)+','+c.y))addSeg(c.x+1,c.y,c.x+1,c.y+1);     /* right → down */
+    if(!set.has(c.x+','+(c.y+1)))addSeg(c.x+1,c.y+1,c.x,c.y+1);     /* bottom → left*/
+    if(!set.has((c.x-1)+','+c.y))addSeg(c.x,c.y+1,c.x,c.y);         /* left → up    */
+  }
+  const paths=[];
+  while(segs.size){
+    const startK=segs.keys().next().value;
+    const [sx,sy]=startK.split(',').map(Number);
+    let cx=sx,cy=sy;
+    const pts=[[cx,cy]];
+    for(let guard=0;guard<4096;guard++){
+      const k=cx+','+cy;
+      const outs=segs.get(k);
+      if(!outs||!outs.length)break;
+      const [nx,ny]=outs.shift();
+      if(!outs.length)segs.delete(k);
+      /* merge collinear points as we go */
+      const prev=pts[pts.length-1],prev2=pts[pts.length-2];
+      if(prev2&&((prev2[0]===prev[0]&&prev[0]===nx)||(prev2[1]===prev[1]&&prev[1]===ny)))
+        pts[pts.length-1]=[nx,ny];
+      else pts.push([nx,ny]);
+      cx=nx;cy=ny;
+      if(cx===sx&&cy===sy)break;
+    }
+    if(pts.length>2)paths.push(pts);
+  }
+  return paths.map(pts=>'M'+pts.map(p=>p[0]+' '+p[1]).join('L')+'Z').join('');
+}
+/* one <path> per wing inside a shared SVG overlay */
+function shapePath(cells,cell){
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',traceOutline(cells));
+  p.setAttribute('transform',`scale(${cell})`);
+  p.setAttribute('vector-effect','non-scaling-stroke');
+  return p;
+}
+/* dashed rectangle preview while a drag is sweeping */
+function rubberBand(host,cell){
+  let band=null;
+  return {
+    show(a,b,bad){
+      if(!band){band=el('div','rband');host.appendChild(band);}
+      band.classList.toggle('bad',!!bad);
+      band.style.left=(Math.min(a.x,b.x)*cell)+'px';
+      band.style.top=(Math.min(a.y,b.y)*cell)+'px';
+      band.style.width=((Math.abs(a.x-b.x)+1)*cell)+'px';
+      band.style.height=((Math.abs(a.y-b.y)+1)*cell)+'px';
+    },
+    hide(){if(band){band.remove();band=null;}}
+  };
+}
 
 /* room numbers that follow a start value: 401 → 401,402,403…  ג-1 → ג-1,ג-2… */
 function roomNums(start,count){
@@ -3886,15 +3975,18 @@ function planEl(w,ev){
     node.style.top=((c.y-bb.y0)*C)+'px';
     inn.appendChild(node);
   };
+  /* the corridor is one drafted floor — walls traced around the whole run */
+  const halls=w.plan.filter(c=>c.t==='hall').map(c=>({x:c.x-bb.x0,y:c.y-bb.y0}));
+  if(halls.length){
+    const hf=el('div','hallfloor');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.appendChild(shapePath(halls,C));
+    hf.appendChild(svg);
+    inn.appendChild(hf);
+  }
   for(const c of w.plan){
     if(c.t==='hall'){
-      /* merge visually with neighbouring hall tiles — the corridor reads as one */
-      let cls='pb-hall';
-      if(at.get(pk(c.x,c.y-1))&&at.get(pk(c.x,c.y-1)).t==='hall')cls+=' cN';
-      if(at.get(pk(c.x,c.y+1))&&at.get(pk(c.x,c.y+1)).t==='hall')cls+=' cS';
-      if(at.get(pk(c.x+1,c.y))&&at.get(pk(c.x+1,c.y)).t==='hall')cls+=' cE';
-      if(at.get(pk(c.x-1,c.y))&&at.get(pk(c.x-1,c.y)).t==='hall')cls+=' cW';
-      place(el('div',cls),c);
+      /* drawn as part of the traced floor above */
     }else if(c.t==='room'){
       const room=roomBy(c.num);
       if(room)place(pbRoom(room,ev,at,c),c);
@@ -5495,9 +5587,9 @@ function bldPaint(){
   /* ---- the tools ---- */
   if(!EDB.tool)EDB.tool='draw';
   const tb=$('#bldTools'); tb.innerHTML='';
-  [['draw','✏️ ציור','גרירה מציירת אגף חדש — או מרחיבה את האגף שנבחר'],
+  [['draw','📐 שרטוט','גוררים מלבן — אגף חדש. מלבן שנגרר מאגף נבחר מתחבר אליו (כך בונים צורת ר או ח)'],
    ['move','🖐️ הזזה','גרירת אגף מזיזה את כל הצורה · לחיצה בוחרת'],
-   ['erase','🧽 מחיקה','גרירה מוחקת משבצות מאגף — מחיקת כולן מוחקת אותו']]
+   ['erase','🧽 מחיקה','גוררים מלבן — מה שבתוכו נמחק מהאגף']]
   .forEach(([k,lbl,tip])=>{
     const t=el('button',EDB.tool===k?'on':'',lbl);
     t.title=tip;
@@ -5517,33 +5609,18 @@ function bldPaint(){
     if(inp.value!==sel.name)inp.value=sel.name;
   }
 }
-/* a wing is drawn as its actual shape: one tile per cell, corners rounded only
-   on free edges, and the name floating at the shape's centre */
+/* a wing is drafted, not tiled: one traced outline — walls around a floor —
+   with the name floating at the shape's centre */
 function barEl(w,edit){
   const g=el('div','shape'+(EDB&&EDB.sel===w.id?' sel':''));
   g.dataset.w=w.id;
-  const set=geomSet(w.geom);
-  const has=(x,y)=>set.has(x+','+y);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  const p=shapePath(w.geom.cells,CELL);
+  p.style.setProperty('--bc',wingColor(w.id));
+  svg.appendChild(p);
+  g.appendChild(svg);
   let minX=1e9,maxX=-1,minY=1e9,maxY=-1;
   for(const c of w.geom.cells){
-    const d=el('div','scell');
-    d.dataset.w=w.id;
-    d.style.setProperty('--bc',wingColor(w.id));
-    d.style.left=(c.x*CELL)+'px';
-    d.style.top=(c.y*CELL)+'px';
-    const r=8;
-    d.style.borderRadius=[
-      !has(c.x+1,c.y-1)&&!has(c.x,c.y-1)&&!has(c.x+1,c.y)?r:0,   /* tl in LTR canvas */
-      !has(c.x-1,c.y-1)&&!has(c.x,c.y-1)&&!has(c.x-1,c.y)?r:0,
-      !has(c.x-1,c.y+1)&&!has(c.x,c.y+1)&&!has(c.x-1,c.y)?r:0,
-      !has(c.x+1,c.y+1)&&!has(c.x,c.y+1)&&!has(c.x+1,c.y)?r:0
-    ].map(v=>v+'px').join(' ');
-    /* interior borders vanish so the shape reads as one body */
-    d.style.borderTopColor=has(c.x,c.y-1)?'transparent':'';
-    d.style.borderBottomColor=has(c.x,c.y+1)?'transparent':'';
-    d.style.borderLeftColor=has(c.x-1,c.y)?'transparent':'';
-    d.style.borderRightColor=has(c.x+1,c.y)?'transparent':'';
-    g.appendChild(d);
     if(c.x<minX)minX=c.x; if(c.x>maxX)maxX=c.x;
     if(c.y<minY)minY=c.y; if(c.y>maxY)maxY=c.y;
   }
@@ -5555,77 +5632,54 @@ function barEl(w,edit){
   g.title=`${w.name} — ${rooms.length} חדרים, ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות`;
   return g;
 }
-/* the canvas speaks the same three tools as the room editor:
-   draw paints a shape cell by cell (so it can be wide, and it can bend),
-   move drags a whole shape, erase nibbles cells away */
+/* the canvas is a drafting board: a drag sweeps out a whole rectangle.
+   ✏️ a rectangle on empty floor is a new wing; a rectangle dragged from the
+   selected wing is welded onto it (that is how an L or a T is drafted —
+   two rectangles). 🖐️ moves a whole shape. 🧽 subtracts a rectangle. */
 (function wireCanvas(){
   const grid=$('#bldGrid');
+  const band=rubberBand(grid,CELL);
   let drag=null;
   const cellAt=e=>{
     const r=grid.getBoundingClientRect();
-    return {x:Math.floor((e.clientX-r.left)/CELL),y:Math.floor((e.clientY-r.top)/CELL)};
+    return {x:clampI(Math.floor((e.clientX-r.left)/CELL),0,GW-1),
+            y:clampI(Math.floor((e.clientY-r.top)/CELL),0,GH-1)};
   };
-  const inGrid=c=>c.x>=0&&c.x<GW&&c.y>=0&&c.y<GH;
   const wingAt=(b,c)=>floorWings(b.id,EDB.floor).find(w=>w.geom&&geomSet(w.geom).has(c.x+','+c.y))||null;
-  const ghostCell=c=>{
-    const d=el('div','gcell');
-    d.style.left=(c.x*CELL)+'px'; d.style.top=(c.y*CELL)+'px';
-    grid.appendChild(d);
-  };
   grid.addEventListener('pointerdown',e=>{
     if(!EDB||!EDB.id||e.button!==0)return;
     const b=bldBy(EDB.id); if(!b)return;
-    const c=cellAt(e); if(!inGrid(c))return;
+    const c=cellAt(e);
     const hit=wingAt(b,c);
     const tool=EDB.tool||'draw';
     if(tool==='move'){
-      if(hit){EDB.sel=hit.id;drag={mode:'move',w:hit,orig:JSON.parse(JSON.stringify(hit.geom)),start:c,snapped:false};}
+      if(hit){EDB.sel=hit.id;drag={mode:'move',w:hit,orig:JSON.parse(JSON.stringify(hit.geom)),start:c,snapped:false,moved:false};}
       else {EDB.sel=null;drag={mode:'click'};}
     }else if(tool==='erase'){
-      /* remember every shape on the floor, so a declined delete can be undone cleanly */
-      drag={mode:'erase',touched:new Set(),moved:false,
-            orig:new Map(floorWings(b.id,EDB.floor).map(w=>[w.id,JSON.parse(JSON.stringify(w.geom))]))};
-      snapshot(); drag.snapped=true;
-      eraseAt(b,c,drag);
+      drag={mode:'rect-erase',start:c,cur:c};
+      band.show(c,c,true);
     }else{ /* draw */
       if(hit&&hit.id!==EDB.sel){EDB.sel=hit.id;drag={mode:'click'};}
-      else if(hit){ /* stroke starts on the selected wing → grow that wing */
-        drag={mode:'grow',w:hit,cells:[],snapped:false,moved:false};
-      }else{
-        drag={mode:'new',cells:[c],keys:new Set([c.x+','+c.y]),moved:false};
-        ghostCell(c);
-      }
+      else drag={mode:hit?'rect-grow':'rect-new',w:hit||null,start:c,cur:c};
+      if(drag.mode!=='click')band.show(c,c,false);
     }
     grid.setPointerCapture(e.pointerId);
     e.preventDefault();
-    if(drag.mode!=='new')bldPaint();
+    if(drag.mode==='click'||tool==='move')bldPaint();
   });
-  function eraseAt(b,c,d){
-    const w=wingAt(b,c); if(!w)return;
-    d.touched.add(w.id); d.moved=true;
-    w.geom={cells:w.geom.cells.filter(x=>!(x.x===c.x&&x.y===c.y))};
-    bldPaint();
-  }
   grid.addEventListener('pointermove',e=>{
     if(!drag)return;
     const b=bldBy(EDB.id); if(!b)return;
-    const c=cellAt(e); if(!inGrid(c))return;
+    const c=cellAt(e);
     const peers=floorWings(b.id,EDB.floor);
-    if(drag.mode==='new'){
-      const k=c.x+','+c.y;
-      if(drag.keys.has(k))return;
-      /* free cells only — a stroke never eats a neighbouring wing */
-      if(takenSet(peers,null).has(k))return;
-      drag.keys.add(k); drag.cells.push(c); drag.moved=true;
-      ghostCell(c);
-    }else if(drag.mode==='grow'){
-      const k=c.x+','+c.y;
-      const mine=geomSet(drag.w.geom);
-      if(mine.has(k)||takenSet(peers,drag.w.id).has(k))return;
-      if(!drag.snapped){snapshot();drag.snapped=true;}
-      drag.w.geom.cells.push({x:c.x,y:c.y});
-      drag.moved=true;
-      bldPaint();
+    if(drag.mode==='rect-new'||drag.mode==='rect-grow'){
+      drag.cur=c;
+      const skip=drag.w?drag.w.id:null;
+      const free=rectCells(drag.start,c).some(p=>!takenSet(peers,skip).has(p.x+','+p.y));
+      band.show(drag.start,c,!free);
+    }else if(drag.mode==='rect-erase'){
+      drag.cur=c;
+      band.show(drag.start,c,true);
     }else if(drag.mode==='move'){
       const dx=c.x-drag.start.x,dy=c.y-drag.start.y;
       if(!dx&&!dy)return;
@@ -5635,47 +5689,62 @@ function barEl(w,edit){
       if(!drag.snapped){snapshot();drag.snapped=true;}
       drag.w.geom=g; drag.moved=true;
       bldPaint();
-    }else if(drag.mode==='erase'){
-      eraseAt(b,c,drag);
     }
   });
   const finish=e=>{
     if(!drag)return;
     const d=drag; drag=null;
+    band.hide();
     try{grid.releasePointerCapture(e.pointerId);}catch(err){}
-    document.querySelectorAll('#bldGrid .gcell').forEach(n=>n.remove());
     const b=bldBy(EDB&&EDB.id);
     if(!b){bldPaint();return;}
-    if(d.mode==='new'){
-      /* one cell is a click; a wing needs at least two */
-      if(d.cells.length>=2){
+    const peers=floorWings(b.id,EDB.floor);
+    if(d.mode==='rect-new'||d.mode==='rect-grow'){
+      /* the swept rectangle, minus anything another wing already owns */
+      const skip=d.w?d.w.id:null;
+      const taken=takenSet(peers,skip);
+      const box=rectCells(d.start,d.cur).filter(p=>!taken.has(p.x+','+p.y));
+      if(d.mode==='rect-grow'&&d.w){
+        const mine=geomSet(d.w.geom);
+        const add=box.filter(p=>!mine.has(p.x+','+p.y));
+        if(add.length){
+          snapshot();
+          d.w.geom={cells:[...d.w.geom.cells,...add]};
+          save();render();
+        }
+      }else if(box.length>=2){
         snapshot();
         const w={id:'w'+uid(),name:nextWingName(b.id),building:b.id,floor:EDB.floor,
-                 plan:[],geom:normGeom({cells:d.cells})};
+                 plan:[],geom:normGeom({cells:box})};
         S.wings.push(w);
         EDB.sel=w.id;
         save();render();
-        toast(`נוצר "${w.name}" — אפשר להמשיך לצייר עליו כדי להרחיב, ואז 🚪 חדרים ופריסה`);
+        toast(`נוצר "${w.name}" — מלבן נוסף שנגרר ממנו מתחבר אליו, ואז 🚪 חדרים ופריסה`);
       }
-    }else if(d.mode==='erase'&&d.moved){
-      /* a wing erased down to nothing is a delete — with everything that entails */
-      for(const id of d.touched){
-        const w=wingBy(id);
-        if(!w||w.geom.cells.length)continue;
-        const rooms=roomsOf(id);
-        const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
-        const lastWing=S.wings.length<2;
-        if(lastWing||!confirm(`נמחקו כל המשבצות של "${w.name}" — למחוק את האגף כולו?\n\n${rooms.length} חדרים`
-            +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.')){
-          w.geom=d.orig.get(id);       /* declined (or last wing) — the shape comes back */
-          if(lastWing)toast('חייב להישאר לפחות אגף אחד');
-        }else{
-          dropRooms(rooms.map(r=>r.num));
-          S.wings=S.wings.filter(x=>x.id!==id);
-          if(EDB.sel===id)EDB.sel=null;
+    }else if(d.mode==='rect-erase'){
+      const box=new Set(rectCells(d.start,d.cur).map(p=>p.x+','+p.y));
+      const touched=peers.filter(w=>w.geom&&w.geom.cells.some(p=>box.has(p.x+','+p.y)));
+      if(touched.length){
+        const orig=new Map(touched.map(w=>[w.id,JSON.parse(JSON.stringify(w.geom))]));
+        snapshot();
+        for(const w of touched)w.geom={cells:w.geom.cells.filter(p=>!box.has(p.x+','+p.y))};
+        for(const w of touched){
+          if(w.geom.cells.length)continue;
+          const rooms=roomsOf(w.id);
+          const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
+          const lastWing=S.wings.length<2;
+          if(lastWing||!confirm(`המלבן מחק את כל "${w.name}" — למחוק את האגף כולו?\n\n${rooms.length} חדרים`
+              +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.')){
+            w.geom=orig.get(w.id);
+            if(lastWing)toast('חייב להישאר לפחות אגף אחד');
+          }else{
+            dropRooms(rooms.map(r=>r.num));
+            S.wings=S.wings.filter(x=>x.id!==w.id);
+            if(EDB.sel===w.id)EDB.sel=null;
+          }
         }
+        save();render();
       }
-      save();render();
     }else if(d.moved||d.snapped){save();render();}
     bldPaint();
   };
@@ -5920,7 +5989,17 @@ function renderLay(){
   if(!grid){grid=el('div','le-grid');box.appendChild(grid);wireLeGrid(grid);}
   grid.className='le-grid tool-'+(LAY.tool==='move'?'move':LAY.tool==='erase'?'erase':'paint');
   grid.innerHTML='';
-  for(const c of LAY.cells)grid.appendChild(leCell(c));
+  /* the corridor is drafted as one continuous floor with walls, not tiles —
+     rooms and services sit on top as discrete boxes */
+  const halls=LAY.cells.filter(c=>c.t==='hall');
+  if(halls.length){
+    const wrap=el('div','hallfloor');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.appendChild(shapePath(halls,LE_CELL));
+    wrap.appendChild(svg);
+    grid.appendChild(wrap);
+  }
+  for(const c of LAY.cells)if(c.t!=='hall')grid.appendChild(leCell(c));
   paintCellEd();
 }
 function leCell(c){
@@ -5937,35 +6016,46 @@ function leCell(c){
   return d;
 }
 const LE_CELL=26;
+/* drafting, not painting: every tool sweeps a rectangle. One drag lays a whole
+   corridor, a whole row of rooms, a whole block of showers. */
 function wireLeGrid(grid){
   let down=null;
+  const band=rubberBand(grid,LE_CELL);
   const cellXY=e=>{
     const r=grid.getBoundingClientRect();
-    const x=Math.floor((e.clientX-r.left)/LE_CELL),y=Math.floor((e.clientY-r.top)/LE_CELL);
-    return (x<0||x>=PW||y<0||y>=PH)?null:{x,y};
+    return {x:clampI(Math.floor((e.clientX-r.left)/LE_CELL),0,PW-1),
+            y:clampI(Math.floor((e.clientY-r.top)/LE_CELL),0,PH-1)};
   };
-  const paintAt=p=>{
-    const hit=layAt(p.x,p.y);
+  const applyRect=(a,b)=>{
+    const box=rectCells(a,b);
+    let changed=false;
     if(LAY.tool==='erase'){
-      if(hit){LAY.cells=LAY.cells.filter(c=>c!==hit);if(LAY.sel&&LAY.sel.x===p.x&&LAY.sel.y===p.y)LAY.sel=null;return true;}
-      return false;
+      const keys=new Set(box.map(p=>p.x+','+p.y));
+      const before=LAY.cells.length;
+      LAY.cells=LAY.cells.filter(c=>!keys.has(c.x+','+c.y));
+      if(LAY.sel&&keys.has(LAY.sel.x+','+LAY.sel.y))LAY.sel=null;
+      return LAY.cells.length!==before;
     }
-    /* painting never overwrites a room by accident — erase it first */
-    if(hit&&hit.t==='room')return false;
-    if(hit&&hit.t===LAY.tool)return false;
-    LAY.cells=LAY.cells.filter(c=>c!==hit);
-    const c={t:LAY.tool,x:p.x,y:p.y};
-    if(LAY.tool==='room'){
-      c.beds=LAY.defBeds||4;
-      if(LAY.numbered){c.num=nextFreeNum();c.orig=null;}
-    }else if(LAY.tool!=='hall')c.label='';
-    LAY.cells.push(c);
-    LAY.sel={x:p.x,y:p.y};
-    return true;
+    for(const p of box){
+      const hit=layAt(p.x,p.y);
+      if(hit&&hit.t==='room')continue;        /* a room never falls to a sweep — erase it first */
+      if(hit&&hit.t===LAY.tool)continue;
+      LAY.cells=LAY.cells.filter(c=>c!==hit);
+      const c={t:LAY.tool,x:p.x,y:p.y};
+      if(LAY.tool==='room'){
+        c.beds=LAY.defBeds||4;
+        if(LAY.numbered){c.num=nextFreeNum();c.orig=null;}
+      }else if(LAY.tool!=='hall')c.label='';
+      LAY.cells.push(c);
+      changed=true;
+    }
+    /* a single-cell click selects what it placed, so the editor opens on it */
+    LAY.sel=(box.length===1)?{x:a.x,y:a.y}:null;
+    return changed;
   };
   grid.addEventListener('pointerdown',e=>{
     if(e.button!==0)return;
-    const p=cellXY(e); if(!p)return;
+    const p=cellXY(e);
     try{grid.setPointerCapture(e.pointerId);}catch(err){}
     e.preventDefault();
     if(LAY.tool==='move'){
@@ -5975,13 +6065,17 @@ function wireLeGrid(grid){
       renderLay();
       return;
     }
-    down={mode:'paint'};
-    if(paintAt(p))renderLay();
+    down={mode:'rect',start:p,cur:p};
+    band.show(p,p,LAY.tool==='erase');
   });
   grid.addEventListener('pointermove',e=>{
     if(!down)return;
-    const p=cellXY(e); if(!p)return;
-    if(down.mode==='paint'){if(paintAt(p))renderLay();return;}
+    const p=cellXY(e);
+    if(down.mode==='rect'){
+      down.cur=p;
+      band.show(down.start,p,LAY.tool==='erase');
+      return;
+    }
     if(down.mode==='drag'&&down.cell){
       if(p.x===down.cell.x&&p.y===down.cell.y)return;
       if(layAt(p.x,p.y))return;               /* only onto a free square */
@@ -5991,8 +6085,10 @@ function wireLeGrid(grid){
     }
   });
   const up=e=>{
-    down=null;
+    const d=down; down=null;
+    band.hide();
     try{grid.releasePointerCapture(e.pointerId);}catch(err){}
+    if(d&&d.mode==='rect'&&applyRect(d.start,d.cur))renderLay();
   };
   grid.addEventListener('pointerup',up);
   grid.addEventListener('pointercancel',up);
