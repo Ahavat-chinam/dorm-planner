@@ -1345,6 +1345,7 @@ body.nopulse .pb-room.warn-hard{animation:none}
 }
 .le-grid{
   position:relative;touch-action:none;
+  user-select:none;-webkit-user-select:none;
   width:calc(26px * 26);height:calc(26px * 12);
   background-image:
     linear-gradient(to left,var(--line) 1px,transparent 1px),
@@ -1402,12 +1403,15 @@ body.nopulse .pb-room.warn-hard{animation:none}
   --cell:24px;
   /* laid out left-to-right so the scroll origin and the stored x match up —
      the labels inside the bars get their RTL back */
-  direction:ltr;
+  direction:ltr;user-select:none;-webkit-user-select:none;
   border:1px solid var(--line2);border-radius:16px;background:var(--sunk);
   overflow:auto;overscroll-behavior:contain;padding:10px;
 }
 .canvas-in{
   position:relative;
+  /* without this a real mouse drag starts selecting text, the browser fires
+     pointercancel, and the stroke dies halfway — "the line does not stretch" */
+  user-select:none;-webkit-user-select:none;
   width:calc(var(--cell) * 24);height:calc(var(--cell) * 16);
   background-image:
     linear-gradient(to left,var(--line) 1px,transparent 1px),
@@ -1661,8 +1665,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     <div class="fl-tabs" id="bldFloors"></div>
     <div class="le-tools" id="bldTools" style="margin-bottom:9px"></div>
     <div class="canvas" id="bldCanvas"><div class="canvas-in" id="bldGrid"></div></div>
-    <div class="canvas-hint">📐 גוררים מלבן — וזה אגף. אגף מפותל? גוררים מלבן נוסף מתוך האגף הנבחר
-      והם מתחברים לצורה אחת · 🖐️ הזזת צורה שלמה · 🧽 מלבן מחיקה</div>
+    <div class="canvas-hint" id="structHint">📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית. אגף מפותל: מלבן נוסף מתוך אגף שנבחר מתחבר אליו.</div>
     <div class="bar-ed" id="bldBarEd" hidden>
       <div class="wiz-f" style="flex:1">
         <label>שם האגף שנבחר</label>
@@ -5682,6 +5685,14 @@ function barEl(w,edit){
   const grid=$('#bldGrid');
   const band=rubberBand(grid,CELL);
   let drag=null;
+  /* two clicks draw the same rectangle a drag does — one corner, then the other.
+     Nobody has to master a drag gesture to use the app. */
+  let anchor=null;
+  const hintEl=()=>document.querySelector('#structHint');
+  const setHint=t=>{const n=hintEl(); if(n)n.textContent=t;};
+  const HINT_IDLE='📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית. אגף מפותל: מלבן נוסף מתוך אגף שנבחר מתחבר אליו.';
+  const clearAnchor=()=>{anchor=null;band.hide();setHint(HINT_IDLE);};
+  window.__bldClearAnchor=clearAnchor;
   const cellAt=e=>{
     const r=grid.getBoundingClientRect();
     return {x:clampI(Math.floor((e.clientX-r.left)/CELL),0,GW-1),
@@ -5694,6 +5705,16 @@ function barEl(w,edit){
     const c=cellAt(e);
     const hit=wingAt(b,c);
     const tool=EDB.tool||'draw';
+    /* a rectangle already waiting for its second corner: this click closes it */
+    if(anchor&&tool!=='move'){
+      const a=anchor; clearAnchor();
+      commitRect(b,tool==='erase'?'rect-erase':(wingAt(b,a)?'rect-grow':'rect-new'),
+                 a,c,wingAt(b,a));
+      drag={mode:'done'};
+      try{grid.setPointerCapture(e.pointerId);}catch(err){}
+      e.preventDefault();
+      return;
+    }
     if(tool==='move'){
       if(hit){EDB.sel=hit.id;drag={mode:'move',w:hit,orig:JSON.parse(JSON.stringify(hit.geom)),start:c,snapped:false,moved:false};}
       else {EDB.sel=null;drag={mode:'click'};}
@@ -5705,9 +5726,15 @@ function barEl(w,edit){
       else drag={mode:hit?'rect-grow':'rect-new',w:hit||null,start:c,cur:c};
       if(drag.mode!=='click')band.show(c,c,false);
     }
-    grid.setPointerCapture(e.pointerId);
+    /* capture can be refused on some inputs — the gesture must survive that */
+    try{grid.setPointerCapture(e.pointerId);}catch(err){}
     e.preventDefault();
     if(drag.mode==='click'||tool==='move')bldPaint();
+  });
+  /* while a corner is parked, the rectangle follows the cursor */
+  grid.addEventListener('pointermove',e=>{
+    if(drag||!anchor)return;
+    band.show(anchor,cellAt(e),(EDB.tool||'draw')==='erase');
   });
   grid.addEventListener('pointermove',e=>{
     if(!drag)return;
@@ -5733,14 +5760,35 @@ function barEl(w,edit){
       bldPaint();
     }
   });
+  /* the one place a rectangle turns into geometry — shared by drag and by clicks */
+  function commitRect(b,mode,start,cur,w){
+    const peers=floorWings(b.id,EDB.floor);
+    const d={mode,start,cur,w};
+    applyCommit(d,b,peers);
+    bldPaint();
+  }
   const finish=e=>{
     if(!drag)return;
     const d=drag; drag=null;
-    band.hide();
     try{grid.releasePointerCapture(e.pointerId);}catch(err){}
     const b=bldBy(EDB&&EDB.id);
-    if(!b){bldPaint();return;}
+    if(!b){band.hide();bldPaint();return;}
     const peers=floorWings(b.id,EDB.floor);
+    /* a click, not a drag: park this corner and wait for the opposite one */
+    if((d.mode==='rect-new'||d.mode==='rect-grow'||d.mode==='rect-erase')
+       &&d.cur&&d.start.x===d.cur.x&&d.start.y===d.cur.y){
+      anchor=d.start;
+      band.show(anchor,anchor,d.mode==='rect-erase');
+      setHint(d.mode==='rect-erase'
+        ? '🧽 עכשיו לחצו על הפינה הנגדית של המלבן למחיקה — או Esc לביטול.'
+        : '📐 פינה ראשונה נבחרה. עכשיו לחצו על הפינה הנגדית — או Esc לביטול.');
+      return;
+    }
+    band.hide();
+    applyCommit(d,b,peers);
+    bldPaint();
+  };
+  function applyCommit(d,b,peers){
     if(d.mode==='rect-new'||d.mode==='rect-grow'){
       /* the swept rectangle, minus anything another wing already owns */
       const skip=d.w?d.w.id:null;
@@ -5788,10 +5836,13 @@ function barEl(w,edit){
         save();render();
       }
     }else if(d.moved||d.snapped){save();render();}
-    bldPaint();
-  };
+  }
   grid.addEventListener('pointerup',finish);
   grid.addEventListener('pointercancel',finish);
+  /* Esc drops a parked corner */
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&anchor){e.preventDefault();clearAnchor();}
+  });
 })();
 $('#bldBarName').addEventListener('input',()=>{
   const w=EDB&&EDB.sel?wingBy(EDB.sel):null; if(!w)return;
@@ -6026,6 +6077,11 @@ function renderLay(){
 
   /* the grid node survives re-renders: destroying it mid-drag would drop the
      pointer capture and cut the painting stroke short */
+  let hintNode=root.querySelector('.le-hint');
+  if(!hintNode){
+    hintNode=el('div','canvas-hint le-hint','📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית.');
+    tools.after(hintNode);
+  }
   const box=layQ('.lay');
   let grid=box.querySelector('.le-grid');
   if(!grid){grid=el('div','le-grid');box.appendChild(grid);wireLeGrid(grid);}
@@ -6064,8 +6120,12 @@ const LE_CELL=26;
 /* drafting, not painting: every tool sweeps a rectangle. One drag lays a whole
    corridor, a whole row of rooms, a whole block of showers. */
 function wireLeGrid(grid){
-  let down=null;
+  let down=null,anchor=null;
   const band=rubberBand(grid,LE_CELL);
+  const hint=()=>LAY&&LAY.root?LAY.root.querySelector('.le-hint'):null;
+  const IDLE='📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית.';
+  const setHint=t=>{const n=hint(); if(n)n.textContent=t;};
+  const dropAnchor=()=>{anchor=null;band.hide();setHint(IDLE);};
   const cellXY=e=>{
     const r=grid.getBoundingClientRect();
     return {x:clampI(Math.floor((e.clientX-r.left)/LE_CELL),0,PW-1),
@@ -6120,6 +6180,13 @@ function wireLeGrid(grid){
     const p=cellXY(e);
     try{grid.setPointerCapture(e.pointerId);}catch(err){}
     e.preventDefault();
+    /* second corner of a click-click rectangle */
+    if(anchor&&LAY.tool!=='move'){
+      const a=anchor; dropAnchor();
+      if(applyRect(a,p))renderLay();
+      down={mode:'done'};
+      return;
+    }
     if(LAY.tool==='move'){
       const hit=layAt(p.x,p.y);
       LAY.sel=hit?{x:hit.x,y:hit.y}:null;
@@ -6133,7 +6200,10 @@ function wireLeGrid(grid){
     band.show(p,p,LAY.tool==='erase');
   });
   grid.addEventListener('pointermove',e=>{
-    if(!down)return;
+    if(!down){
+      if(anchor)band.show(anchor,cellXY(e),LAY.tool==='erase');
+      return;
+    }
     const p=cellXY(e);
     if(down.mode==='rect'){
       down.cur=p;
@@ -6154,12 +6224,26 @@ function wireLeGrid(grid){
   });
   const up=e=>{
     const d=down; down=null;
-    band.hide();
     try{grid.releasePointerCapture(e.pointerId);}catch(err){}
-    if(d&&d.mode==='rect'&&applyRect(d.start,d.cur))renderLay();
+    if(!d||d.mode!=='rect'){band.hide();return;}
+    /* a click parks the first corner instead of drawing a single square blindly */
+    if(d.start.x===d.cur.x&&d.start.y===d.cur.y){
+      anchor=d.start;
+      band.show(anchor,anchor,LAY.tool==='erase');
+      const T=CELL_TYPES[LAY.tool];
+      setHint(LAY.tool==='erase'
+        ? '🧽 עכשיו לחצו על הפינה הנגדית של המלבן למחיקה — או Esc לביטול.'
+        : `📐 פינה ראשונה נבחרה${T?' ל'+T.he:''}. עכשיו לחצו על הפינה הנגדית — או Esc לביטול.`);
+      return;
+    }
+    band.hide();
+    if(applyRect(d.start,d.cur))renderLay();
   };
   grid.addEventListener('pointerup',up);
   grid.addEventListener('pointercancel',up);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&anchor&&LAY&&LAY.root&&LAY.root.offsetParent){e.preventDefault();dropAnchor();}
+  });
 }
 function nextFreeNum(){
   const used=new Set(S.rooms.map(r=>String(r.num)));
