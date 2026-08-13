@@ -2017,6 +2017,10 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
               <div class="wiz-f" style="flex:1"><label>כיתוב (לא חובה)</label>
                 <input type="text" class="cell-lbl" placeholder="למשל: מקלחות בנים" style="width:100%"></div>
             </div>
+            <div class="cell-size" hidden>
+              <label class="fl" style="margin-top:10px">גודל על השרטוט</label>
+              <div class="wiz-row cell-size-in"></div>
+            </div>
           </div>
         </div>
         <div class="dlgbtns wrap">
@@ -2088,6 +2092,10 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
             <div class="wiz-row cell-free" hidden>
               <div class="wiz-f" style="flex:1"><label>כיתוב (לא חובה)</label>
                 <input type="text" class="cell-lbl" placeholder="למשל: מקלחות בנים" style="width:100%"></div>
+            </div>
+            <div class="cell-size" hidden>
+              <label class="fl" style="margin-top:10px">גודל על השרטוט</label>
+              <div class="wiz-row cell-size-in"></div>
             </div>
           </div>
         </div>
@@ -2565,6 +2573,18 @@ function autoLayout(nums){
    service cells placed on any side of them — 360°, like drawing a real floor. */
 const PW=26,PH=12;
 const pk=(x,y)=>x+','+y;
+/* a cell is a rectangle: a room can be one square or a whole block, drawn to the
+   size it really is. Corridor tiles stay 1×1 — they trace into one floor anyway. */
+const cellW=c=>Math.max(1,Math.min(PW,Math.round(+c.w||1)));
+const cellH=c=>Math.max(1,Math.min(PH,Math.round(+c.h||1)));
+const cellCovers=(c,x,y)=>x>=c.x&&x<c.x+cellW(c)&&y>=c.y&&y<c.y+cellH(c);
+function cellSquares(c){
+  const out=[];
+  for(let y=c.y;y<c.y+cellH(c);y++)for(let x=c.x;x<c.x+cellW(c);x++)out.push({x,y});
+  return out;
+}
+const cellsClash=(a,b)=>
+  a.x<b.x+cellW(b)&&b.x<a.x+cellW(a)&&a.y<b.y+cellH(b)&&b.y<a.y+cellH(a);
 /* the two-sided legacy shape becomes three rows on the grid: side, hall, side */
 function sidesToPlan(sides){
   const cells=[];
@@ -2582,19 +2602,29 @@ function normPlan(plan,rooms){
   const want=rooms.map(r=>String(r.num));
   const wantSet=new Set(want),seenNum=new Set(),seenXY=new Set();
   const cells=[];
+  const take=c=>{                      /* claim every square the rectangle covers */
+    const sq=cellSquares(c);
+    if(sq.some(p=>seenXY.has(pk(p.x,p.y))))return false;
+    sq.forEach(p=>seenXY.add(pk(p.x,p.y)));
+    return true;
+  };
   for(const c of (Array.isArray(plan)?plan:[])){
     if(!c||typeof c!=='object')continue;
     const t=CELL_TYPES[c.t]?c.t:'dead';
     const x=clampI(c.x,0,PW-1),y=clampI(c.y,0,PH-1);
-    if(seenXY.has(pk(x,y)))continue;
+    /* the rectangle is trimmed to whatever still fits on the grid */
+    const w=t==='hall'?1:clampI(c.w||1,1,PW-x),h=t==='hall'?1:clampI(c.h||1,1,PH-y);
     if(t==='room'){
       const num=String(c.num==null?'':c.num);
       if(!wantSet.has(num)||seenNum.has(num))continue;
-      seenNum.add(num); seenXY.add(pk(x,y));
-      cells.push({t:'room',num,x,y});
+      const cell={t:'room',num,x,y,w,h};
+      if(!take(cell))continue;
+      seenNum.add(num);
+      cells.push(cell);
     }else{
-      seenXY.add(pk(x,y));
       const o={t,x,y};
+      if(t!=='hall'){o.w=w;o.h=h;}
+      if(!take(o))continue;
       if(c.label)o.label=String(c.label).slice(0,24);
       cells.push(o);
     }
@@ -2617,7 +2647,7 @@ function normPlan(plan,rooms){
         if(fy>=PH)break;
         s=[fx,fy]; seenXY.add(pk(fx,fy));
       }
-      cells.push({t:'room',num:n,x:s[0],y:s[1]});
+      cells.push({t:'room',num:n,x:s[0],y:s[1],w:1,h:1});
     }
   }
   return cells;
@@ -2629,11 +2659,11 @@ function planBBox(plan){
   let x0=1e9,y0=1e9,x1=-1,y1=-1;
   for(const c of plan||[]){
     x0=Math.min(x0,c.x);y0=Math.min(y0,c.y);
-    x1=Math.max(x1,c.x);y1=Math.max(y1,c.y);
+    x1=Math.max(x1,c.x+cellW(c)-1);y1=Math.max(y1,c.y+cellH(c)-1);
   }
   return x1<0?null:{x0,y0,x1,y1};
 }
-const planAt=(plan,x,y)=>(plan||[]).find(c=>c.x===x&&c.y===y)||null;
+const planAt=(plan,x,y)=>(plan||[]).find(c=>cellCovers(c,x,y))||null;
 
 /* ================= ready-made wing shapes =================
    make() receives the room numbers and returns the two sides.
@@ -3869,7 +3899,7 @@ function miniPlan(w,ev){
   box.style.setProperty('--mc',Math.min(M,Math.floor(182/cols))+'px');
   box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
   const map=new Map();
-  for(const c of w.plan)map.set(pk(c.x,c.y),c);
+  for(const c of w.plan)for(const p of cellSquares(c))map.set(pk(p.x,p.y),c);
   for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
     const c=map.get(pk(x,y));
     let cls='mini2-c';
@@ -3969,10 +3999,13 @@ function planEl(w,ev){
   inn.style.width=((bb.x1-bb.x0+1)*C)+'px';
   inn.style.height=((bb.y1-bb.y0+1)*C)+'px';
   const at=new Map();
-  for(const c of w.plan)at.set(pk(c.x,c.y),c);
+  for(const c of w.plan)for(const p of cellSquares(c))at.set(pk(p.x,p.y),c);
   const place=(node,c)=>{
     node.style.left=((c.x-bb.x0)*C)+'px';
     node.style.top=((c.y-bb.y0)*C)+'px';
+    /* a room drawn 3×2 stays 3×2 on the board — the plan is what you see */
+    if(cellW(c)>1)node.style.width=(cellW(c)*C-6)+'px';
+    if(cellH(c)>1)node.style.height=(cellH(c)*C-6)+'px';
     inn.appendChild(node);
   };
   /* the corridor is one drafted floor — walls traced around the whole run */
@@ -4013,11 +4046,20 @@ function pbRoom(room,ev,at,c){
     +(selected&&free&&S.assign[selected]!==room.num?' target':''));
   d.dataset.num=room.num;
   d.style.setProperty('--ac',RC.get(room.num)||ROOM_COLORS[0]);
-  /* the door faces the corridor, whichever side it is on */
-  for(const [dx,dy,side] of [[0,-1,'dN'],[0,1,'dS'],[1,0,'dE'],[-1,0,'dW']]){
-    const n=at.get(pk(c.x+dx,c.y+dy));
-    if(n&&n.t==='hall'){d.classList.add(side);break;}
-  }
+  /* the door faces the corridor — scanning the whole perimeter, so a wide room
+     still finds the hall along whichever edge touches it */
+  const W=cellW(c),H=cellH(c);
+  const hallOn=probes=>probes.some(([px,py])=>{
+    const n=at.get(pk(px,py));
+    return n&&n.t==='hall';
+  });
+  const edges=[
+    ['dN',Array.from({length:W},(_,i)=>[c.x+i,c.y-1])],
+    ['dS',Array.from({length:W},(_,i)=>[c.x+i,c.y+H])],
+    ['dE',Array.from({length:H},(_,i)=>[c.x+W,c.y+i])],
+    ['dW',Array.from({length:H},(_,i)=>[c.x-1,c.y+i])]
+  ];
+  for(const [side,probes] of edges)if(hallOn(probes)){d.classList.add(side);break;}
   d.append(el('span','no',room.num),
            el('span','oc'+(free?'':' fullr'),`${occ.length}/${room.beds}`));
   const dots=el('span','gds');
@@ -5923,7 +5965,7 @@ $('#wgApplyTpl').addEventListener('click',()=>{
      sits there stays put when the template is re-applied */
   const prev=new Map();
   for(const c of layRooms())if(c.orig)prev.set(c.num,c.orig);
-  LAY.cells=tplPlan(t,nums,beds).map(c=>c.t==='room'
+  LAY.cells=tplPlan(t,nums,beds).map(c=>c.t==='room'   /* keeps w/h from the template */
     ?{...c,orig:prev.get(c.num)||null}:c);
   LAY.sel=null;
   renderLay(); tplNote();
@@ -5940,7 +5982,7 @@ const layQ=sel=>LAY.root.querySelector(sel);
 const cellName=c=>c.t!=='room'
   ? (c.label||CELL_TYPES[c.t].he)
   : (LAY&&LAY.numbered ? (c.num||'?') : 'חדר');
-const layAt=(x,y)=>LAY.cells.find(c=>c.x===x&&c.y===y)||null;
+const layAt=(x,y)=>LAY.cells.find(c=>cellCovers(c,x,y))||null;
 const layRooms=()=>LAY.cells.filter(c=>c.t==='room');
 
 /* the tools: paint each kind of cell, erase, or select-and-move */
@@ -6004,15 +6046,18 @@ function renderLay(){
 }
 function leCell(c){
   const T=CELL_TYPES[c.t]||CELL_TYPES.dead;
-  const on=LAY.sel&&LAY.sel.x===c.x&&LAY.sel.y===c.y;
+  const on=LAY.sel&&cellCovers(c,LAY.sel.x,LAY.sel.y);
   const d=el('div','le-c '+c.t+(on?' sel':''));
   d.style.left=(c.x*LE_CELL+1)+'px';
   d.style.top=(c.y*LE_CELL+1)+'px';
+  d.style.width=(cellW(c)*LE_CELL-2)+'px';
+  d.style.height=(cellH(c)*LE_CELL-2)+'px';
   if(c.t==='room')d.appendChild(el('span','cn',cellName(c)));
   else if(c.t!=='hall')d.appendChild(el('span','ci',T.ico));
-  d.title=c.t==='room'
+  d.title=(c.t==='room'
     ? `חדר ${c.num||'?'} · ${c.beds||4} מיטות`
-    : (c.label||T.he);
+    : (c.label||T.he))
+    +(cellW(c)>1||cellH(c)>1?` · ${cellW(c)}×${cellH(c)} משבצות`:'');
   return d;
 }
 const LE_CELL=26;
@@ -6028,30 +6073,47 @@ function wireLeGrid(grid){
   };
   const applyRect=(a,b)=>{
     const box=rectCells(a,b);
+    const keys=new Set(box.map(p=>p.x+','+p.y));
+    const touches=c=>cellSquares(c).some(p=>keys.has(p.x+','+p.y));
     let changed=false;
     if(LAY.tool==='erase'){
-      const keys=new Set(box.map(p=>p.x+','+p.y));
       const before=LAY.cells.length;
-      LAY.cells=LAY.cells.filter(c=>!keys.has(c.x+','+c.y));
-      if(LAY.sel&&keys.has(LAY.sel.x+','+LAY.sel.y))LAY.sel=null;
+      LAY.cells=LAY.cells.filter(c=>!touches(c));
+      if(LAY.sel&&!layAt(LAY.sel.x,LAY.sel.y))LAY.sel=null;
       return LAY.cells.length!==before;
     }
-    for(const p of box){
-      const hit=layAt(p.x,p.y);
-      if(hit&&hit.t==='room')continue;        /* a room never falls to a sweep — erase it first */
-      if(hit&&hit.t===LAY.tool)continue;
-      LAY.cells=LAY.cells.filter(c=>c!==hit);
-      const c={t:LAY.tool,x:p.x,y:p.y};
-      if(LAY.tool==='room'){
-        c.beds=LAY.defBeds||4;
-        if(LAY.numbered){c.num=nextFreeNum();c.orig=null;}
-      }else if(LAY.tool!=='hall')c.label='';
-      LAY.cells.push(c);
-      changed=true;
+    /* the corridor still fills square by square — it is a floor, not a box */
+    if(LAY.tool==='hall'){
+      for(const p of box){
+        const hit=layAt(p.x,p.y);
+        if(hit&&hit.t==='room')continue;      /* a room never falls to a sweep */
+        if(hit&&hit.t==='hall')continue;
+        LAY.cells=LAY.cells.filter(c=>c!==hit);
+        LAY.cells.push({t:'hall',x:p.x,y:p.y});
+        changed=true;
+      }
+      LAY.sel=null;
+      return changed;
     }
-    /* a single-cell click selects what it placed, so the editor opens on it */
-    LAY.sel=(box.length===1)?{x:a.x,y:a.y}:null;
-    return changed;
+    /* everything else becomes ONE rectangle of the size that was swept —
+       that is how a big room and a small room differ */
+    const x0=Math.min(a.x,b.x),y0=Math.min(a.y,b.y);
+    const w=Math.abs(a.x-b.x)+1,h=Math.abs(a.y-b.y)+1;
+    const cover={x:x0,y:y0,w,h};
+    /* a room inside the swept area is protected: it would silently disappear */
+    if(LAY.cells.some(c=>c.t==='room'&&cellsClash(c,cover))){
+      toast('יש חדר בתוך המלבן — מחקו אותו קודם, או שרטטו במקום אחר');
+      return false;
+    }
+    LAY.cells=LAY.cells.filter(c=>!cellsClash(c,cover));
+    const c={t:LAY.tool,x:x0,y:y0,w,h};
+    if(LAY.tool==='room'){
+      c.beds=LAY.defBeds||4;
+      if(LAY.numbered){c.num=nextFreeNum();c.orig=null;}
+    }else c.label='';
+    LAY.cells.push(c);
+    LAY.sel={x:x0,y:y0};
+    return true;
   };
   grid.addEventListener('pointerdown',e=>{
     if(e.button!==0)return;
@@ -6061,7 +6123,9 @@ function wireLeGrid(grid){
     if(LAY.tool==='move'){
       const hit=layAt(p.x,p.y);
       LAY.sel=hit?{x:hit.x,y:hit.y}:null;
-      down={mode:hit?'drag':'none',cell:hit,from:p};
+      /* grab offset, so a wide room does not jump its corner to the cursor */
+      down={mode:hit?'drag':'none',cell:hit,from:p,
+            off:hit?{x:p.x-hit.x,y:p.y-hit.y}:{x:0,y:0}};
       renderLay();
       return;
     }
@@ -6077,10 +6141,14 @@ function wireLeGrid(grid){
       return;
     }
     if(down.mode==='drag'&&down.cell){
-      if(p.x===down.cell.x&&p.y===down.cell.y)return;
-      if(layAt(p.x,p.y))return;               /* only onto a free square */
-      down.cell.x=p.x;down.cell.y=p.y;
-      LAY.sel={x:p.x,y:p.y};
+      /* the whole footprint travels, and only onto squares nothing else owns */
+      const nx=clampI(p.x-down.off.x,0,PW-cellW(down.cell));
+      const ny=clampI(p.y-down.off.y,0,PH-cellH(down.cell));
+      if(nx===down.cell.x&&ny===down.cell.y)return;
+      const moved={...down.cell,x:nx,y:ny};
+      if(LAY.cells.some(c=>c!==down.cell&&cellsClash(c,moved)))return;
+      down.cell.x=nx;down.cell.y=ny;
+      LAY.sel={x:nx,y:ny};
       renderLay();
     }
   });
@@ -6129,6 +6197,39 @@ function paintCellEd(){
   }
   layQ('.cell-room').hidden=c.t!=='room';
   layQ('.cell-free').hidden=c.t==='room';
+  /* size, for anything that is not corridor: a room can be one square or a block */
+  const sizeBox=layQ('.cell-size');
+  if(sizeBox){
+    sizeBox.hidden=c.t==='hall';
+    if(c.t!=='hall'){
+      const step=(get,set,max)=>{
+        const st=el('span','stepn');
+        const dec=el('button',null,'−'),val=el('span','val',String(get())),inc=el('button',null,'+');
+        dec.addEventListener('click',()=>{if(get()>1){set(get()-1);renderLay();}});
+        inc.addEventListener('click',()=>{
+          const n=get()+1;
+          if(n>max()){toast('אין מקום להגדיל לכיוון הזה');return;}
+          const test={...c,w:c===null?1:cellW(c),h:cellH(c)};
+          set(n);
+          const grown={...c};
+          if(LAY.cells.some(o=>o!==c&&cellsClash(o,grown))){
+            set(n-1);
+            toast('משהו אחר תופס את המקום — הזיזו אותו קודם');
+            return;
+          }
+          renderLay();
+        });
+        st.append(dec,val,inc);
+        return st;
+      };
+      const wrap=layQ('.cell-size-in'); wrap.innerHTML='';
+      const wf=el('div','wiz-f'); wf.append(el('label',null,'רוחב'),
+        step(()=>cellW(c),v=>{c.w=v;},()=>PW-c.x));
+      const hf=el('div','wiz-f'); hf.append(el('label',null,'גובה'),
+        step(()=>cellH(c),v=>{c.h=v;},()=>PH-c.y));
+      wrap.append(wf,hf);
+    }
+  }
   /* typing must repaint only the one label, or the caret jumps out of the field */
   const echo=()=>{const n=layQ('.le-c.sel .cn'); if(n)n.textContent=cellName(c);};
   if(c.t==='room'){
@@ -6157,6 +6258,8 @@ $('#wgAutoLay').addEventListener('click',()=>{
      for one corridor wraps onto another one below — never off the grid edge */
   const rooms=layRooms().slice().sort((p,q)=>p.y-q.y||p.x-q.x);
   const svc=LAY.cells.filter(c=>c.t!=='room'&&c.t!=='hall');
+  /* straightening returns every cell to one square — that is what "classic" means */
+  for(const c of [...rooms,...svc]){c.w=1;c.h=1;}
   const a=[],b=[];
   rooms.forEach((c,i)=>(i%2?b:a).push(c));
   const head=svc.filter(c=>c.t==='entrance'),tail=svc.filter(c=>c.t!=='entrance');
@@ -6193,6 +6296,7 @@ $('#wgMgrTpl').addEventListener('click',openTplMgr);
 /* a template keeps the shape and the bed counts, never the room numbers */
 const packPlan=cells=>cells.map(c=>{
   const o={t:c.t,x:c.x,y:c.y};
+  if(c.t!=='hall'){o.w=cellW(c);o.h=cellH(c);}   /* size is part of the shape */
   if(c.t==='room')o.beds=Math.max(1,Math.min(12,+c.beds||4));
   else if(c.label)o.label=c.label;
   return o;
@@ -6212,16 +6316,19 @@ function tplPlan(t,nums,defBeds){
   const sorted=[...src].sort((p,q)=>p.y-q.y||p.x-q.x);
   for(const c of sorted){
     if(c.t==='room'){
-      if(i<nums.length)out.push({t:'room',num:nums[i++],beds:c.beds||defBeds,x:c.x,y:c.y});
+      /* a template keeps each room's drawn size, not just its position */
+      if(i<nums.length)out.push({t:'room',num:nums[i++],beds:c.beds||defBeds,
+                                 x:c.x,y:c.y,w:cellW(c),h:cellH(c)});
     }else out.push({...c});
   }
   /* more rooms asked for than the template has: extra rows under the shape */
   if(i<nums.length){
     const bb=planBBox(out)||{x0:1,y0:1,x1:1,y1:1};
-    const used=new Set(out.map(c=>pk(c.x,c.y)));
+    const used=new Set();
+    for(const c of out)for(const p of cellSquares(c))used.add(pk(p.x,p.y));
     let x=bb.x0,y=bb.y1+1;
     while(i<nums.length&&y<PH){
-      if(!used.has(pk(x,y))){out.push({t:'room',num:nums[i++],beds:defBeds,x,y});used.add(pk(x,y));}
+      if(!used.has(pk(x,y))){out.push({t:'room',num:nums[i++],beds:defBeds,x,y,w:1,h:1});used.add(pk(x,y));}
       x++; if(x>=PW){x=bb.x0;y++;}
     }
   }
@@ -6236,7 +6343,7 @@ function tplPreview(t){
   box.style.setProperty('--mc',Math.min(8,Math.floor(196/cols))+'px');
   box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
   const map=new Map();
-  for(const c of plan)map.set(pk(c.x,c.y),c);
+  for(const c of plan)for(const p of cellSquares(c))map.set(pk(p.x,p.y),c);
   for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
     const c=map.get(pk(x,y));
     box.appendChild(el('span','mini2-c'+(
@@ -6283,8 +6390,9 @@ function openTplEdit(src,dup){
   let cells;
   if(src){
     cells=tplPlanOf(src).map(c=>c.t==='room'
-      ?{t:'room',beds:c.beds||4,x:c.x,y:c.y}
-      :{t:c.t,label:c.label||'',x:c.x,y:c.y});
+      ?{t:'room',beds:c.beds||4,x:c.x,y:c.y,w:cellW(c),h:cellH(c)}
+      :{t:c.t,label:c.label||'',x:c.x,y:c.y,
+        ...(c.t==='hall'?{}:{w:cellW(c),h:cellH(c)})});
   }else{
     cells=sidesToPlan({
       a:[{t:'entrance'},{t:'room',beds:4},{t:'room',beds:4},{t:'room',beds:4},{t:'shower'}],
@@ -6411,6 +6519,7 @@ $('#wgSave').addEventListener('click',()=>{
 
   w.plan=LAY.cells.map(c=>{
     const o={t:c.t,x:c.x,y:c.y};
+    if(c.t!=='hall'){o.w=cellW(c);o.h=cellH(c);}
     if(c.t==='room')o.num=c.num;
     else if(c.label)o.label=c.label;
     return o;
