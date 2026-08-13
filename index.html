@@ -802,7 +802,7 @@ body.rail-off{--railW:0px}
 body.no-project{--railW:0px;padding-inline-end:clamp(14px,3.5vw,46px)}
 body.no-project #rail,body.no-project .rl-toggle,body.no-project #assignBar{display:none!important}
 body.no-project #topbar{margin-left:calc(clamp(14px,3.5vw,46px) * -1);padding-left:clamp(14px,3.5vw,46px)}
-body.no-project #btnAuto,body.no-project #btnClear,body.no-project #btnEdit,
+body.no-project #btnAuto,body.no-project #btnClear,
 body.no-project #btnXlsx,body.no-project #btnProjects,
 body.no-project #aiFab,body.no-project #aiPanel{display:none!important}
 
@@ -1376,7 +1376,7 @@ body.nopulse .pb-room.warn-hard{animation:none}
   border-radius:10px;touch-action:none;
 }
 .canvas.ro .canvas-in{cursor:default}
-.canvas-in{cursor:crosshair}
+.canvas-in{cursor:crosshair;margin:0 auto}
 .bar{
   position:absolute;border-radius:9px;overflow:hidden;
   background:linear-gradient(160deg,color-mix(in srgb,var(--bc) 45%,var(--card)),var(--card2));
@@ -1468,6 +1468,70 @@ body.nopulse .pb-room.warn-hard{animation:none}
 .rl-groups button.on{color:var(--tx);border-color:var(--gc,var(--acc));background:color-mix(in srgb,var(--gc,var(--acc)) 14%,transparent)}
 .vpane{display:none}
 .vpane.on{display:block;animation:fadeIn .2s}
+
+/* ================= the numbered section nav ================= */
+.secnav{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;
+  background:linear-gradient(180deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:16px;padding:8px;
+}
+.secnav button{
+  flex:1;min-width:118px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:none;border:1px solid transparent;color:var(--dim);
+  font:inherit;font-size:13.5px;font-weight:800;padding:10px 8px;border-radius:11px;
+  cursor:pointer;transition:.14s;white-space:nowrap;
+}
+.secnav button:hover{color:var(--tx);background:var(--card2)}
+.secnav button.on{
+  color:var(--tx);background:var(--card2);border-color:var(--line2);
+  box-shadow:0 4px 14px var(--sh1);
+}
+.sn-n{
+  width:21px;height:21px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:900;color:var(--muted);
+  background:var(--sunk2);border:1.5px solid var(--line2);
+}
+.secnav button.on .sn-n{color:var(--onAcc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent}
+.secnav button.done .sn-n{color:var(--green);border-color:color-mix(in srgb,var(--green) 55%,transparent)}
+.secnav .bdg{
+  font-size:10.5px;font-weight:900;background:var(--red);color:#fff;
+  border-radius:999px;padding:0 6px;
+}
+
+/* ================= guide banners: what to do here, and what's next ================= */
+.guide{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border:1px solid color-mix(in srgb,var(--acc) 32%,transparent);
+  background:
+    radial-gradient(420px 120px at 92% -30%, color-mix(in srgb,var(--acc) 14%,transparent), transparent 70%),
+    var(--card);
+  border-radius:16px;padding:13px 17px;margin-bottom:16px;
+}
+.guide .gi{font-size:25px;flex:none}
+.guide .gt{flex:1;min-width:220px}
+.guide .gt b{display:block;font-size:14.5px;font-weight:900;margin-bottom:2px}
+.guide .gt small{font-size:12.5px;color:var(--dim);font-weight:600;line-height:1.6}
+.guide.ok{border-color:color-mix(in srgb,var(--green) 35%,transparent)}
+.guide.ok .gi{filter:none}
+.guide.slim{padding:9px 15px}
+.guide.slim .gi{font-size:17px}
+.guide.slim .gt b{display:inline;font-size:13px;margin-inline-end:8px}
+.guide.slim .gt small{display:inline;font-size:12px}
+
+/* ================= the boys page ================= */
+.by-list{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;min-height:38px}
+.by-row{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:3px 4px 3px 6px;
+}
+.by-row .gdot{margin-inline-start:4px}
+.by-row input{
+  background:none;border:none;color:var(--tx);font:inherit;font-size:13px;font-weight:700;
+  width:110px;outline:none;padding:3px 5px;border-radius:6px;
+}
+.by-row input:focus{background:color-mix(in srgb,var(--acc) 9%,transparent)}
+.by-row .st{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;padding-inline-end:3px}
+.by-row .st.in{color:var(--green)}
 /* the UA's [hidden] rule loses to .vpane.on / .tabbar on specificity — on the
    first run the whole board would otherwise show through under the welcome panel */
 .vpane[hidden],.tabbar[hidden],footer[hidden],.stats[hidden]{display:none!important}
@@ -1529,7 +1593,6 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     <button class="btn" id="btnProjects" title="מעבר בין פרויקטים">📁 פרויקטים</button>
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
     <button class="btn" id="btnClear">🧹 נקה לוח</button>
-    <button class="btn" id="btnEdit">✏️ עריכה</button>
     <button class="btn" id="btnXlsx">📊 אקסל</button>
     <button class="btn" id="btnSettings">⚙️ הגדרות</button>
   </div>
@@ -1539,43 +1602,93 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
      listeners survive the view being re-rendered -->
 <span class="zman" id="zman" contenteditable="true" spellcheck="false" hidden></span>
 
-<section id="welcome" class="panel" hidden>
-  <div class="wel">
-    <div class="wel-ico">🏠</div>
-    <h3>ברוכים הבאים — התוכנה עדיין ריקה</h3>
-    <p>כדי להתחיל צריך להזין את רשימת הבחורים ואת החדרים. הדרך המהירה: קובץ אקסל.</p>
-    <div class="wel-btns">
-      <button class="btn accent" id="welImport">📥 ייבוא מקובץ</button>
-      <button class="btn" id="welWing">🧱 בניית אגף מתבנית</button>
-      <button class="btn" id="welTemplate">📄 הורדת קובץ תבנית</button>
-      <button class="btn" id="welManual">✏️ הזנה ידנית</button>
-      <button class="btn" id="welRestore">📂 שחזור מגיבוי</button>
-    </div>
-    <div class="wel-how">
-      <b>מבנה הקובץ</b> — עמודה לבחורים, ולצידה עמודות לחדרים:
-      <table class="wel-tbl">
-        <tr><th>בחורים</th><th>חדר</th><th>מיטות</th><th>אגף</th></tr>
-        <tr><td>ישראל ישראלי</td><td>405</td><td>4</td><td>אגף 400</td></tr>
-        <tr><td>משה כהן</td><td>406</td><td>4</td><td>אגף 400</td></tr>
-      </table>
-      עמודת האגף אינה חובה. אפשר גם קובץ עם שמות בלבד, ולהוסיף את החדרים ידנית.
-    </div>
-    <p class="wel-foot" id="welFoot" hidden>
-      עובדים מהאינטרנט? <span class="lnk" id="welDownload">הורידו את התוכנה למחשב</span> —
-      היא תעבוד בדיוק אותו דבר גם בלי חיבור.
-    </p>
-  </div>
-</section>
+<!-- the old first-run welcome panel is gone: the numbered nav plus the guide
+     banner in each section do that job now, in the place the user actually works -->
+<section id="welcome" class="panel" hidden></section>
 
-<div class="tabbar" id="mainTabs">
-  <button data-v="board" class="on">🏠 הלוח</button>
-  <button data-v="rules">⚖️ תנאים וכללים <span class="bdg" id="tabRulesBdg" hidden></span></button>
-  <button data-v="sims">🗂️ סימולציות</button>
+<!-- the app is a numbered path: build the place, list the boys, set the rules,
+     assign, compare. The nav itself teaches the order of work. -->
+<nav class="secnav" id="mainTabs">
+  <button data-v="struct"><span class="sn-n">1</span>🏗️ מבנה</button>
+  <button data-v="boys"><span class="sn-n">2</span>👥 בחורים</button>
+  <button data-v="rules"><span class="sn-n">3</span>⚖️ כללים <span class="bdg" id="tabRulesBdg" hidden></span></button>
+  <button data-v="board" class="on"><span class="sn-n">4</span>🛏️ שיבוץ</button>
+  <button data-v="sims"><span class="sn-n">5</span>🗂️ השוואה</button>
+</nav>
+
+<div class="vpane" data-v="struct">
+  <div id="guideStruct"></div>
+  <section class="panel">
+    <h2>🏢 הבניין <span class="cnt" id="structBldName"></span></h2>
+    <div class="dlgbtns wrap" id="structBldBar" style="margin:0 0 12px"></div>
+    <div class="fl-tabs" id="bldFloors"></div>
+    <div class="canvas" id="bldCanvas"><div class="canvas-in" id="bldGrid"></div></div>
+    <div class="canvas-hint">גרירה על משבצת ריקה = אגף חדש · גרירה על אגף = הזזה ·
+      גרירה מהקצה = הארכה או קיצור · לחיצה = בחירה</div>
+    <div class="bar-ed" id="bldBarEd" hidden>
+      <div class="wiz-f" style="flex:1">
+        <label>שם האגף שנבחר</label>
+        <input type="text" id="bldBarName" style="width:100%">
+      </div>
+      <button class="btn mini accent" id="bldBarOpen">🚪 חדרים ופריסה</button>
+      <button class="btn mini danger" id="bldBarDel">🗑️ מחיקת האגף</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>🚪 החדרים בכל אגף</h2>
+    <p class="hint" style="margin-bottom:12px">כל אגף צריך פריסה: בוחרים תבנית מוכנה או מציירים חופשי —
+      מסדרון, חדרים, מקלחות, שירותים. לחיצה על אגף פותחת את העורך שלו.</p>
+    <div class="grid-cards" id="structWings"></div>
+  </section>
 </div>
 
-<div class="vpane on" data-v="board"><div id="view"></div></div>
+<div class="vpane" data-v="boys">
+  <div id="guideBoys"></div>
+  <section class="panel">
+    <h2>👥 רשימת הבחורים <span class="cnt" id="byCnt"></span></h2>
+    <div class="searchrow">
+      <span class="search"><input type="text" id="bySearch" placeholder="חיפוש שם…">
+        <button class="clr" id="bySearchClr" hidden title="ניקוי">✕</button></span>
+      <span class="hitcount" id="byHits"></span>
+    </div>
+    <div class="by-list" id="byList"></div>
+    <div class="ed-add">
+      <input type="text" id="byNew" placeholder="שם בחור חדש…">
+      <button class="btn mini accent" id="byAdd">+ הוספה</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>📥 ייבוא רשימה</h2>
+    <div class="drop" id="byDrop">
+      <div class="dz-ico">📄</div>
+      <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="byPickFile">בחרו קובץ מהמחשב</span></div>
+      <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
+        קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא גם את המבנה ·
+        <span class="lnk" id="byTemplate">הורדת תבנית</span></div>
+    </div>
+    <textarea id="byPaste" rows="4" style="width:100%;margin-top:10px"
+      placeholder="…או הדביקו כאן רשימת שמות — שם בכל שורה, או מופרדים בפסיקים.&#10;מספור וסימנים (1. , - , •) ינוקו אוטומטית."></textarea>
+    <div class="dlgbtns">
+      <button class="btn mini accent" id="byPasteAdd">➕ הוספה לרשימה</button>
+      <button class="btn mini danger" id="byPasteReplace">🔁 החלפת כל הרשימה</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>🎨 קבוצות <span class="cnt" id="byGrCnt"></span></h2>
+    <p class="hint" style="margin-bottom:10px">קבוצה — שיעור א׳, מחזור — מקבלת צבע, ובמדור השיבוץ אפשר
+      למלא בה אגף שלם בלחיצה אחת.</p>
+    <div class="rl-groups" id="byGroups" style="padding:0 0 10px"></div>
+    <button class="btn" id="byGrOpen">⚙️ ניהול הקבוצות</button>
+  </section>
+</div>
+
+<div class="vpane on" data-v="board">
+  <div id="guideBoard"></div>
+  <div id="view"></div>
+</div>
 
 <div class="vpane" data-v="rules">
+<div id="guideRules"></div>
 <section class="panel">
   <h2>⚖️ תנאים וכללים</h2>
   <div class="ruleform" id="ruleForm">
@@ -1612,6 +1725,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 </div>
 
 <div class="vpane" data-v="sims">
+<div id="guideSims"></div>
 <section class="panel">
   <h2>🗂️ סימולציות שמורות</h2>
   <div class="savebar">
@@ -1774,24 +1888,6 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
       <div class="ed-sec">
         <h4>🎨 סמל</h4>
         <div class="pal" id="bldIcons"></div>
-      </div>
-      <div class="ed-sec" id="bldPlanSec">
-        <h4>📐 שרטוט הבניין <span class="cnt">קומות ואגפים</span></h4>
-        <p class="hint">כל בניין נראה אחרת, אז פשוט משרטטים אותו: בוחרים קומה,
-          וגוררים על הרשת קו לכל אגף — לאורך או לרוחב. אפשר להזיז אגף, למתוח את קצותיו,
-          ולתת לו שם. את החדרים שבתוכו מגדירים אחר כך בעורך האגף.</p>
-        <div class="fl-tabs" id="bldFloors"></div>
-        <div class="canvas" id="bldCanvas"><div class="canvas-in" id="bldGrid"></div></div>
-        <div class="canvas-hint">גרירה על משבצת ריקה = אגף חדש · גרירה על אגף = הזזה ·
-          גרירה מהקצה = הארכה או קיצור · לחיצה = בחירה</div>
-        <div class="bar-ed" id="bldBarEd" hidden>
-          <div class="wiz-f" style="flex:1">
-            <label>שם האגף שנבחר</label>
-            <input type="text" id="bldBarName" style="width:100%">
-          </div>
-          <button class="btn mini" id="bldBarOpen">⚙️ חדרים ופריסה</button>
-          <button class="btn mini danger" id="bldBarDel">🗑️ מחיקת האגף</button>
-        </div>
       </div>
     </div>
     <div class="dlg-foot">
@@ -2446,7 +2542,7 @@ const WING_TEMPLATES=[
 let S=loadState();
 let selected=null;
 let formMembers=new Set();
-const Q={board:'',rule:'',rules:'',edit:'',ab:'',grp:''};
+const Q={board:'',rule:'',rules:'',edit:'',ab:'',grp:'',by:''};
 
 /* Hebrew-friendly matching: ignores geresh/quotes, hyphens and double spaces */
 const norm=s=>String(s||'').toLowerCase()
@@ -2713,9 +2809,12 @@ function openProject(id){
   PID=id; S=s;
   IX.active=id; saveIndex();
   UNDO.length=0; clearSel(); formMembers.clear(); editingRule=null; ED=null; EDW=null; EDB=null;
-  clearSearches(); setTab('board');
+  STR={bld:null};
+  clearSearches();
   V={level:'home',bld:null,wing:null};
-  initDynamic(); applySettings(); paintDisplayUI(); render();
+  initDynamic(); applySettings(); paintDisplayUI();
+  setTab(landingSec());
+  render();
   return true;
 }
 function createProject(name,desc){
@@ -2725,10 +2824,18 @@ function createProject(name,desc){
   IX.projects.push({id,name,desc:desc||'',created:Date.now(),modified:Date.now(),sum:projSummary()});
   IX.active=id;
   save(); saveIndex();
-  UNDO.length=0; clearSel(); setTab('board');
+  UNDO.length=0; clearSel();
   V={level:'home',bld:null,wing:null};
-  initDynamic(); applySettings(); render();
+  initDynamic(); applySettings();
+  setTab('struct');            /* a brand-new project starts at stage 1: the building */
+  render();
   return id;
+}
+/* land on the first stage that still needs work — the app opens where the work is */
+function landingSec(){
+  if(!S.rooms.length)return 'struct';
+  if(!S.boys.length)return 'boys';
+  return 'board';
 }
 function deleteProject(id){
   try{localStorage.removeItem(pKey(id));}catch(e){}
@@ -3157,6 +3264,11 @@ function render(){
   paintIndex();
   renderStats(ev); renderPool(ev); renderView(ev); renderRules(ev);
   renderSuggestions(ev); renderSims(); renderWelcome();
+  if(PID){
+    if(SEC==='struct')renderStruct();
+    if(SEC==='boys')renderBoys();
+    paintSecnav(); paintGuides();
+  }
   if(selected)renderAssign(ev);
 }
 
@@ -3421,75 +3533,17 @@ function warnCount(ev,nums){
   return {hard,soft};
 }
 
-/* ---------- home: the build guide ----------
-   the same four stages every institution walks through, as a visible path:
-   draw the building → rooms per wing → the boys → the assignment itself */
-function buildSteps(){
-  const placed=S.boys.filter(b=>S.assign[b]).length;
-  return [
-    {ico:'🏢',t:'שרטוט הבניין',d:'קומות, ומתיחת קו לכל אגף על הרשת',
-     done:S.wings.some(w=>w.geom)&&(S.wings.length>1||S.rooms.length>0),
-     act:()=>openBld(S.buildings[0].id),btn:'📐 לשרטוט'},
-    {ico:'🚪',t:'חדרים ופריסה',d:'תבנית מוכנה או ציור חופשי לכל אגף',
-     done:S.rooms.length>0,
-     act:()=>{const w=S.wings.find(x=>!roomsOf(x.id).length)||S.wings[0];openWing(w.id);},btn:'🧱 לפריסה'},
-    {ico:'👥',t:'רשימת הבחורים',d:'ייבוא מאקסל, הדבקה או הזנה ידנית',
-     done:S.boys.length>0,
-     act:()=>$('#btnEdit').click(),btn:'📥 לרשימה'},
-    {ico:'🛏️',t:'השיבוץ',d:'לחיצה על שם ← חדר, כללים, ואוטומט',
-     done:placed>0,
-     act:()=>{
-       const w=S.wings.find(x=>roomsOf(x.id).length);
-       if(w){go('wing',w.building,w.id);return;}
-       toast('אין עדיין חדרים לשבץ אליהם — נתחיל מהפריסה של האגף');
-       if(S.wings[0])openWing(S.wings[0].id);
-     },btn:'▶️ לשיבוץ'}
-  ];
-}
-function stepperEl(){
-  const steps=buildSteps();
-  const allDone=steps.every(s=>s.done);
-  const box=el('div','steps'+(allDone?' slim':''));
-  if(allDone){
-    const line=el('div','steps-done');
-    line.append(el('span',null,'✓ הכול מוגדר — הבניין, החדרים, הבחורים והשיבוץ פועלים.'));
-    steps.forEach(s=>{
-      const b=el('button','btn mini',s.ico+' '+s.t);
-      b.addEventListener('click',s.act);
-      line.appendChild(b);
-    });
-    box.appendChild(line);
-    return box;
-  }
-  const firstOpen=steps.findIndex(s=>!s.done);
-  steps.forEach((s,i)=>{
-    const st=el('div','gstep'+(s.done?' done':'')+(i===firstOpen?' now':''));
-    const head=el('div','st-head');
-    head.append(el('span','st-n',s.done?'✓':String(i+1)),el('b',null,s.ico+' '+s.t));
-    st.append(head,el('small',null,s.d));
-    if(!s.done){
-      const b=el('button','btn'+(i===firstOpen?' accent':' mini'),s.btn);
-      b.addEventListener('click',s.act);
-      st.appendChild(b);
-    }
-    box.appendChild(st);
-  });
-  return box;
-}
 function renderHome(host,ev){
   host.appendChild(heroEl(ev));
-  host.appendChild(stepperEl());
   if(S.buildings.length>1){
-    host.appendChild(secHead('🏢 בניינים',[mini('+ בניין חדש',()=>openBld(null))]));
+    host.appendChild(secHead('🏢 בניינים',[mini('🏗️ לעריכת המבנה',()=>setTab('struct'))]));
     const g=el('div','grid-cards');
     S.buildings.forEach(b=>g.appendChild(bldCard(b,ev)));
-    g.appendChild(addCard('בניין נוסף','🏢',()=>openBld(null)));
     host.appendChild(g);
   }else{
     const b=S.buildings[0];
     host.appendChild(secHead('🏗️ אגפים',[
-      mini('✏️ שם הבניין',()=>openBld(b.id)),
-      mini('+ בניין נפרד',()=>openBld(null))
+      mini('🏗️ לעריכת המבנה',()=>setTab('struct'))
     ]));
     host.appendChild(wingsGrid(b.id,ev));
   }
@@ -4324,15 +4378,112 @@ document.body.addEventListener('click',e=>{
 
 /* ---------- shell wiring ---------- */
 $('#tbHome').addEventListener('click',()=>{setTab('board');go('home');});
+/* which of the five sections is on screen; 'board' is the assignment section */
+let SEC='board';
 function setTab(v){
+  SEC=v;
+  if(v!=='board')clearSel();
   document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.vpane').forEach(p=>p.classList.toggle('on',p.dataset.v===v));
+  /* the breadcrumb trail belongs to the assignment drill-down only */
+  $('#crumbs').hidden=v!=='board';
+  if(v==='struct')renderStruct();
+  if(v==='boys')renderBoys();
   if(v==='rules')renderSuggestions(evaluate(S.assign));
+  paintGuides();
+  paintSecnav();
+  renderWelcome();
+  window.scrollTo({top:0,behavior:'auto'});
 }
 $('#mainTabs').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   setTab(b.dataset.v);
 });
+/* checkmarks on the nav — the path shows its own progress */
+function paintSecnav(){
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const done={
+    struct:S.rooms.length>0,
+    boys:S.boys.length>0,
+    rules:S.rules.length>0,
+    board:S.boys.length>0&&placed===S.boys.length,
+    sims:S.sims.length>0
+  };
+  document.querySelectorAll('#mainTabs button').forEach(b=>{
+    const d=!!done[b.dataset.v];
+    b.classList.toggle('done',d);
+    const n=b.querySelector('.sn-n');
+    if(n)n.textContent=d?'✓':{struct:'1',boys:'2',rules:'3',board:'4',sims:'5'}[b.dataset.v];
+  });
+}
+
+/* ================= guide banners =================
+   Each section explains itself in one breath and hands you the next step.
+   Big while the stage is unfinished, one quiet line once it is done. */
+function guideEl(ico,title,text,btns,ok){
+  const g=el('div','guide'+(ok?' ok slim':''));
+  g.appendChild(el('span','gi',ico));
+  const t=el('div','gt');
+  t.append(el('b',null,title),el('small',null,text));
+  g.appendChild(t);
+  (btns||[]).forEach(([lbl,fn,accent])=>{
+    const b=el('button','btn'+(accent?' accent':' mini'),lbl);
+    b.addEventListener('click',fn);
+    g.appendChild(b);
+  });
+  return g;
+}
+function paintGuides(){
+  const hasRooms=S.rooms.length>0,hasBoys=S.boys.length>0;
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const next=lbl=>['➡️ '+lbl.t,()=>setTab(lbl.v),true];
+
+  const gs=$('#guideStruct'); gs.innerHTML='';
+  gs.appendChild(hasRooms
+    ? guideEl('✓','המבנה מוגדר.',`${S.wings.length} אגפים · ${S.rooms.length} חדרים. אפשר לחזור לכאן ולשנות בכל רגע.`,
+        [next({t:'לשלב הבא: הבחורים',v:'boys'})],true)
+    : guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
+        'מותחים קו על הרשת לכל אגף (אפשר גם כמה קומות), ואז לוחצים על האגף ובוחרים לו תבנית חדרים — הכול נבנה בבת אחת.',
+        [] ));
+
+  const gb=$('#guideBoys'); gb.innerHTML='';
+  gb.appendChild(hasBoys
+    ? guideEl('✓',`${S.boys.length} בחורים ברשימה.`,'אפשר להוסיף, לתקן שם או לחלק לקבוצות בכל רגע.',
+        [next({t:'לשלב הבא: השיבוץ',v:'board'})],true)
+    : guideEl('👥','שלב 2 — רשימת הבחורים.',
+        'הדרך המהירה: לגרור לכאן קובץ אקסל. אפשר גם להדביק רשימה שלמה או להקליד שם־שם.',
+        [] ));
+
+  const gr=$('#guideRules'); gr.innerHTML='';
+  gr.appendChild(S.rules.length
+    ? guideEl('✓',`${S.rules.length} כללים פעילים.`,'הפרה של כלל "בלתי מתפשר" תופיע באדום בכל מקום.',
+        [next({t:'לשיבוץ',v:'board'})],true)
+    : guideEl('⚖️','שלב 3 — כללים (לא חובה).',
+        'למשל: פלוני ואלמוני לא באותו חדר, או שלישייה שחייבת להיות יחד. השיבוץ האוטומטי מכבד את הכללים.',
+        [['➡️ דלגו לשיבוץ',()=>setTab('board'),false]],false));
+
+  const go2=$('#guideBoard'); go2.innerHTML='';
+  if(!hasRooms)
+    go2.appendChild(guideEl('🏗️','עוד אין חדרים לשבץ אליהם.','קודם בונים את המבנה — אגפים וחדרים.',
+      [['🏗️ למדור המבנה',()=>setTab('struct'),true]],false));
+  else if(!hasBoys)
+    go2.appendChild(guideEl('👥','עוד אין את מי לשבץ.','המבנה מוכן — עכשיו צריך את רשימת הבחורים.',
+      [['👥 למדור הבחורים',()=>setTab('boys'),true]],false));
+  else if(!placed)
+    go2.appendChild(guideEl('🛏️','שלב 4 — השיבוץ עצמו.',
+      'לוחצים על שם ברשימה משמאל ואז על חדר — או נותנים לשיבוץ האוטומטי למלא הכול לפי הכללים.',
+      [['🤖 שיבוץ אוטומטי',()=>$('#btnAuto').click(),true]],false));
+  else if(placed<S.boys.length)
+    go2.appendChild(guideEl('🛏️',`${placed} משובצים, ${S.boys.length-placed} ממתינים.`,
+      'ממשיכים לשבץ מהרשימה משמאל, או משלימים אוטומטית.',
+      [['🤖 השלמה אוטומטית',()=>$('#btnAuto').click(),false]],true));
+
+  const gm=$('#guideSims'); gm.innerHTML='';
+  gm.appendChild(guideEl(S.sims.length?'✓':'🗂️',
+    S.sims.length?`${S.sims.length} גרסאות שמורות.`:'שלב 5 — משווים גרסאות.',
+    'שומרים את השיבוץ הנוכחי בשם, מנסים סידור אחר, ומשווים במבט — כל גרסה מראה כמה הפרות יש בה.',
+    [],!!S.sims.length));
+}
 $('#railToggle').addEventListener('click',()=>{
   S.settings.display.rail=!S.settings.display.rail;
   save();applyDisplay();
@@ -4532,9 +4683,10 @@ $('#fileImport').addEventListener('change',e=>{
   e.target.value='';
 });
 
-/* ---------- visual editor ---------- */
+/* ---------- the old combined list editor ----------
+   superseded by the מבנה and בחורים pages; kept callable for power users */
 let ED=null;
-$('#btnEdit').addEventListener('click',()=>{
+function openListEditor(){
   ED={
     boys:S.boys.map(n=>({orig:n,name:n})),
     wings:S.wings.map(w=>({id:w.id,name:w.name})),
@@ -4543,7 +4695,7 @@ $('#btnEdit').addEventListener('click',()=>{
   Q.edit='';$('#edSearch').value='';$('#edSearchClr').hidden=true;
   renderEdit();
   $('#dlgEdit').showModal();
-});
+}
 const closeEdit=()=>{$('#dlgEdit').close();ED=null;};
 $('#btnEditCancel').addEventListener('click',closeEdit);
 $('#editX').addEventListener('click',closeEdit);
@@ -4796,6 +4948,151 @@ function noteLine(kind,id){
 }
 
 /* =====================================================================
+   ============  one boy, renamed or removed, everywhere at once  =======
+   ===================================================================== */
+/* the name IS the identity key, so a rename must chase it through the whole state */
+function renameBoyEverywhere(old,nn){
+  const i=S.boys.indexOf(old); if(i<0)return false;
+  S.boys[i]=nn;
+  moveNote('boy',old,nn);
+  if(S.assign[old]){S.assign[nn]=S.assign[old];delete S.assign[old];}
+  S.locks=S.locks.map(b=>b===old?nn:b);
+  S.sims.forEach(s=>{if(s.assign[old]){s.assign[nn]=s.assign[old];delete s.assign[old];}});
+  S.rules.forEach(r=>{
+    if(r.members)r.members=r.members.map(b=>b===old?nn:b);
+    if(r.a===old)r.a=nn;
+  });
+  S.groups.forEach(g=>{g.members=g.members.map(b=>b===old?nn:b);});
+  return true;
+}
+function removeBoyEverywhere(name){
+  if(!S.boys.includes(name))return false;
+  S.boys=S.boys.filter(b=>b!==name);
+  delete S.notes['boy:'+name];
+  delete S.assign[name];
+  S.locks=S.locks.filter(b=>b!==name);
+  S.sims.forEach(s=>delete s.assign[name]);
+  S.rules=S.rules.map(r=>{
+    if(r.members)r.members=r.members.filter(b=>b!==name);
+    return r;
+  }).filter(r=>r.members?r.members.length>=2:r.a!==name);
+  S.groups.forEach(g=>{g.members=g.members.filter(b=>b!==name);});
+  return true;
+}
+
+/* =====================================================================
+   =========================  the boys page  ============================
+   ===================================================================== */
+function renderBoys(){
+  if(!PID)return;
+  $('#byCnt').textContent=S.boys.length?`${S.boys.length} בחורים`:'הרשימה ריקה';
+  const box=$('#byList'); box.innerHTML='';
+  const shown=S.boys.filter(b=>hits(b,Q.by));
+  let n=0;
+  for(const b of shown){
+    box.appendChild(byRow(b)); n++;
+  }
+  if(!S.boys.length)
+    box.appendChild(el('div','empty-note','עדיין אין אף אחד — ייבאו קובץ למטה, הדביקו רשימה, או הוסיפו שם ראשון.'));
+  else if(!n)
+    box.appendChild(el('div','empty-note',`אין שם שתואם ל"${Q.by}"`));
+  const hc=$('#byHits');
+  hc.classList.toggle('none',!n&&!!Q.by);
+  hc.textContent=Q.by?`${n} מתוך ${S.boys.length}`:'';
+  /* groups strip */
+  $('#byGrCnt').textContent=S.groups.length?`${S.groups.length} קבוצות`:'אין עדיין';
+  const gb=$('#byGroups'); gb.innerHTML='';
+  for(const g of S.groups){
+    const t=el('button',null);
+    t.style.setProperty('--gc',g.color);
+    t.classList.add('on');
+    const d=el('span','gdot'); d.style.setProperty('--gc',g.color);
+    t.append(d,document.createTextNode(`${g.name} · ${g.members.length}`));
+    t.addEventListener('click',()=>{GSEL=g.id;openGroups();});
+    gb.appendChild(t);
+  }
+  if(!S.groups.length)gb.appendChild(el('span','hint','עדיין אין קבוצות.'));
+}
+function byRow(name){
+  const row=el('span','by-row');
+  const g=GRP.get(name);
+  if(g){const d=el('span','gdot'); d.style.setProperty('--gc',g.color); d.title=g.name; row.appendChild(d);}
+  const inp=el('input'); inp.value=name; inp.title='לחיצה — תיקון השם';
+  /* renaming happens on blur, as one atomic cascade */
+  inp.addEventListener('blur',()=>{
+    const nn=inp.value.trim();
+    if(!nn||nn===name){inp.value=name;return;}
+    if(S.boys.includes(nn)){toast('השם "'+nn+'" כבר קיים');inp.value=name;return;}
+    snapshot();
+    renameBoyEverywhere(name,nn);
+    save();initDynamic();render();
+    toast(`"${name}" ← "${nn}"`);
+  });
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();inp.blur();}});
+  row.appendChild(inp);
+  const rm=S.assign[name];
+  row.appendChild(el('span','st'+(rm?' in':''),rm?('חדר '+rm):'ממתין'));
+  row.appendChild(noteBtn('boy',name,'הערה על '+name));
+  const x=el('button','ed-x','✕'); x.title='הסרה מהרשימה';
+  x.addEventListener('click',()=>{
+    const extra=rm?`\nהוא משובץ בחדר ${rm} — החדר יתפנה.`:'';
+    if(!confirm(`להסיר את "${name}" מהרשימה?${extra}\nCtrl+Z מחזיר.`))return;
+    snapshot();
+    removeBoyEverywhere(name);
+    save();initDynamic();render();
+    toast('הוסר — Ctrl+Z מחזיר');
+  });
+  row.appendChild(x);
+  return row;
+}
+$('#byAdd').addEventListener('click',()=>{
+  const inp=$('#byNew'),nn=inp.value.trim();
+  if(!nn)return;
+  if(S.boys.includes(nn)){toast('השם כבר קיים');return;}
+  snapshot();S.boys.push(nn);save();initDynamic();render();
+  inp.value='';inp.focus();
+});
+$('#byNew').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#byAdd').click();}});
+$('#byGrOpen').addEventListener('click',openGroups);
+$('#byTemplate').addEventListener('click',downloadTemplate);
+$('#byPickFile').addEventListener('click',()=>$('#fileNames').click());
+/* plain name list applied straight to S — no draft dialog in the way */
+function applyNames(names,replace){
+  const clean=cleanNames(names);
+  if(!clean.length){toast('לא נמצאו שמות');return;}
+  snapshot();
+  if(replace){
+    const gone=S.boys.filter(b=>!clean.includes(b));
+    gone.forEach(removeBoyEverywhere);
+  }
+  let added=0;
+  for(const nx of clean)if(!S.boys.includes(nx)){S.boys.push(nx);added++;}
+  save();initDynamic();render();
+  toast(replace?`הרשימה הוחלפה — ${S.boys.length} בחורים`:`נוספו ${added} שמות`);
+}
+$('#byPasteAdd').addEventListener('click',()=>{
+  applyNames(parseNameList($('#byPaste').value),false);
+  $('#byPaste').value='';
+});
+$('#byPasteReplace').addEventListener('click',()=>{
+  const names=parseNameList($('#byPaste').value);
+  if(!names.length){toast('אין מה להחליף — ההדבקה ריקה');return;}
+  if(S.boys.length&&!confirm(`להחליף את כל ${S.boys.length} השמות ב־${names.length} החדשים?\nמי שלא ברשימה החדשה יוסר מכל מקום.`))return;
+  applyNames(names,true);
+  $('#byPaste').value='';
+});
+(()=>{  /* the boys-page drop zone rides the same file pipeline as the dialog */
+  const dz=$('#byDrop');
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();dz.classList.add('over');
+  }));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault();e.stopPropagation();dz.classList.remove('over');
+  }));
+  dz.addEventListener('drop',e=>handleNamesFile(e.dataTransfer.files[0]));
+})();
+
+/* =====================================================================
    =========================  groups of boys  ==========================
    ===================================================================== */
 const GROUP_COLORS=['#22d3ee','#a78bfa','#fbbf24','#34d399','#fb7185','#60a5fa','#f472b6','#facc15'];
@@ -5012,18 +5309,81 @@ function nextWingName(bid){
   while(S.wings.some(w=>w.name===nm))nm='אגף '+(++k);
   return nm;
 }
+/* the dialog is only for a building's name and icon now —
+   the drawing itself lives on the structure page */
 function openBld(id){
   const b=id?bldBy(id):null;
-  EDB={id:id||null,icon:b?b.icon:'🏢',floor:b?b.floors[0].id:null,sel:null};
+  EDB={id:id||null,icon:b?b.icon:'🏢',floor:b?b.floors[0].id:(EDB&&EDB.floor),sel:null};
   $('#bldTtl').textContent=b?'🏢 '+b.name:'🏢 בניין חדש';
   $('#bldName').value=b?b.name:'';
   paintBldIcons();
   $('#bldDel').hidden=!b||S.buildings.length<2;
-  $('#bldSave').textContent=b?'סיום':'יצירת הבניין';
-  $('#bldPlanSec').hidden=!b;
-  if(b)bldPaint();
+  $('#bldSave').textContent=b?'שמירה':'יצירת הבניין';
   $('#dlgBld').showModal();
   $('#bldName').focus();
+}
+
+/* ================= the structure page =================
+   The building canvas, in the page instead of behind a dialog: pick a building,
+   draw wings per floor, and the wings-with-rooms status right underneath. */
+let STR={bld:null};
+function renderStruct(){
+  if(!PID)return;
+  if(!STR.bld||!bldBy(STR.bld))STR.bld=S.buildings[0].id;
+  const b=bldBy(STR.bld);
+  /* the canvas machinery (bldPaint/wireCanvas) drives off EDB */
+  if(!EDB||EDB.id!==b.id)EDB={id:b.id,icon:b.icon,floor:b.floors[0].id,sel:null};
+  /* the name repeats the heading when there is one default building — show it
+     only when it actually distinguishes something */
+  const generic=S.buildings.length===1&&(b.name==='הבניין'||b.name==='בניין');
+  $('#structBldName').textContent=generic?'':(b.icon||'🏢')+' '+b.name;
+
+  const bar=$('#structBldBar'); bar.innerHTML='';
+  if(S.buildings.length>1){
+    for(const x of S.buildings){
+      const t=el('button','btn mini'+(x.id===STR.bld?' accent':''),(x.icon||'🏢')+' '+x.name);
+      t.addEventListener('click',()=>{STR.bld=x.id;EDB=null;renderStruct();});
+      bar.appendChild(t);
+    }
+  }
+  bar.appendChild(mini('✏️ שם וסמל',()=>openBld(b.id)));
+  bar.appendChild(mini('+ בניין נוסף',()=>openBld(null)));
+  if(S.buildings.length>1)bar.appendChild(mini('🗑️ מחיקת הבניין',()=>{EDB={id:b.id};$('#bldDel').click();},'danger'));
+
+  bldPaint();
+  renderStructWings();
+}
+function renderStructWings(){
+  const box=$('#structWings'); box.innerHTML='';
+  const ev=evaluate(S.assign);
+  const ws=wingsOf(STR.bld);
+  if(!ws.length){
+    box.appendChild(el('div','empty-note','עדיין אין אגפים — גררו קו על הרשת למעלה כדי ליצור את הראשון.'));
+    return;
+  }
+  for(const w of ws){
+    const rooms=roomsOf(w.id);
+    const card=el('div','card');
+    const top=el('div','card-top');
+    top.appendChild(el('span','card-ico','🏗️'));
+    const ttl=el('div','card-ttl');
+    ttl.append(el('b',null,w.name),
+      el('small',null,rooms.length
+        ? `${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות`
+        : 'עדיין בלי חדרים'));
+    top.append(ttl);
+    card.appendChild(top);
+    if(rooms.length)card.appendChild(miniPlan(w,ev));
+    const btn=el('button','btn'+(rooms.length?' mini':' accent'),
+      rooms.length?'🚪 עריכת החדרים':'🚪 בניית החדרים');
+    btn.addEventListener('click',()=>openWing(w.id));
+    card.appendChild(btn);
+    const nl=noteLine('wing',w.id); if(nl)card.appendChild(nl);
+    const nb=noteBtn('wing',w.id,'הערה על '+w.name);
+    nb.classList.add('card-edit'); nb.style.opacity='1';
+    card.appendChild(nb);
+    box.appendChild(card);
+  }
 }
 function bldPaint(){
   const b=bldBy(EDB.id); if(!b)return;
@@ -5204,9 +5564,7 @@ $('#bldBarName').addEventListener('blur',()=>{
 });
 $('#bldBarOpen').addEventListener('click',()=>{
   if(!EDB||!EDB.sel)return;
-  const id=EDB.sel;
-  $('#dlgBld').close();
-  openWing(id);
+  openWing(EDB.sel);
 });
 $('#bldBarDel').addEventListener('click',()=>{
   const w=EDB&&EDB.sel?wingBy(EDB.sel):null; if(!w)return;
@@ -5243,21 +5601,14 @@ $('#bldSave').addEventListener('click',()=>{
     save();$('#dlgBld').close();render();toast('נשמר ✓');
     return;
   }
-  /* a new building becomes real immediately, then the same dialog turns into
-     its drawing board — nobody wants to reopen a dialog to start drawing */
+  /* a new building lands straight on the structure page, ready to draw */
   const b={id:'bld'+uid(),name:nm,icon:EDB.icon,
            floors:[{id:'f'+uid(),name:'קומה א׳'}]};
   S.buildings.push(b);
-  EDB.id=b.id; EDB.floor=b.floors[0].id; EDB.sel=null;
-  V={level:'building',bld:b.id,wing:null};
-  save();render();
-  $('#bldTtl').textContent='🏢 '+b.name;
-  $('#bldSave').textContent='סיום';
-  $('#bldDel').hidden=S.buildings.length<2;
-  $('#bldPlanSec').hidden=false;
-  bldPaint();
-  toast('הבניין נוצר — עכשיו שרטטו את האגפים');
-  $('#bldPlanSec').scrollIntoView({block:'nearest'});
+  STR.bld=b.id; EDB={id:b.id,icon:b.icon,floor:b.floors[0].id,sel:null};
+  save();$('#dlgBld').close();
+  setTab('struct');
+  toast('הבניין נוצר — עכשיו מותחים קו על הרשת לכל אגף');
 });
 $('#bldDel').addEventListener('click',()=>{
   const b=bldBy(EDB.id); if(!b)return;
@@ -5274,7 +5625,9 @@ $('#bldDel').addEventListener('click',()=>{
   if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,plan:[]}];
   save();$('#dlgBld').close();
   V={level:'home',bld:null,wing:null};
-  render();toast('הבניין נמחק — Ctrl+Z מחזיר');
+  STR.bld=S.buildings[0].id; EDB=null;
+  if(SEC==='struct')renderStruct(); else render();
+  toast('הבניין נמחק — Ctrl+Z מחזיר');
 });
 
 /* ---------------- wing: details, template, layout ---------------- */
@@ -6416,9 +6769,10 @@ async function handleNamesFile(file){
     // otherwise fall back to a plain list of names
     const names=await readNamesFile(file);
     if(!names.length){toast('לא נמצאו שמות בקובץ');return;}
-    if(!$('#dlgEdit').open)$('#btnEdit').click();
-    $('#edPaste').value=names.join('\n');
-    const det=$('.ed-import'); if(det)det.open=true;
+    /* a plain name list lands on the boys page, ready to confirm */
+    setTab('boys');
+    $('#byPaste').value=names.join('\n');
+    $('#byPaste').scrollIntoView({block:'center'});
     toast(`נקראו ${names.length} שמות מ"${file.name}" — בדקו ולחצו הוספה או החלפה`);
   }catch(e){
     toast('שגיאה בקריאת הקובץ: '+(e.message||e));
@@ -6879,21 +7233,12 @@ function runActions(acts){
       }
       /* ---------- boys ---------- */
       else if(a.type==='renameBoy'){
-        const i=S.boys.indexOf(a.boy);
-        if(i<0)throw new Error('שם לא קיים: '+a.boy);
+        if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
         const nn=String(a.newName||'').trim();
         if(!nn)throw new Error('חסר שם חדש');
         if(S.boys.includes(nn))throw new Error('השם "'+nn+'" כבר קיים');
         snapshot();
-        S.boys[i]=nn;
-        moveNote('boy',a.boy,nn);
-        if(S.assign[a.boy]){S.assign[nn]=S.assign[a.boy];delete S.assign[a.boy];}
-        S.locks=S.locks.map(b=>b===a.boy?nn:b);
-        S.sims.forEach(s=>{if(s.assign[a.boy]){s.assign[nn]=s.assign[a.boy];delete s.assign[a.boy];}});
-        S.rules.forEach(r=>{
-          if(r.members)r.members=r.members.map(b=>b===a.boy?nn:b);
-          if(r.a===a.boy)r.a=nn;
-        });
+        renameBoyEverywhere(a.boy,nn);
         save();initDynamic();render();
         done.push(`"${a.boy}" שונה ל"${nn}"`);
       }
@@ -6907,15 +7252,7 @@ function runActions(acts){
       else if(a.type==='removeBoy'){
         if(!S.boys.includes(a.boy))throw new Error('שם לא קיים: '+a.boy);
         snapshot();
-        S.boys=S.boys.filter(b=>b!==a.boy);
-        delete S.notes['boy:'+a.boy];
-        delete S.assign[a.boy];
-        S.locks=S.locks.filter(b=>b!==a.boy);
-        S.sims.forEach(s=>delete s.assign[a.boy]);
-        S.rules=S.rules.map(r=>{
-          if(r.members)r.members=r.members.filter(b=>b!==a.boy);
-          return r;
-        }).filter(r=>r.members?r.members.length>=2:r.a!==a.boy);
+        removeBoyEverywhere(a.boy);
         save();initDynamic();render();
         done.push(`"${a.boy}" הוסר מהרשימה`);
       }
@@ -7501,6 +7838,7 @@ wireSearch('#rulesSearch','#rulesSearchClr','rules',()=>renderRules(evaluate(S.a
 wireSearch('#edSearch','#edSearchClr','edit',()=>{if(ED)renderEdit();});
 wireSearch('#abSearch','#abSearchClr','ab',()=>{if(selected)renderAssign();},120);
 wireSearch('#grSearch','#grSearchClr','grp',()=>{if($('#dlgGroups').open)renderGroups();},120);
+wireSearch('#bySearch','#bySearchClr','by',()=>{if(SEC==='boys')renderBoys();},150);
 
 /* ---------- download & share ---------- */
 const APP_HOME='https://ahavat-chinam.github.io/dorm-planner/';
@@ -7544,29 +7882,22 @@ $('#btnCopyLink').addEventListener('click',async()=>{
 /* ---------- first-run welcome ---------- */
 /* single owner of "which chrome is on screen": the launch screen, a brand-new
    empty project, and a working board each show a different subset */
+/* which chrome is on screen: the guides replaced the old welcome panel, so the
+   nav is always there inside a project, and the rail belongs to שיבוץ only */
 function renderWelcome(){
-  const board=!!PID&&V.level!=='projects';
-  const empty=board&&!S.boys.length&&!S.rooms.length;
-  const bare=!board||empty;
-  $('#welcome').hidden=!empty;
-  $('#mainTabs').hidden=bare;
-  document.querySelectorAll('.vpane').forEach(p=>{p.hidden=empty;});
-  document.querySelector('footer').hidden=bare;
-  document.body.classList.toggle('rail-off',bare||S.settings.display.rail===false);
-  $('#railToggle').hidden=bare;
-  $('#stats').hidden=bare;
+  const inProj=!!PID&&V.level!=='projects';
+  const empty=!S.boys.length&&!S.rooms.length;
+  $('#welcome').hidden=true;
+  $('#mainTabs').hidden=!inProj;
+  document.querySelector('footer').hidden=!inProj||SEC!=='board';
+  const railOff=!inProj||SEC!=='board'||!S.boys.length||S.settings.display.rail===false;
+  document.body.classList.toggle('rail-off',railOff);
+  $('#railToggle').hidden=!inProj||SEC!=='board'||!S.boys.length;
+  $('#stats').hidden=!inProj||empty;
   $('#btnAuto').disabled=empty;
   $('#btnClear').disabled=empty;
   $('#btnXlsx').disabled=empty;
 }
-/* only meaningful when the app is being served over the web */
-$('#welFoot').hidden=location.protocol==='file:';
-$('#welDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
-$('#welImport').addEventListener('click',()=>$('#fileNames').click());
-$('#welTemplate').addEventListener('click',downloadTemplate);
-$('#welRestore').addEventListener('click',()=>$('#fileImport').click());
-$('#welManual').addEventListener('click',()=>$('#btnEdit').click());
-$('#welWing').addEventListener('click',()=>openWing(S.wings.length===1&&!S.rooms.length?S.wings[0].id:null));
 
 /* ---------- settings panel ---------- */
 const SET_MAP={sound:'#setSound',flash:'#setFlash',pulse:'#setPulse',
