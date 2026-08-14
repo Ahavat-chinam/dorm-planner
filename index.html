@@ -1549,6 +1549,66 @@ body.nopulse .pb-room.warn-hard{animation:none}
   .hp-nav .hn-t{max-width:110px}
 }
 
+/* ---- storage gauge ---- */
+.stor-bar{height:8px;border-radius:99px;background:var(--sunk2);overflow:hidden;margin-top:10px}
+.stor-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s}
+.stor-bar.hot>i{background:linear-gradient(90deg,var(--amber),var(--red))}
+
+/* ---- bulk selection ---- */
+.bulk-bar{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px;
+  background:var(--sunk);border:1px solid var(--line);border-radius:13px;padding:9px 12px;
+}
+.bulk-n{
+  font-size:12px;font-weight:900;color:var(--onAcc);
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  border-radius:999px;padding:3px 11px;
+}
+.bulk-hint{font-size:12px;color:var(--muted);font-weight:700}
+.bulk-sel{font-size:12.5px;padding:6px 9px;border-radius:10px}
+.by-cb{width:16px;height:16px;flex:none;cursor:pointer;accent-color:var(--acc);margin-inline-end:2px}
+.by-row.picked{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 9%,var(--card2))}
+
+/* ---- global search ---- */
+#dlgFind{width:min(680px,96vw)}
+.find-head{padding:10px 14px;gap:10px}
+.find-ico{font-size:16px;flex:none;opacity:.7}
+#findInput{
+  flex:1;min-width:0;background:none;border:none;outline:none;
+  color:var(--tx);font:inherit;font-size:16px;font-weight:700;
+}
+.find-body{padding:6px 8px 10px;max-height:min(58vh,460px)}
+.find-foot{font-size:11.5px;color:var(--muted)}
+.find-row{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:start;
+  background:none;border:1px solid transparent;border-radius:11px;
+  padding:8px 11px;cursor:pointer;font:inherit;color:var(--tx);
+}
+.find-row.on{background:var(--card2);border-color:var(--line2)}
+.fr-ico{font-size:16px;flex:none;width:22px;text-align:center}
+.fr-kind{
+  flex:none;font-size:10.5px;font-weight:900;color:var(--dim);
+  background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:1px 8px;min-width:52px;text-align:center;
+}
+.fr-tx{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.fr-tx b{font-size:13.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fr-tx small{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- recycle bin ---- */
+.tr-row{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:6px;
+  background:var(--sunk);border:1px solid var(--line);border-radius:12px;
+}
+.tr-ico{font-size:16px;flex:none}
+.tr-kind{
+  flex:none;font-size:10.5px;font-weight:900;color:var(--dim);
+  background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;min-width:54px;text-align:center;
+}
+.tr-tx{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.tr-tx b{font-size:13.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-tx small{font-size:11.5px;color:var(--dim)}
+.blank-sm{color:var(--dim);font-size:13px;line-height:1.8;padding:16px 4px;text-align:center}
+
 /* ---- notes ---- */
 .nbtn{
   background:none;border:none;cursor:pointer;font-size:13px;line-height:1;
@@ -1721,7 +1781,8 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
     <button class="btn" id="btnProjects" title="מעבר בין פרויקטים">📁 פרויקטים</button>
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
     <button class="btn" id="btnClear">🧹 נקה לוח</button>
-    <button class="btn" id="btnXlsx">📊 אקסל</button>
+    <button class="btn" id="btnData" title="ייבוא, ייצוא, גיבוי והדפסה">🗄️ נתונים</button>
+    <button class="btn" id="btnFind" title="חיפוש בכל התוכנה (Ctrl+K)">🔍 חיפוש</button>
     <button class="btn" id="btnHelp" title="מדריך ההפעלה (F1)">❔ עזרה</button>
     <button class="btn" id="btnSettings">⚙️ הגדרות</button>
   </div>
@@ -1777,6 +1838,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         <button class="clr" id="bySearchClr" hidden title="ניקוי">✕</button></span>
       <span class="hitcount" id="byHits"></span>
     </div>
+    <div class="bulk-bar" id="byBulk" hidden></div>
     <div class="by-list" id="byList"></div>
     <div class="ed-add">
       <input type="text" id="byNew" placeholder="שם בחור חדש…">
@@ -1951,6 +2013,86 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
   </div>
   <div class="ab-body" id="abRooms"></div>
 </div>
+
+<dialog id="dlgData">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>🗄️ נתונים — ייבוא, ייצוא וגיבוי</h3>
+      <button class="dlg-x" id="dtX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <div class="ed-sec">
+        <h4>📥 הכנסת נתונים</h4>
+        <p class="hint">קובץ עם שמות בלבד, או עם עמודות חדר · מיטות · אגף — ואז גם המבנה נבנה.
+          נקראים אקסל, וורד, CSV, TXT ו־JSON. כל הגיליונות בחוברת נסרקים, ונבחר זה שנראה כמו טבלה.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn accent" id="dtImport">📥 בחירת קובץ לייבוא</button>
+          <button class="btn" id="dtTemplate">📄 הורדת קובץ תבנית</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>📤 הוצאת נתונים</h4>
+        <div class="dlgbtns wrap">
+          <button class="btn" id="dtXlsx">📊 ייצוא לאקסל</button>
+          <button class="btn" id="dtPrint">🖨️ הדפסת השיבוץ</button>
+        </div>
+        <p class="hint" style="margin-top:9px">האקסל הוא טבלה מלאה לעריכה; ההדפסה היא דף נקי לתלייה.</p>
+      </div>
+      <div class="ed-sec">
+        <h4>💾 גיבוי ושחזור</h4>
+        <p class="hint">הגיבוי כולל את הפרויקט כולו — בחורים, מבנה, כללים, קבוצות, הערות
+          וסימולציות. מפתח היועץ לא נכלל.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn accent" id="dtBackup">💾 שמירת גיבוי לקובץ</button>
+          <button class="btn" id="dtRestore">📂 שחזור מגיבוי</button>
+        </div>
+      </div>
+      <div class="ed-sec">
+        <h4>📊 מה יש בפרויקט</h4>
+        <div class="statgrid" id="dtStats"></div>
+        <div class="stor-bar" id="dtStorBar"><i></i></div>
+        <p class="hint" id="dtStor" style="margin-top:7px"></p>
+      </div>
+      <div class="ed-sec">
+        <h4>♻️ מחיקות</h4>
+        <p class="hint">כל מה שנמחק ממתין בסל ואפשר לשחזר.</p>
+        <div class="dlgbtns wrap">
+          <button class="btn" id="dtTrash">♻️ פתיחת סל המיחזור</button>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot"><button class="btn accent" id="dtClose">סגירה</button></div>
+  </div>
+</dialog>
+
+<dialog id="dlgTrash">
+  <div class="dlg-in">
+    <div class="dlg-head"><h3>♻️ סל המיחזור <span class="cnt" id="trCnt"></span></h3>
+      <button class="dlg-x" id="trX" title="סגירה">✕</button></div>
+    <div class="dlg-body">
+      <p class="hint">כל מה שנמחק ממתין כאן — בחורים, חדרים, אגפים, בניינים, כללים, קבוצות,
+        סימולציות ותבניות. השחזור מחזיר גם את מה שהיה בפנים.</p>
+      <div id="trList"></div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn accent" id="trClose">סגירה</button>
+      <span class="ab-sp"></span>
+      <button class="btn danger-btn" id="trEmpty">🗑️ ריקון הסל</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlgFind">
+  <div class="dlg-in">
+    <div class="dlg-head find-head">
+      <span class="find-ico">🔍</span>
+      <input type="text" id="findInput" placeholder="חיפוש בכל התוכנה — שם, חדר, אגף, כלל, קבוצה או פקודה…" autocomplete="off">
+      <button class="dlg-x" id="fdX" title="סגירה (Esc)">✕</button>
+    </div>
+    <div class="dlg-body find-body"><div id="findResults"></div></div>
+    <div class="dlg-foot find-foot">
+      <span class="hint" style="margin:0">↑↓ ניווט · Enter פתיחה · Esc סגירה</span>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="dlgHelp">
   <div class="dlg-in">
@@ -2493,6 +2635,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         <div class="dlgbtns wrap">
           <button class="btn accent" id="btnDownloadApp">⬇️ הורדת התוכנה למחשב</button>
           <button class="btn" id="btnCopyLink">🔗 העתקת הקישור</button>
+          <button class="btn" id="btnXlsx" hidden>📊 אקסל</button>
         </div>
         <div class="linkbox" id="appLinkBox"></div>
       </div>
@@ -2964,6 +3107,13 @@ function migrate(s){
   s.desc=typeof s.desc==='string'?s.desc.slice(0,240):'';
   /* notes hang off anything: project / wing:<id> / room:<num> / boy:<name> /
      rule:<id> / group:<id> / sim:<id> */
+  /* deleted records wait here instead of vanishing — Ctrl+Z only reaches the last
+     step and dies on reload, which is no answer for "I deleted the wrong wing" */
+  if(!Array.isArray(s.trash))s.trash=[];
+  s.trash=s.trash.filter(t=>t&&t.id&&t.kind&&t.data).slice(-60).map(t=>({
+    id:String(t.id),kind:String(t.kind),label:String(t.label||'').slice(0,120),
+    detail:String(t.detail||'').slice(0,160),ts:+t.ts||0,data:t.data
+  }));
   if(!s.notes||typeof s.notes!=='object'||Array.isArray(s.notes))s.notes={};
   for(const k of Object.keys(s.notes)){
     const v=String(s.notes[k]==null?'':s.notes[k]).trim().slice(0,500);
@@ -3313,7 +3463,7 @@ function alarm(txt){
 /* ---------- undo ---------- */
 const UNDO=[];
 const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','buildings',
-                 'templates','groups','sims','zman','desc','notes'];
+                 'templates','groups','sims','zman','desc','notes','trash'];
 function snapshot(){
   const o={};
   for(const k of UNDO_KEYS)o[k]=S[k];
@@ -4543,6 +4693,8 @@ function renderRules(ev){
     del.addEventListener('click',()=>{
       snapshot();
       if(editingRule===r.id)cancelRuleEdit();
+      trashPut('rule',ruleText(r),r.level==='hard'?'בלתי מתפשר':'עדיף',{rule:{...r},note:noteOf('rule',r.id)});
+      delete S.notes[noteKey('rule',r.id)];
       S.rules=S.rules.filter(x=>x.id!==r.id);save();render();
       toast('הכלל נמחק — Ctrl+Z לביטול');
     });
@@ -4613,6 +4765,7 @@ function renderSims(){
       e.stopPropagation();
       if(confirm(`למחוק את הסימולציה "${sim.name}"?`)){
         snapshot();
+        trashPut('sim',sim.name,`${S.boys.filter(b2=>sim.assign[b2]).length} משובצים`,{sim:JSON.parse(JSON.stringify(sim))});
         S.sims=S.sims.filter(x=>x.id!==sim.id);
         if(S.activeSim===sim.id)S.activeSim=null;
         save();render();toast('נמחקה — Ctrl+Z מחזיר');
@@ -5304,9 +5457,40 @@ $('#btnEditApply').addEventListener('click',()=>{
    ===================================================================== */
 /* removing rooms must not leave a boy assigned to a room that is gone, nor a
    rule pointing at one — every caller goes through here */
-function dropRooms(nums){
+/* one wing's whole world, so restoring it brings the rooms and the people back */
+function trashWing(w){
+  const rooms=S.rooms.filter(r=>r.wing===w.id);
+  const assign={};
+  for(const r of rooms)for(const b of occupants(r.num))assign[b]=r.num;
+  const notes={};
+  notes[noteKey('wing',w.id)]=noteOf('wing',w.id);
+  for(const r of rooms){const v=noteOf('room',r.num);if(v)notes[noteKey('room',r.num)]=v;}
+  for(const k of Object.keys(notes))if(!notes[k])delete notes[k];
+  trashPut('wing',w.name,`${rooms.length} חדרים · ${Object.keys(assign).length} משובצים`,
+           {wing:JSON.parse(JSON.stringify(w)),rooms,assign,notes});
+}
+function trashBuilding(b){
+  const wings=S.wings.filter(w=>w.building===b.id);
+  const wid=new Set(wings.map(w=>w.id));
+  const rooms=S.rooms.filter(r=>wid.has(r.wing));
+  const assign={};
+  for(const r of rooms)for(const bo of occupants(r.num))assign[bo]=r.num;
+  trashPut('building',b.name,`${wings.length} אגפים · ${rooms.length} חדרים`,
+           {building:{...b},wings:JSON.parse(JSON.stringify(wings)),rooms,assign});
+}
+function dropRooms(nums,toTrash){
   const set=new Set(nums.map(String));
   if(!set.size)return;
+  /* keep a restorable copy unless the caller is deleting the whole wing, which
+     files one entry for the wing instead of one per room */
+  if(toTrash!==false)for(const n of set){
+    const r=roomBy(n); if(!r)continue;
+    const w=wingBy(r.wing);
+    trashPut('room',`חדר ${n}`,
+      (w?w.name+' · ':'')+`${occupants(n).length}/${r.beds} מיטות`,
+      {room:{...r},occ:occupants(n),note:noteOf('room',n),
+       cell:(w&&(w.plan||[]).find(c=>c.t==='room'&&c.num===n))||null});
+  }
   for(const n of set)delete S.notes['room:'+n];
   S.rooms=S.rooms.filter(r=>!set.has(r.num));
   for(const b of Object.keys(S.assign))if(set.has(S.assign[b]))delete S.assign[b];
@@ -5328,11 +5512,292 @@ function trimOverfull(){
 }
 
 /* =====================================================================
+   ==========================  the data hub  ===========================
+   =====================================================================
+   Import, export, print, backup, restore and storage in one place, instead
+   of buttons scattered across three dialogs. */
+function openData(){
+  const ev=evaluate(S.assign);
+  const placed=S.boys.filter(b=>S.assign[b]).length;
+  const cells=[
+    ['בחורים',S.boys.length,''],['משובצים',`${placed}/${S.boys.length}`,placed&&placed===S.boys.length?'okv':''],
+    ['בניינים',S.buildings.length,''],['אגפים',S.wings.length,''],
+    ['חדרים',S.rooms.length,''],['מיטות',S.rooms.reduce((a,r)=>a+r.beds,0),''],
+    ['כללים',S.rules.length,''],['קבוצות',S.groups.length,''],
+    ['סימולציות',S.sims.length,''],['הערות',Object.keys(S.notes).length,''],
+    ['תבניות',S.templates.length,''],['הפרות',ev.hard+ev.soft,(ev.hard+ev.soft)?'warnv':'okv']
+  ];
+  $('#dtStats').innerHTML='';
+  for(const [k,v,c] of cells){
+    const d=el('div','sg'+(c?' '+c:''));
+    d.append(el('div','v',String(v)),el('div','k',k));
+    $('#dtStats').appendChild(d);
+  }
+  /* how close this browser is to refusing to save */
+  let used=0;
+  try{for(const k of Object.keys(localStorage))used+=(k.length+(localStorage.getItem(k)||'').length)*2;}catch(e){}
+  const CAP=5*1024*1024;
+  const pct=Math.min(100,Math.round(used/CAP*100));
+  $('#dtStorBar').querySelector('i').style.width=pct+'%';
+  $('#dtStorBar').classList.toggle('hot',pct>=80);
+  $('#dtStor').textContent=`בשימוש כ־${(used/1024/1024).toFixed(2)}MB מתוך כ־5MB שהדפדפן מקצה (${pct}%)`
+    +(pct>=80?' — כדאי לשמור גיבוי ולמחוק פרויקטים ישנים.':'');
+  if(!$('#dlgData').open)$('#dlgData').showModal();
+}
+$('#dtX').addEventListener('click',()=>$('#dlgData').close());
+$('#dtClose').addEventListener('click',()=>$('#dlgData').close());
+$('#dtImport').addEventListener('click',()=>$('#fileNames').click());
+$('#dtTemplate').addEventListener('click',downloadTemplate);
+$('#dtXlsx').addEventListener('click',()=>$('#btnXlsx').click());
+$('#dtPrint').addEventListener('click',()=>{$('#dlgData').close();printAssignment();});
+$('#dtBackup').addEventListener('click',()=>$('#btnExport').click());
+$('#dtRestore').addEventListener('click',()=>$('#fileImport').click());
+$('#dtTrash').addEventListener('click',()=>{$('#dlgData').close();openTrash();});
+
+/* =====================================================================
+   ======================  one search over everything  =================
+   =====================================================================
+   Boys, rooms, wings, buildings, rules, groups, simulations, notes and the
+   commands themselves — one box, keyboard driven. */
+let FIND={q:'',sel:0,rows:[]};
+function findRows(q){
+  const out=[];
+  const add=(ico,kind,title,sub,go)=>out.push({ico,kind,title,sub,go});
+  if(!q){
+    /* with an empty box it is a command palette */
+    add('🏗️','מעבר','שלב 1 · מבנה','בניין, אגפים וחדרים',()=>setTab('struct'));
+    add('👥','מעבר','שלב 2 · בחורים','רשימת השמות',()=>setTab('boys'));
+    add('⚖️','מעבר','שלב 3 · כללים','מה מותר ומה אסור',()=>setTab('rules'));
+    add('🛏️','מעבר','שלב 4 · שיבוץ','הלוח עצמו',()=>setTab('board'));
+    add('🗂️','מעבר','שלב 5 · השוואה','גרסאות שמורות',()=>setTab('sims'));
+    add('🤖','פקודה','שיבוץ אוטומטי','מילוי כל החדרים לפי הכללים',()=>$('#btnAuto').click());
+    add('🖨️','פקודה','הדפסת השיבוץ','דף נקי לתלייה',printAssignment);
+    add('📊','פקודה','ייצוא לאקסל','טבלת שיבוץ מלאה',()=>$('#btnXlsx').click());
+    add('💾','פקודה','שמירת גיבוי','קובץ לשחזור מלא',()=>$('#btnExport').click());
+    add('♻️','פקודה','סל המיחזור',`${S.trash.length} פריטים`,openTrash);
+    add('❔','פקודה','מדריך ההפעלה','הסבר על כל חלק',()=>openHelp('start'));
+    return out;
+  }
+  for(const b of S.boys){
+    if(!hits(b,q))continue;
+    const rm=S.assign[b],g=GRP.get(b);
+    add('👤','בחור',b,(rm?`חדר ${rm}`:'ממתין לשיבוץ')+(g?' · '+g.name:''),
+        ()=>{setTab('board');openAssign(b);});
+  }
+  for(const r of S.rooms){
+    const w=wingBy(r.wing);
+    if(!hits(r.num,q)&&!(w&&hits(w.name,q)))continue;
+    const occ=occupants(r.num);
+    add('🚪','חדר','חדר '+r.num,`${w?w.name+' · ':''}${occ.length}/${r.beds}`+(occ.length?' · '+occ.join(', '):''),
+        ()=>{setTab('board');go('wing',w?w.building:null,r.wing);RSEL=r.num;render();});
+  }
+  for(const w of S.wings){
+    if(!hits(w.name,q))continue;
+    const rooms=roomsOf(w.id);
+    add('🏗️','אגף',w.name,`${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות`,
+        ()=>{setTab('board');go('wing',w.building,w.id);});
+  }
+  for(const b of S.buildings){
+    if(!hits(b.name,q))continue;
+    add(b.icon||'🏢','בניין',b.name,`${wingsOf(b.id).length} אגפים`,
+        ()=>{setTab('struct');STR.bld=b.id;EDB=null;renderStruct();});
+  }
+  for(const g of S.groups){
+    if(!hits(g.name,q))continue;
+    add('🎓','קבוצה',g.name,`${g.members.length} חברים`,()=>{railGroup=g.id;setTab('board');render();});
+  }
+  for(const r of S.rules){
+    const txt=ruleText(r);
+    if(!hits(txt,q))continue;
+    add('⚖️','כלל',txt,r.level==='hard'?'בלתי מתפשר':'עדיף',()=>setTab('rules'));
+  }
+  for(const sim of S.sims){
+    if(!hits(sim.name,q))continue;
+    add('🗂️','סימולציה',sim.name,`${S.boys.filter(b=>sim.assign[b]).length} משובצים`,
+        ()=>{setTab('sims');});
+  }
+  for(const [k,v] of Object.entries(S.notes)){
+    if(!hits(v,q))continue;
+    const i=k.indexOf(':');
+    const kind=i<0?'project':k.slice(0,i),id=i<0?'':k.slice(i+1);
+    add('📝','הערה',v.slice(0,60),kind==='project'?'הערה על הפרויקט':(TRASH_HE[kind]||kind)+' '+id,
+        ()=>{if(kind==='room'){const r=roomBy(id);if(r){setTab('board');go('wing',null,r.wing);RSEL=id;render();}}
+             else if(kind==='wing'){setTab('board');go('wing',null,id);}
+             else if(kind==='boy'){setTab('board');openAssign(id);}
+             else setTab('board');});
+  }
+  return out;
+}
+function openFind(){
+  FIND={q:'',sel:0,rows:[]};
+  $('#findInput').value='';
+  renderFind();
+  if(!$('#dlgFind').open)$('#dlgFind').showModal();
+  $('#findInput').focus();
+}
+function renderFind(){
+  paintIndex();
+  FIND.rows=findRows(FIND.q.trim()).slice(0,40);
+  if(FIND.sel>=FIND.rows.length)FIND.sel=Math.max(0,FIND.rows.length-1);
+  const box=$('#findResults'); box.innerHTML='';
+  if(!FIND.rows.length){
+    box.appendChild(el('div','blank-sm',`לא נמצא שום דבר שתואם ל"${FIND.q}".`));
+    return;
+  }
+  FIND.rows.forEach((r,i)=>{
+    const row=el('button','find-row'+(i===FIND.sel?' on':''));
+    row.append(el('span','fr-ico',r.ico),el('span','fr-kind',r.kind));
+    const tx=el('div','fr-tx');
+    tx.append(el('b',null,r.title),el('small',null,r.sub||''));
+    row.appendChild(tx);
+    row.addEventListener('click',()=>runFind(i));
+    row.addEventListener('mousemove',()=>{if(FIND.sel!==i){FIND.sel=i;paintFindSel();}});
+    box.appendChild(row);
+  });
+}
+function paintFindSel(){
+  [...$('#findResults').children].forEach((n,i)=>n.classList&&n.classList.toggle('on',i===FIND.sel));
+}
+function runFind(i){
+  const r=FIND.rows[i!=null?i:FIND.sel];
+  if(!r)return;
+  $('#dlgFind').close();
+  try{r.go();}catch(e){}
+}
+$('#fdX').addEventListener('click',()=>$('#dlgFind').close());
+$('#findInput').addEventListener('input',()=>{FIND.q=$('#findInput').value;FIND.sel=0;renderFind();});
+$('#findInput').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();FIND.sel=Math.min(FIND.sel+1,FIND.rows.length-1);paintFindSel();
+    const n=$('#findResults').children[FIND.sel]; if(n)n.scrollIntoView({block:'nearest'});}
+  else if(e.key==='ArrowUp'){e.preventDefault();FIND.sel=Math.max(FIND.sel-1,0);paintFindSel();
+    const n=$('#findResults').children[FIND.sel]; if(n)n.scrollIntoView({block:'nearest'});}
+  else if(e.key==='Enter'){e.preventDefault();runFind();}
+});
+
+/* =====================================================================
+   ===========================  recycle bin  ===========================
+   =====================================================================
+   Every destructive action drops a restorable copy here first. Ctrl+Z only
+   reaches the last step and dies on reload; this survives both. */
+function trashPut(kind,label,detail,data){
+  S.trash.push({id:'t'+uid(),kind,label,detail:detail||'',ts:Date.now(),
+                data:JSON.parse(JSON.stringify(data))});
+  if(S.trash.length>60)S.trash=S.trash.slice(-60);
+}
+const TRASH_HE={boy:'בחור',room:'חדר',wing:'אגף',building:'בניין',
+                rule:'כלל',group:'קבוצה',sim:'סימולציה',template:'תבנית'};
+const TRASH_ICO={boy:'👤',room:'🚪',wing:'🏗️',building:'🏢',
+                 rule:'⚖️',group:'🎓',sim:'🗂️',template:'⭐'};
+function restoreTrash(id){
+  const i=S.trash.findIndex(t=>t.id===id);
+  if(i<0)return;
+  const t=S.trash[i],d=t.data;
+  snapshot();
+  let msg='';
+  try{
+    if(t.kind==='boy'){
+      if(S.boys.includes(d.name)){toast('כבר קיים בחור בשם הזה');return;}
+      S.boys.push(d.name);
+      if(d.room&&roomBy(d.room)&&occupants(d.room).length<roomBy(d.room).beds)S.assign[d.name]=d.room;
+      if(d.locked&&S.assign[d.name])S.locks.push(d.name);
+      if(d.note)S.notes[noteKey('boy',d.name)]=d.note;
+      (d.groups||[]).forEach(gid=>{const g=S.groups.find(x=>x.id===gid);if(g&&!g.members.includes(d.name))g.members.push(d.name);});
+      msg=`"${d.name}" הוחזר`;
+    }else if(t.kind==='room'){
+      if(roomBy(d.room.num)){toast('כבר קיים חדר עם המספר הזה');return;}
+      if(!wingBy(d.room.wing)){toast('האגף של החדר כבר לא קיים — שחזרו אותו קודם');return;}
+      S.rooms.push({...d.room});
+      const w=wingBy(d.room.wing);
+      if(d.cell)w.plan.push({...d.cell});
+      for(const b of (d.occ||[]))if(S.boys.includes(b)&&occupants(d.room.num).length<d.room.beds)S.assign[b]=d.room.num;
+      if(d.note)S.notes[noteKey('room',d.room.num)]=d.note;
+      msg=`חדר ${d.room.num} הוחזר`;
+    }else if(t.kind==='wing'){
+      if(!bldBy(d.wing.building))d.wing.building=S.buildings[0].id;
+      if(S.wings.some(w=>w.id===d.wing.id)){toast('האגף כבר קיים');return;}
+      S.wings.push({...d.wing});
+      for(const r of (d.rooms||[]))if(!roomBy(r.num))S.rooms.push({...r});
+      for(const [b,rm] of Object.entries(d.assign||{}))
+        if(S.boys.includes(b)&&roomBy(rm)&&!S.assign[b])S.assign[b]=rm;
+      Object.assign(S.notes,d.notes||{});
+      msg=`"${d.wing.name}" הוחזר עם ${(d.rooms||[]).length} חדרים`;
+    }else if(t.kind==='building'){
+      if(S.buildings.some(b=>b.id===d.building.id)){toast('הבניין כבר קיים');return;}
+      S.buildings.push({...d.building});
+      for(const w of (d.wings||[]))if(!wingBy(w.id))S.wings.push({...w});
+      for(const r of (d.rooms||[]))if(!roomBy(r.num))S.rooms.push({...r});
+      for(const [b,rm] of Object.entries(d.assign||{}))
+        if(S.boys.includes(b)&&roomBy(rm)&&!S.assign[b])S.assign[b]=rm;
+      msg=`"${d.building.name}" הוחזר`;
+    }else if(t.kind==='rule'){
+      S.rules.push({...d.rule});
+      if(d.note)S.notes[noteKey('rule',d.rule.id)]=d.note;
+      msg='הכלל הוחזר';
+    }else if(t.kind==='group'){
+      if(S.groups.some(g=>g.id===d.group.id)){toast('הקבוצה כבר קיימת');return;}
+      const g={...d.group,members:(d.group.members||[]).filter(b=>S.boys.includes(b))};
+      S.groups.forEach(x=>{x.members=x.members.filter(b=>!g.members.includes(b));});
+      S.groups.push(g);
+      msg=`"${g.name}" הוחזרה`;
+    }else if(t.kind==='sim'){
+      if(S.sims.some(x=>x.id===d.sim.id)){toast('הסימולציה כבר קיימת');return;}
+      S.sims.push({...d.sim});
+      msg=`"${d.sim.name}" הוחזרה`;
+    }else if(t.kind==='template'){
+      if(S.templates.some(x=>x.id===d.template.id)){toast('התבנית כבר קיימת');return;}
+      S.templates.push({...d.template});
+      msg=`"${d.template.name}" הוחזרה`;
+    }
+  }catch(e){toast('השחזור נכשל');return;}
+  S.trash.splice(i,1);
+  save();initDynamic();render();
+  if($('#dlgTrash').open)renderTrash();
+  toast('♻️ '+(msg||'הפריט הוחזר'));
+}
+function openTrash(){renderTrash();if(!$('#dlgTrash').open)$('#dlgTrash').showModal();}
+function renderTrash(){
+  const box=$('#trList'); box.innerHTML='';
+  $('#trCnt').textContent=S.trash.length?`${S.trash.length} פריטים`:'ריק';
+  $('#trEmpty').hidden=!S.trash.length;
+  if(!S.trash.length){
+    box.appendChild(el('div','blank-sm','אין כאן כלום. כל מה שתמחקו — בחור, חדר, אגף, כלל, קבוצה או סימולציה — ימתין כאן עד שתרוקנו.'));
+    return;
+  }
+  for(const t of [...S.trash].reverse()){
+    const row=el('div','tr-row');
+    row.append(el('span','tr-ico',TRASH_ICO[t.kind]||'🗑'),
+               el('span','tr-kind',TRASH_HE[t.kind]||t.kind));
+    const tx=el('div','tr-tx');
+    tx.append(el('b',null,t.label),el('small',null,t.detail||niceDate(t.ts)));
+    row.appendChild(tx);
+    const rb=el('button','btn mini accent','♻️ שחזור');
+    rb.addEventListener('click',()=>restoreTrash(t.id));
+    row.appendChild(rb);
+    const db=el('button','ed-x','✕');
+    db.title='מחיקה סופית';
+    db.addEventListener('click',()=>{
+      if(!confirm(`למחוק סופית את "${t.label}"?\nאחרי זה אי אפשר יהיה לשחזר.`))return;
+      snapshot();S.trash=S.trash.filter(x=>x.id!==t.id);save();renderTrash();render();
+    });
+    row.appendChild(db);
+    box.appendChild(row);
+  }
+}
+$('#trX').addEventListener('click',()=>$('#dlgTrash').close());
+$('#trClose').addEventListener('click',()=>$('#dlgTrash').close());
+$('#trEmpty').addEventListener('click',()=>{
+  if(!S.trash.length)return;
+  if(!confirm(`לרוקן את הסל?\n${S.trash.length} פריטים יימחקו סופית ולא ניתן יהיה לשחזר אותם.`))return;
+  snapshot();S.trash=[];save();renderTrash();render();toast('הסל רוקן');
+});
+
+/* =====================================================================
    ==========================  the help centre  ========================
    =====================================================================
    One place that explains the whole app, searchable, and reachable from
    every screen — plus a ❔ next to the controls that need it most. */
 const KEYS=[
+  [['Ctrl','K'],'חיפוש בכל התוכנה — שמות, חדרים, אגפים, כללים ופקודות'],
   [['F1'],'פתיחת המדריך'],
   [['?'],'קיצורי המקלדת (הרשימה הזו)'],
   [['/'],'קפיצה לחיפוש בחור'],
@@ -5451,10 +5916,13 @@ const HELP=[
    body:[
     {h:'ייבוא'},
     {p:'אקסל (xlsx), וורד (docx), CSV, TXT או JSON. עמודה של שמות מספיקה; אם יש גם חדר, מיטות ואגף — הכול נבנה יחד.'},
+    {p:'הכול נמצא במקום אחד: <b>🗄️ נתונים</b> בסרגל העליון.'},
+    {p:'בחוברת אקסל עם כמה גיליונות התוכנה סורקת את כולם ובוחרת את זה שנראה כמו טבלת שמות — לא רק את הראשון.'},
     {h:'ייצוא'},
     {ul:['<b>📊 אקסל</b> — טבלת שיבוץ מלאה ומעוצבת.',
          '<b>💾 גיבוי</b> — קובץ JSON עם הכול, לשחזור מלא.',
          '<b>🖨️ הדפסה</b> — דף נקי לתלייה על לוח המודעות.']},
+    {p:'באותו מסך מוצג גם כמה מקום אחסון תפוס בדפדפן — כשמתקרבים למגבלה כדאי לגבות ולמחוק פרויקטים ישנים.'},
     {warn:'הנתונים נשמרים בדפדפן במחשב הזה בלבד. ניקוי נתוני הדפדפן ימחק אותם. שמרו גיבוי לקובץ מדי פעם.'}
    ]},
   {id:'projects',ico:'📁',t:'פרויקטים',lead:'כמה שיבוצים במקביל, בלי להתערבב.',
@@ -5472,6 +5940,33 @@ const HELP=[
          '<b>פעולות רגילות</b> — משבץ, נועל, מוסיף כללים ושומר סימולציות.',
          '<b>ללא הגבלה</b> — גם מוחק ומאפס. מומלץ להשאיר את האישור המקדים דלוק.']},
     {p:'המפתח מתקבל חינם ב־aistudio.google.com/apikey, נשמר רק בדפדפן, ואינו נכלל בגיבויים.'}
+   ]},
+  {id:'find',ico:'🔍',t:'חיפוש בכל התוכנה',lead:'תיבה אחת שמוצאת הכול — Ctrl+K.',
+   body:[
+    {p:'לוחצים <kbd>Ctrl</kbd>+<kbd>K</kbd> (או 🔍 בסרגל) ומקלידים. החיפוש עובר על בחורים, חדרים, אגפים, בניינים, כללים, קבוצות, סימולציות ואפילו על ההערות שכתבתם.'},
+    {ul:['תוצאה של בחור פותחת אותו ישר במגירת השיבוץ.',
+         'תוצאה של חדר קופצת לאגף שלו ומדגישה אותו.',
+         'תוצאה של הערה לוקחת אתכם למקום שאליו היא שייכת.']},
+    {p:'כשהתיבה ריקה היא רשימת פקודות: מעבר בין השלבים, שיבוץ אוטומטי, הדפסה, ייצוא, גיבוי וסל המיחזור.'},
+    {tip:'ניווט במקלדת בלבד: ↑↓ לבחירה, Enter לפתיחה, Esc לסגירה.'}
+   ]},
+  {id:'bulk',ico:'☑️',t:'פעולות על כמה בחורים',lead:'לא אחד־אחד.',
+   body:[
+    {p:'במדור <b>2 בחורים</b> יש תיבת סימון לצד כל שם. מסמנים כמה — או "בחירת כל המוצגים" אחרי חיפוש — ומקבלים סרגל פעולות.'},
+    {ul:['<b>🎓 שיוך לקבוצה</b> — כל המסומנים לקבוצה אחת בבת אחת.',
+         '<b>🛏️ שיבוץ לאגף</b> — ממלא את המיטות הפנויות באגף לפי סדר החדרים.',
+         '<b>↩️ לממתינים</b> · <b>🔒 נעילה</b> · <b>🔓 שחרור</b>',
+         '<b>🗑️ הסרה</b> — כולם יחד, ואפשר לשחזר מסל המיחזור.']},
+    {tip:'החיפוש והסימון עובדים יחד: מחפשים "לוי", לוחצים "בחירת כל המוצגים", ומשבצים את כולם באגף אחד.'}
+   ]},
+  {id:'trash',ico:'♻️',t:'סל המיחזור',lead:'מחיקה כבר לא סופית.',
+   body:[
+    {p:'כל מחיקה — בחור, חדר, אגף, בניין, כלל, קבוצה, סימולציה או תבנית — נכנסת לסל במקום להיעלם.'},
+    {p:'השחזור מחזיר גם את מה שהיה בפנים: אגף חוזר עם החדרים שלו, עם הבחורים שישבו בהם ועם ההערות.'},
+    {ul:['פותחים מ־🗄️ נתונים ← ♻️ סל המיחזור, או מהחיפוש.',
+         'הסל שומר את 60 הפריטים האחרונים.',
+         '"ריקון הסל" מוחק סופית — זו הפעולה היחידה שאין ממנה דרך חזרה.']},
+    {tip:'<kbd>Ctrl</kbd>+<kbd>Z</kbd> עדיין קיים לביטול מיידי. הסל הוא לרשת הביטחון הארוכה — הוא שורד גם רענון דף.'}
    ]},
   {id:'keys',ico:'⌨️',t:'קיצורי מקלדת',lead:'',
    body:[{keys:true}]},
@@ -5541,6 +6036,8 @@ function keysTable(){
   }
   return g;
 }
+$('#btnData').addEventListener('click',openData);
+$('#btnFind').addEventListener('click',openFind);
 $('#btnHelp').addEventListener('click',()=>openHelp(HELP_FOR_SEC[SEC]||'start'));
 $('#hpClose').addEventListener('click',()=>$('#dlgHelp').close());
 $('#hpX').addEventListener('click',()=>$('#dlgHelp').close());
@@ -5735,8 +6232,14 @@ function renameBoyEverywhere(old,nn){
   S.groups.forEach(g=>{g.members=g.members.map(b=>b===old?nn:b);});
   return true;
 }
-function removeBoyEverywhere(name){
+function removeBoyEverywhere(name,toTrash){
   if(!S.boys.includes(name))return false;
+  if(toTrash!==false){
+    const room=S.assign[name]||'';
+    trashPut('boy',name,room?`היה בחדר ${room}`:'היה בממתינים',
+      {name,room,locked:S.locks.includes(name),note:noteOf('boy',name),
+       groups:S.groups.filter(g=>g.members.includes(name)).map(g=>g.id)});
+  }
   S.boys=S.boys.filter(b=>b!==name);
   delete S.notes['boy:'+name];
   delete S.assign[name];
@@ -5753,15 +6256,20 @@ function removeBoyEverywhere(name){
 /* =====================================================================
    =========================  the boys page  ============================
    ===================================================================== */
+/* names ticked for a bulk action */
+let PICK=new Set();
 function renderBoys(){
   if(!PID)return;
   $('#byCnt').textContent=S.boys.length?`${S.boys.length} בחורים`:'הרשימה ריקה';
   const box=$('#byList'); box.innerHTML='';
   const shown=S.boys.filter(b=>hits(b,Q.by));
+  /* a tick on a name that no longer exists must not linger */
+  PICK=new Set([...PICK].filter(b=>S.boys.includes(b)));
   let n=0;
   for(const b of shown){
     box.appendChild(byRow(b)); n++;
   }
+  renderBulk(shown);
   if(!S.boys.length)
     box.appendChild(el('div','empty-note','עדיין אין אף אחד — ייבאו קובץ למטה, הדביקו רשימה, או הוסיפו שם ראשון.'));
   else if(!n)
@@ -5784,7 +6292,15 @@ function renderBoys(){
   if(!S.groups.length)gb.appendChild(el('span','hint','עדיין אין קבוצות.'));
 }
 function byRow(name){
-  const row=el('span','by-row');
+  const row=el('span','by-row'+(PICK.has(name)?' picked':''));
+  const cb=el('input','by-cb'); cb.type='checkbox'; cb.checked=PICK.has(name);
+  cb.title='סימון לפעולה קבוצתית';
+  cb.addEventListener('change',()=>{
+    if(cb.checked)PICK.add(name); else PICK.delete(name);
+    row.classList.toggle('picked',cb.checked);
+    renderBulk(S.boys.filter(b=>hits(b,Q.by)));
+  });
+  row.appendChild(cb);
   const g=GRP.get(name);
   if(g){const d=el('span','gdot'); d.style.setProperty('--gc',g.color); d.title=g.name; row.appendChild(d);}
   const inp=el('input'); inp.value=name; inp.title='לחיצה — תיקון השם';
@@ -5814,6 +6330,114 @@ function byRow(name){
   });
   row.appendChild(x);
   return row;
+}
+/* the bulk bar: appears the moment anything is ticked, and every action it
+   offers works on the whole selection at once */
+function renderBulk(shown){
+  const bar=$('#byBulk');
+  const sel=[...PICK];
+  bar.hidden=!sel.length&&!shown.length;
+  bar.innerHTML='';
+  if(!shown.length){bar.hidden=true;return;}
+  const allOn=shown.length&&shown.every(b=>PICK.has(b));
+  const tick=el('button','btn mini',allOn?'☑️ ביטול הבחירה':'☐ בחירת כל המוצגים');
+  tick.addEventListener('click',()=>{
+    if(allOn)shown.forEach(b=>PICK.delete(b));
+    else shown.forEach(b=>PICK.add(b));
+    renderBoys();
+  });
+  bar.appendChild(tick);
+  if(!sel.length){
+    bar.appendChild(el('span','bulk-hint','סמנו שמות כדי לשבץ, לשייך לקבוצה או להסיר כמה בבת אחת.'));
+    return;
+  }
+  bar.appendChild(el('span','bulk-n',`${sel.length} מסומנים`));
+
+  /* into a group */
+  if(S.groups.length){
+    const gs=document.createElement('select');
+    gs.className='bulk-sel';
+    gs.appendChild(new Option('🎓 שיוך לקבוצה…',''));
+    for(const g of S.groups)gs.appendChild(new Option(g.name,g.id));
+    gs.appendChild(new Option('— הסרה מכל קבוצה —','__none'));
+    gs.addEventListener('change',()=>{
+      if(!gs.value)return;
+      snapshot();
+      S.groups.forEach(g=>{g.members=g.members.filter(b=>!PICK.has(b));});
+      if(gs.value!=='__none'){
+        const g=S.groups.find(x=>x.id===gs.value);
+        if(g)g.members.push(...sel);
+      }
+      gs.value='';save();render();
+      toast(gs.value==='__none'?`${sel.length} הוסרו מקבוצותיהם`:`${sel.length} שויכו לקבוצה`);
+    });
+    bar.appendChild(gs);
+  }
+  /* into a wing */
+  const wingsWithBeds=S.wings.filter(w=>roomsOf(w.id).length);
+  if(wingsWithBeds.length){
+    const ws=document.createElement('select');
+    ws.className='bulk-sel';
+    ws.appendChild(new Option('🛏️ שיבוץ לאגף…',''));
+    for(const w of wingsWithBeds){
+      const rooms=roomsOf(w.id);
+      const free=rooms.reduce((a,r)=>a+Math.max(0,r.beds-occupants(r.num).length),0);
+      const o=new Option(`${w.name} (${free} מיטות פנויות)`,w.id);
+      o.disabled=!free;
+      ws.appendChild(o);
+    }
+    ws.addEventListener('change',()=>{
+      if(!ws.value)return;
+      const wid=ws.value; ws.value='';
+      bulkAssign(sel,wid);
+    });
+    bar.appendChild(ws);
+  }
+  bar.appendChild(mini('↩️ לממתינים',()=>{
+    const placed=sel.filter(b=>S.assign[b]);
+    if(!placed.length){toast('אף אחד מהמסומנים לא משובץ');return;}
+    snapshot();
+    placed.forEach(b=>{delete S.assign[b];});
+    S.locks=S.locks.filter(b=>S.assign[b]);
+    save();render();toast(`${placed.length} הוחזרו לרשימת הממתינים`);
+  }));
+  bar.appendChild(mini('🔒 נעילה',()=>{
+    const placed=sel.filter(b=>S.assign[b]&&!S.locks.includes(b));
+    if(!placed.length){toast('אין מה לנעול — סמנו בחורים משובצים');return;}
+    snapshot();S.locks.push(...placed);save();render();
+    toast(`${placed.length} ננעלו במקומם`);
+  }));
+  bar.appendChild(mini('🔓 שחרור',()=>{
+    const n=sel.filter(b=>S.locks.includes(b)).length;
+    if(!n){toast('אף אחד מהמסומנים אינו נעול');return;}
+    snapshot();S.locks=S.locks.filter(b=>!PICK.has(b));save();render();
+    toast(`${n} שוחררו`);
+  }));
+  bar.appendChild(mini('🗑️ הסרה',()=>{
+    if(!confirm(`להסיר ${sel.length} בחורים מהרשימה?\n\nהם ימתינו בסל המיחזור וניתן יהיה לשחזר אותם.`))return;
+    snapshot();
+    sel.forEach(b=>removeBoyEverywhere(b));
+    PICK.clear();
+    save();initDynamic();render();
+    toast(`${sel.length} הוסרו — ♻️ ניתן לשחזר מסל המיחזור`);
+  },'danger'));
+}
+function bulkAssign(names,wid){
+  const w=wingBy(wid); if(!w)return;
+  const waiting=names.filter(b=>!S.assign[b]);
+  if(!waiting.length){toast('כל המסומנים כבר משובצים');return;}
+  snapshot();
+  let placed=0;
+  const order=planRoomNums(w.plan);
+  const seen=new Set(order);
+  const rooms=[...order.map(n=>roomBy(n)).filter(Boolean),
+               ...roomsOf(wid).filter(r=>!seen.has(r.num))];
+  for(const r of rooms){
+    let free=r.beds-occupants(r.num).length;
+    while(free>0&&waiting.length){S.assign[waiting.shift()]=r.num;free--;placed++;}
+  }
+  S.activeSim=null;save();render();
+  toast(`${placed} שובצו ל${w.name}`+(waiting.length?` · ${waiting.length} לא נכנסו — אין מספיק מיטות`:''));
 }
 $('#byAdd').addEventListener('click',()=>{
   const inp=$('#byNew'),nn=inp.value.trim();
@@ -5909,6 +6533,7 @@ function renderGroups(){
     del.addEventListener('click',()=>{
       if(!confirm(`למחוק את הקבוצה "${g.name}"?\nהבחורים עצמם והשיבוץ שלהם לא ייפגעו.`))return;
       snapshot();
+      trashPut('group',g.name,`${g.members.length} חברים`,{group:JSON.parse(JSON.stringify(g))});
       S.groups=S.groups.filter(x=>x.id!==g.id);
       if(GSEL===g.id)GSEL=null;
       if(railGroup===g.id)railGroup=null;
@@ -6405,8 +7030,9 @@ function barEl(w,edit){
             w.geom=orig.get(w.id);
             if(lastWing)toast('חייב להישאר לפחות אגף אחד');
           }else{
-            dropRooms(rooms.map(r=>r.num));
-            S.wings=S.wings.filter(x=>x.id!==w.id);
+            trashWing(w);
+            dropRooms(rooms.map(r=>r.num),false);
+  S.wings=S.wings.filter(x=>x.id!==w.id);
             if(EDB.sel===w.id)EDB.sel=null;
           }
         }
@@ -6451,7 +7077,8 @@ $('#bldBarDel').addEventListener('click',()=>{
     +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\nCtrl+Z מחזיר.'))return;
   dropBldAnchor();
   snapshot();
-  dropRooms(rooms.map(r=>r.num));
+  trashWing(w);
+  dropRooms(rooms.map(r=>r.num),false);
   S.wings=S.wings.filter(x=>x.id!==w.id);
   EDB.sel=null;
   save();bldPaint();render();
@@ -6496,8 +7123,10 @@ $('#bldDel').addEventListener('click',()=>{
   if(!confirm(`למחוק את "${b.name}"?\n\nיימחקו גם ${ws.length} אגפים ו־${rooms.length} חדרים`
     +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
   snapshot();
-  dropRooms(rooms.map(r=>r.num));
+  trashBuilding(b);
+  dropRooms(rooms.map(r=>r.num),false);
   S.wings=S.wings.filter(w=>!wid.has(w.id));
+  trashBuilding(b);
   S.buildings=S.buildings.filter(x=>x.id!==b.id);
   if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,plan:[]}];
   save();$('#dlgBld').close();
@@ -7048,6 +7677,7 @@ function renderTplMgr(){
     if(mine)row.appendChild(mini('🗑 מחיקה',()=>{
       if(!confirm(`למחוק את התבנית "${t.name}"?`))return;
       snapshot();
+      trashPut('template',t.name,t.desc||'',{template:JSON.parse(JSON.stringify(t))});
       S.templates=S.templates.filter(x=>x.id!==t.id);
       save();renderTplMgr();
       if($('#dlgWing').open)renderTpls();
@@ -7233,7 +7863,8 @@ $('#wgDel').addEventListener('click',()=>{
   if(!confirm(`למחוק את "${w.name}"?\n\nיימחקו ${rooms.length} חדרים`
     +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
   snapshot();
-  dropRooms(rooms.map(r=>r.num));
+  trashWing(w);
+  dropRooms(rooms.map(r=>r.num),false);
   S.wings=S.wings.filter(x=>x.id!==w.id);
   save(); closeWing(); initDynamic();
   V={level:S.buildings.length>1?'building':'home',bld:w.building,wing:null};
@@ -7567,38 +8198,65 @@ function textOfXml(xml,tagSel){
   const doc=new DOMParser().parseFromString(xml,'application/xml');
   return [...doc.getElementsByTagName(tagSel)];
 }
-async function sheetRows(buf){
+/* every worksheet in the workbook, not just the first: the table people actually
+   want is regularly on sheet 2 or 3, and reading only sheet1 imported nothing */
+async function sheetsRows(buf){
   const files=await unzipEntries(buf);
-  const sheetName=Object.keys(files).find(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n));
-  if(!sheetName)throw new Error('לא נמצא גיליון בקובץ');
+  const names=Object.keys(files).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n))
+    .sort((a,b)=>(+a.match(/\d+/)[0])-(+b.match(/\d+/)[0]));
+  if(!names.length)throw new Error('לא נמצא גיליון בקובץ');
   let shared=[];
   if(files['xl/sharedStrings.xml']){
     const doc=new DOMParser().parseFromString(files['xl/sharedStrings.xml'],'application/xml');
     shared=[...doc.getElementsByTagName('si')].map(si=>
       [...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
   }
-  const doc=new DOMParser().parseFromString(files[sheetName],'application/xml');
-  const rows=[];
-  for(const r of doc.getElementsByTagName('row')){
-    const cells=[];
-    for(const c of r.getElementsByTagName('c')){
-      const ref=(c.getAttribute('r')||'').match(/^([A-Z]+)/);
-      let idx=cells.length;
-      if(ref){idx=0;for(const ch of ref[1])idx=idx*26+(ch.charCodeAt(0)-64);idx--;}
-      const t=c.getAttribute('t');
-      let val='';
-      if(t==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');
-      else{
-        const v=c.getElementsByTagName('v')[0];
-        if(v)val=(t==='s')?(shared[+v.textContent]||''):v.textContent;
-      }
-      while(cells.length<idx)cells.push('');
-      cells[idx]=val;
-    }
-    if(cells.length)rows.push(cells);
+  /* the human sheet names live in the workbook part, in the same order */
+  let titles=[];
+  if(files['xl/workbook.xml']){
+    try{
+      const wb=new DOMParser().parseFromString(files['xl/workbook.xml'],'application/xml');
+      titles=[...wb.getElementsByTagName('sheet')].map(s=>s.getAttribute('name')||'');
+    }catch(e){}
   }
-  return rows;
+  const out=[];
+  names.forEach((name,i)=>{
+    const doc=new DOMParser().parseFromString(files[name],'application/xml');
+    const rows=[];
+    for(const r of doc.getElementsByTagName('row')){
+      const cells=[];
+      for(const c of r.getElementsByTagName('c')){
+        const ref=(c.getAttribute('r')||'').match(/^([A-Z]+)/);
+        let idx=cells.length;
+        if(ref){idx=0;for(const ch of ref[1])idx=idx*26+(ch.charCodeAt(0)-64);idx--;}
+        const t=c.getAttribute('t');
+        let val='';
+        if(t==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');
+        else{
+          const v=c.getElementsByTagName('v')[0];
+          if(v)val=(t==='s')?(shared[+v.textContent]||''):v.textContent;
+        }
+        while(cells.length<idx)cells.push('');
+        cells[idx]=val;
+      }
+      if(cells.length)rows.push(cells);
+    }
+    out.push({name:titles[i]||`גיליון ${i+1}`,rows});
+  });
+  return out;
 }
+/* the sheet that actually looks like our table wins; otherwise the fullest one */
+function bestSheet(sheets){
+  let best=null,bestScore=-1;
+  for(const s of sheets){
+    const setup=parseSetupTable(s.rows);
+    const score=setup?1000+(setup.boys.length+setup.rooms.length)
+                     :(pickNameColumn(s.rows)||[]).length;
+    if(score>bestScore){bestScore=score;best=s;}
+  }
+  return best||sheets[0];
+}
+async function sheetRows(buf){ return bestSheet(await sheetsRows(buf)).rows; }
 async function namesFromXlsx(buf){ return pickNameColumn(await sheetRows(buf)); }
 async function namesFromDocx(buf){
   const files=await unzipEntries(buf);
@@ -8352,12 +9010,13 @@ function runActions(acts){
         if(!w)throw new Error('אגף לא קיים: '+a.wing);
         if(S.wings.length<2)throw new Error('חייב להישאר לפחות אגף אחד');
         snapshot();
+        trashWing(w);
         const rooms=S.rooms.filter(r=>r.wing===w.id);
         rooms.forEach(r=>occupants(r.num).forEach(b=>{delete S.assign[b];S.locks=S.locks.filter(x=>x!==b);}));
         const nums=new Set(rooms.map(r=>r.num));
         S.rooms=S.rooms.filter(r=>r.wing!==w.id);
         S.rules=S.rules.filter(x=>!nums.has(x.room));
-        S.wings=S.wings.filter(x=>x.id!==w.id);
+  S.wings=S.wings.filter(x=>x.id!==w.id);
         save();initDynamic();render();
         done.push(`האגף "${w.name}" נמחק על ${rooms.length} חדריו`);
       }
@@ -9104,7 +9763,7 @@ $('#setZman').addEventListener('input',()=>{
 });
 $('#setExport').addEventListener('click',()=>$('#btnExport').click());
 $('#setImport').addEventListener('click',()=>$('#btnImport').click());
-$('#setXlsx').addEventListener('click',()=>$('#btnXlsx').click());
+$('#setXlsx').addEventListener('click',()=>{$('#dlgSettings').close();openData();});
 $('#setOpenAi').addEventListener('click',()=>{
   $('#dlgSettings').close();
   refreshGreeting();
@@ -9154,6 +9813,7 @@ document.addEventListener('keydown',e=>{
   const dlgOpen=!!document.querySelector('dialog[open]');
   /* help is reachable from anywhere, even mid-dialog — that is the point of F1 */
   if(e.key==='F1'){e.preventDefault();openHelp(HELP_FOR_SEC[SEC]||'start');return;}
+  if(e.ctrlKey&&(e.key==='k'||e.key==='K')){e.preventDefault();if(PID)openFind();return;}
   if(e.key==='?'&&!typing){e.preventDefault();openKeys();return;}
   if(e.ctrlKey&&(e.key==='z'||e.key==='Z')&&!typing&&!dlgOpen){e.preventDefault();undo();return;}
   if(e.ctrlKey&&(e.key==='s'||e.key==='S')){
