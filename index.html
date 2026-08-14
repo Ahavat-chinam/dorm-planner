@@ -75,6 +75,14 @@
 :root[data-theme="light"] h1 .grad{background-image:linear-gradient(110deg,var(--tx) 10%,var(--acc) 45%,var(--acc2) 80%)}
 :root[data-theme="light"] .rule.viol-hard .rdetail{color:#b91c1c}
 :root[data-theme="light"] .rule.viol-soft .rdetail{color:#92400e}
+/* the per-room accent is a dark-theme pastel set from JS, so it never reaches the
+   overrides above — darken it here or a room number reads at 1.5:1 on white */
+:root[data-theme="light"] .pb-room .no,
+:root[data-theme="light"] .fp-head .no,
+:root[data-theme="light"] .plate .no{color:color-mix(in srgb,var(--ac) 52%,#000)}
+:root[data-theme="light"] .pb-room::after{background:color-mix(in srgb,var(--ac) 55%,#000)}
+:root[data-theme="light"] .shape path{stroke:color-mix(in srgb,var(--bc) 55%,#000)}
+:root[data-theme="light"] .slabel{color:#16203a}
 html{scroll-behavior:smooth}
 body{
   /* Segoe UI Variable has no Hebrew coverage — with it first, Hebrew letters fell back to a
@@ -1344,7 +1352,7 @@ body.nopulse .pb-room.warn-hard{animation:none}
   padding:10px;overflow:auto;direction:ltr;
 }
 .le-grid{
-  position:relative;touch-action:none;
+  position:relative;touch-action:pan-x pan-y;
   user-select:none;-webkit-user-select:none;
   width:calc(26px * 26);height:calc(26px * 12);
   background-image:
@@ -1417,7 +1425,7 @@ body.nopulse .pb-room.warn-hard{animation:none}
     linear-gradient(to left,var(--line) 1px,transparent 1px),
     linear-gradient(to bottom,var(--line) 1px,transparent 1px);
   background-size:var(--cell) var(--cell);
-  border-radius:10px;touch-action:none;
+  border-radius:10px;touch-action:pan-x pan-y;
 }
 .canvas.ro .canvas-in{cursor:default}
 .canvas-in{cursor:crosshair;margin:0 auto}
@@ -1708,6 +1716,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
   <nav id="crumbs"></nav>
   <span class="tb-spacer"></span>
   <div class="stats" id="stats"></div>
+  <span class="stat" id="saveState" hidden></span>
   <div class="actions">
     <button class="btn" id="btnProjects" title="מעבר בין פרויקטים">📁 פרויקטים</button>
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
@@ -1967,13 +1976,13 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 <dialog id="dlgAbout">
   <div class="dlg-in">
     <div class="dlg-head"><h3>ℹ️ אודות</h3>
-      <button class="dlg-x" id="abX" title="סגירה">✕</button></div>
+      <button class="dlg-x" id="autX" title="סגירה">✕</button></div>
     <div class="dlg-body">
       <div class="ab-hero">
         <div class="ab-logo">🛏️</div>
         <div class="ab-id">
           <b>שיבוץ חדרים לפנימייה</b>
-          <span class="ab-ver" id="abVer"></span>
+          <span class="ab-ver" id="autVer"></span>
           <small>כלי לשיבוץ בחורים לחדרים — שרטוט המבנה, כללים, שיבוץ והשוואת גרסאות.</small>
         </div>
       </div>
@@ -1994,23 +2003,23 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         <p class="hint">מכיוון שהכול מקומי — מחיקת נתוני הדפדפן תמחק גם את הפרויקטים.
           שמרו גיבוי לקובץ מדי פעם: ⚙️ הגדרות ← נתונים ← שמירת גיבוי.</p>
         <div class="dlgbtns wrap">
-          <button class="btn" id="abBackup">💾 שמירת גיבוי עכשיו</button>
+          <button class="btn" id="autBackup">💾 שמירת גיבוי עכשיו</button>
         </div>
       </div>
       <div class="ed-sec">
         <h4>⬇️ הורדה ושיתוף</h4>
         <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור הזה:</p>
-        <div class="linkbox" id="abLinkBox"></div>
+        <div class="linkbox" id="autLinkBox"></div>
         <div class="dlgbtns wrap">
-          <button class="btn accent" id="abDownload">⬇️ הורדת התוכנה למחשב</button>
-          <button class="btn" id="abCopyLink">🔗 העתקת הקישור</button>
+          <button class="btn accent" id="autDownload">⬇️ הורדת התוכנה למחשב</button>
+          <button class="btn" id="autCopyLink">🔗 העתקת הקישור</button>
         </div>
       </div>
       <div class="ed-sec credits">
         <h4>🙏 קרדיטים</h4>
         <div class="cred-row">
           <span class="cred-av">👤</span>
-          <span class="cred-txt"><b id="abCredUser">בנימין</b><small>רעיון, אפיון, ליווי ובדיקות</small></span>
+          <span class="cred-txt"><b id="autCredUser">בנימין</b><small>רעיון, אפיון, ליווי ובדיקות</small></span>
         </div>
         <div class="cred-row">
           <span class="cred-av">🤖</span>
@@ -2020,8 +2029,8 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
       </div>
     </div>
     <div class="dlg-foot">
-      <button class="btn accent" id="abClose">סגירה</button>
-      <button class="btn" id="abHelp">❔ מדריך ההפעלה</button>
+      <button class="btn accent" id="autClose">סגירה</button>
+      <button class="btn" id="autHelp">❔ מדריך ההפעלה</button>
     </div>
   </div>
 </dialog>
@@ -2705,7 +2714,9 @@ function rubberBand(host,cell){
   let band=null;
   return {
     show(a,b,bad){
-      if(!band){band=el('div','rband');host.appendChild(band);}
+      /* a repaint wipes the host's children — the closure must notice that its
+         band was detached, or the two-click preview silently stops showing */
+      if(!band||!band.isConnected){band=el('div','rband');host.appendChild(band);}
       band.classList.toggle('bad',!!bad);
       band.style.left=(Math.min(a.x,b.x)*cell)+'px';
       band.style.top=(Math.min(a.y,b.y)*cell)+'px';
@@ -2942,6 +2953,9 @@ function migrate(s){
     return {num,beds:Math.max(1,Math.min(12,+r.beds||2)),wing:r.wing};
   });
   if(!s.assign||typeof s.assign!=='object')s.assign={};
+  /* a hand-edited or older backup may hold numbers where the app keys by string */
+  for(const k of Object.keys(s.assign))s.assign[k]=String(s.assign[k]);
+  s.rules.forEach(r=>{if(r&&r.room!=null)r.room=String(r.room);});
   if(!Array.isArray(s.rules))s.rules=[];
   s.rules=s.rules.filter(r=>r&&typeof r==='object');
   if(!Array.isArray(s.sims))s.sims=[];
@@ -3027,7 +3041,11 @@ function migrate(s){
       return {id:String(t.id),name:String(t.name||'תבנית').slice(0,40),
               ico:String(t.ico||'⭐').slice(0,4),desc:String(t.desc||'').slice(0,120),
               plan:plan.filter(c=>c&&CELL_TYPES[c.t]).map(c=>{
-                const o={t:c.t,x:clampI(c.x,0,PW-1),y:clampI(c.y,0,PH-1)};
+                const x=clampI(c.x,0,PW-1),y=clampI(c.y,0,PH-1);
+                const o={t:c.t,x,y};
+                /* a template remembers the size each room was drawn at, exactly
+                   like normPlan does for a wing */
+                if(c.t!=='hall'){o.w=clampI(c.w||1,1,PW-x);o.h=clampI(c.h||1,1,PH-y);}
                 if(c.t==='room')o.beds=Math.max(1,Math.min(12,+c.beds||4));
                 else if(c.label)o.label=String(c.label).slice(0,24);
                 return o;
@@ -3119,10 +3137,21 @@ function projSummary(){
   return {boys:S.boys.length,rooms:S.rooms.length,wings:S.wings.length,
           buildings:S.buildings.length,placed:S.boys.filter(b=>S.assign[b]).length};
 }
+/* a failed write must never go quiet: the board keeps rendering from memory and
+   looks perfectly healthy while nothing is reaching disk */
 function warnQuota(){
-  if(warnQuota._done)return;
-  warnQuota._done=true;
-  toast('⚠️ הדפדפן לא מאפשר לשמור — שמרו גיבוי לקובץ מיד! (⚙️ ← נתונים)');
+  markSaved(false);
+  toast('⚠️ אין מקום לשמור בדפדפן — שמרו גיבוי לקובץ עכשיו (⚙️ ← נתונים ← שמירת גיבוי), ואז מחקו פרויקטים ישנים');
+}
+function markSaved(ok){
+  const n=$('#saveState'); if(!n)return;
+  n.hidden=false;
+  n.className='stat'+(ok?'':' bad');
+  const t=new Date();
+  n.textContent=ok
+    ? `נשמר ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`
+    : '⛔ לא נשמר — גבו לקובץ';
+  n.title=ok?'כל השינויים נכתבו לדפדפן במחשב הזה':'הכתיבה לדפדפן נכשלה. השינויים קיימים בזיכרון בלבד ויאבדו ברענון.';
 }
 
 /* while a batch is open, save() and render() only mark the work as pending —
@@ -3142,6 +3171,7 @@ function save(){
       if(m._sig!==sig){m.sum=sum;m._sig=sig;}
       saveIndex();
     }
+    markSaved(true);
   }catch(e){warnQuota();}
 }
 function readProject(id){
@@ -3771,7 +3801,10 @@ function renderProjects(host){
   hero.appendChild(L);
   host.appendChild(hero);
 
-  host.appendChild(secHead('📁 פרויקטים',[mini('+ פרויקט חדש',()=>openProjDlg(null))]));
+  host.appendChild(secHead('📁 פרויקטים',[
+    mini('+ פרויקט חדש',()=>openProjDlg(null)),
+    mini('📂 שחזור מגיבוי',()=>$('#fileImport').click())
+  ]));
 
   if(!IX.projects.length){
     const box=el('div','blank');
@@ -3781,6 +3814,11 @@ function renderProjects(host){
     const b=el('button','btn accent','+ יצירת הפרויקט הראשון');
     b.addEventListener('click',()=>openProjDlg(null));
     box.appendChild(b);
+    /* someone whose browser data was cleared arrives here holding only a .json */
+    const rb=el('button','btn','📂 שחזור מגיבוי');
+    rb.style.marginInlineStart='8px';
+    rb.addEventListener('click',()=>$('#fileImport').click());
+    box.appendChild(rb);
     host.appendChild(box);
     return;
   }
@@ -4541,11 +4579,13 @@ function renderSims(){
     card.title=simTitle(sim.assign);
 
     const nm=document.createElement('div'); nm.className='sname'; nm.textContent=sim.name;
-    nm.addEventListener('dblclick',e=>{
+    nm.title='לחיצה כפולה — שינוי שם';
+    const renameSim=e=>{
       e.stopPropagation();
       const nn=prompt('שם חדש לסימולציה:',sim.name);
-      if(nn&&nn.trim()){sim.name=nn.trim();save();render();}
-    });
+      if(nn&&nn.trim()){snapshot();sim.name=nn.trim();save();render();}
+    };
+    nm.addEventListener('dblclick',renameSim);
 
     const st=document.createElement('div'); st.className='sstats';
     let vh='';
@@ -4748,7 +4788,12 @@ document.body.addEventListener('click',e=>{
 $('#tbHome').addEventListener('click',()=>{setTab('board');go('home');});
 /* which of the five sections is on screen; 'board' is the assignment section */
 let SEC='board';
+const dropBldAnchor=()=>{try{window.__bldClearAnchor&&window.__bldClearAnchor();}catch(e){}};
+const dropLayAnchor=()=>{try{const g=document.querySelector('.lay .le-grid');
+  if(g&&g.__dropAnchor)g.__dropAnchor();}catch(e){}};
 function setTab(v){
+  dropBldAnchor();dropLayAnchor();
+  const had=!!selected;
   SEC=v;
   if(v!=='board')clearSel();
   document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
@@ -4761,6 +4806,8 @@ function setTab(v){
   paintGuides();
   paintSecnav();
   renderWelcome();
+  /* clearing the selection without repainting left the chip stuck looking picked */
+  if(had&&!selected)render();
   window.scrollTo({top:0,behavior:'auto'});
 }
 $('#mainTabs').addEventListener('click',e=>{
@@ -4979,7 +5026,9 @@ function optimize(locked){
       const capNow=new Map();
       S.rooms.forEach(r=>capNow.set(r.num,r.beds));
       for(const b of S.boys){const rm=asg[b]; if(capNow.has(rm))capNow.set(rm,capNow.get(rm)-1);}
+      let k2=0;
       for(const b of hot)for(const r of S.rooms){
+        if((++k2&63)===0&&Date.now()-t0>BUDGET)break;
         if(capNow.get(r.num)>0&&asg[b]!==r.num){
           const old=asg[b];asg[b]=r.num;
           const s2=scoreOf(asg);
@@ -5003,13 +5052,19 @@ $('#btnAuto').addEventListener('click',()=>{
   }
   const btn=$('#btnAuto');
   btn.disabled=true;btn.textContent='⏳ מחשב…';
-  const res=optimize(locked);
-  btn.disabled=false;btn.textContent='🤖 שיבוץ אוטומטי';
-  if(!res){toast('אין מספיק מיטות לכולם');return;}
-  snapshot();                                   /* the most destructive click in the app */
-  S.assign=res.asg;S.activeSim=null;clearSel();save();render();
-  if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
-  else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
+  /* the search blocks the thread for a second or two. Yielding a frame first lets
+     the browser actually paint the label — otherwise the page just freezes with
+     the button looking untouched, and people click it again. */
+  requestAnimationFrame(()=>setTimeout(()=>{
+    let res=null;
+    try{ res=optimize(locked); }
+    finally{ btn.disabled=false; btn.textContent='🤖 שיבוץ אוטומטי'; }
+    if(!res){toast('אין מספיק מיטות לכולם');return;}
+    snapshot();                                 /* the most destructive click in the app */
+    S.assign=res.asg;S.activeSim=null;clearSel();save();render();
+    if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
+    else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
+  },0));
 });
 
 /* ---------- sims save ---------- */
@@ -5020,6 +5075,9 @@ $('#btnSaveSim').addEventListener('click',()=>{
   const inp=$('#simName');
   const name=(inp.value.trim())||`סימולציה ${S.sims.length+1}`;
   const sim={id:uid(),name,ts:Date.now(),assign:{...S.assign}};
+  /* sims are undo-tracked: without this the next Ctrl+Z restores a world where
+     the simulation was never saved, and it vanishes */
+  snapshot();
   S.sims.push(sim);S.activeSim=sim.id;inp.value='';
   save();render();toast(`נשמרה: "${name}"`);
 });
@@ -5042,10 +5100,20 @@ $('#fileImport').addEventListener('change',e=>{
     try{
       const s=JSON.parse(rd.result);
       if(!s||!Array.isArray(s.boys)||!Array.isArray(s.rooms))throw 0;
-      /* this replaces everything — boys, rooms, rules, every saved simulation */
-      if(S.boys.length&&!confirm(
-        `שחזור גיבוי ידרוס את כל מה שעל הלוח עכשיו:\n`
-        +`${S.boys.length} בחורים · ${S.rooms.length} חדרים · ${S.rules.length} כללים · ${S.sims.length} סימולציות.\n\n`
+      /* restoring with no project open used to report success and write nothing —
+         a backup that cannot be restored is not a backup */
+      if(!PID){
+        createProject(String(s.zman||'שוחזר מגיבוי').slice(0,80),String(s.desc||'').slice(0,240));
+        if(!PID){toast('לא הצלחתי ליצור פרויקט לשחזור');return;}
+      }
+      /* this replaces everything — and "everything" is not only the boys */
+      const cur=[S.boys.length&&S.boys.length+' בחורים',
+                 S.wings.length&&S.wings.length+' אגפים',
+                 S.rooms.length&&S.rooms.length+' חדרים',
+                 S.rules.length&&S.rules.length+' כללים',
+                 S.sims.length&&S.sims.length+' סימולציות'].filter(Boolean);
+      if(cur.length&&!confirm(
+        `שחזור גיבוי ידרוס את כל מה שבפרויקט עכשיו:\n${cur.join(' · ')}.\n\n`
         +`הקובץ שנבחר מכיל ${s.boys.length} בחורים ו־${s.rooms.length} חדרים.\n\nלהמשיך?`))
         {toast('השחזור בוטל');return;}
       snapshot();
@@ -5494,17 +5562,17 @@ $('#kyX').addEventListener('click',()=>$('#dlgKeys').close());
 
 /* ---------------- about ---------------- */
 function openAbout(){
-  $('#abVer').textContent='גרסה '+APP_VERSION;
-  $('#abLinkBox').textContent=APP_HOME;
-  $('#abCredUser').textContent=(S.settings&&S.settings.credUser)||'בנימין';
+  $('#autVer').textContent='גרסה '+APP_VERSION;
+  $('#autLinkBox').textContent=APP_HOME;
+  $('#autCredUser').textContent=(S.settings&&S.settings.credUser)||'בנימין';
   if(!$('#dlgAbout').open)$('#dlgAbout').showModal();
 }
-$('#abClose').addEventListener('click',()=>$('#dlgAbout').close());
-$('#abX').addEventListener('click',()=>$('#dlgAbout').close());
-$('#abHelp').addEventListener('click',()=>{$('#dlgAbout').close();openHelp('start');});
-$('#abDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
-$('#abCopyLink').addEventListener('click',()=>$('#btnCopyLink').click());
-$('#abBackup').addEventListener('click',()=>{$('#dlgAbout').close();$('#btnExport').click();});
+$('#autClose').addEventListener('click',()=>$('#dlgAbout').close());
+$('#autX').addEventListener('click',()=>$('#dlgAbout').close());
+$('#autHelp').addEventListener('click',()=>{$('#dlgAbout').close();openHelp('start');});
+$('#autDownload').addEventListener('click',()=>$('#btnDownloadApp').click());
+$('#autCopyLink').addEventListener('click',()=>$('#btnCopyLink').click());
+$('#autBackup').addEventListener('click',()=>{$('#dlgAbout').close();$('#btnExport').click();});
 
 /* ---------------- print: the guide, and the assignment ---------------- */
 function printDoc(title,inner){
@@ -5823,10 +5891,13 @@ function renderGroups(){
       save();renderGroups();render();
     });
     const nm=el('input','gn'); nm.type='text'; nm.value=g.name;
-    nm.addEventListener('input',()=>{g.name=nm.value.slice(0,40);});
+    /* the old code wrote g.name on every keystroke, so by blur the comparison was
+       always equal and the rename was never snapshotted OR saved — it lived in
+       memory until the next reload threw it away */
+    const wasName=g.name;
     nm.addEventListener('blur',()=>{
       const nn=(nm.value.trim()||'קבוצה').slice(0,40);
-      if(nn!==g.name){snapshot();g.name=nn;save();}
+      if(nn!==wasName){snapshot();g.name=nn;save();}
       renderGroups();render();
     });
     const cnt=el('span','gr-n',`${g.members.length} בחורים`);
@@ -6044,7 +6115,7 @@ function renderStruct(){
   if(S.buildings.length>1){
     for(const x of S.buildings){
       const t=el('button','btn mini'+(x.id===STR.bld?' accent':''),(x.icon||'🏢')+' '+x.name);
-      t.addEventListener('click',()=>{STR.bld=x.id;EDB=null;renderStruct();});
+      t.addEventListener('click',()=>{dropBldAnchor();STR.bld=x.id;EDB=null;renderStruct();});
       bar.appendChild(t);
     }
   }
@@ -6098,7 +6169,7 @@ function bldPaint(){
     const n=floorWings(b.id,f.id).length;
     t.appendChild(el('span','fx',n?`(${n})`:'(ריקה)'));
     t.title='לחיצה כפולה — שינוי שם הקומה';
-    t.addEventListener('click',()=>{EDB.floor=f.id;EDB.sel=null;bldPaint();});
+    t.addEventListener('click',()=>{dropBldAnchor();EDB.floor=f.id;EDB.sel=null;bldPaint();});
     t.addEventListener('dblclick',()=>{
       const nn=prompt('שם הקומה:',f.name);
       if(nn&&nn.trim()){snapshot();f.name=nn.trim().slice(0,30);save();bldPaint();render();}
@@ -6126,6 +6197,7 @@ function bldPaint(){
   add.addEventListener('click',()=>{
     snapshot();
     const f={id:'f'+uid(),name:'קומה '+(b.floors.length+1)};
+    dropBldAnchor();
     b.floors.push(f); EDB.floor=f.id; EDB.sel=null;
     save();bldPaint();render();
   });
@@ -6140,7 +6212,7 @@ function bldPaint(){
   .forEach(([k,lbl,tip])=>{
     const t=el('button',EDB.tool===k?'on':'',lbl);
     t.title=tip;
-    t.addEventListener('click',()=>{EDB.tool=k;bldPaint();});
+    t.addEventListener('click',()=>{dropBldAnchor();EDB.tool=k;bldPaint();});
     tb.appendChild(t);
   });
 
@@ -6194,6 +6266,9 @@ function barEl(w,edit){
   const setHint=t=>{const n=hintEl(); if(n)n.textContent=t;};
   const HINT_IDLE='📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית. אגף מפותל: מלבן נוסף מתוך אגף שנבחר מתחבר אליו.';
   const clearAnchor=()=>{anchor=null;band.hide();setHint(HINT_IDLE);};
+  /* every context switch must drop a parked corner: otherwise the next click
+     completes a rectangle the user framed for a different tool, floor or wing —
+     and with the erase tool that silently deletes real geometry */
   window.__bldClearAnchor=clearAnchor;
   const cellAt=e=>{
     const r=grid.getBoundingClientRect();
@@ -6341,20 +6416,26 @@ function barEl(w,edit){
   }
   grid.addEventListener('pointerup',finish);
   grid.addEventListener('pointercancel',finish);
-  /* Esc drops a parked corner */
+  /* Esc drops a parked corner — but only while the canvas is the thing on screen.
+     Swallowing Esc elsewhere would stop every dialog in the app from closing. */
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&anchor){e.preventDefault();clearAnchor();}
+    if(e.key!=='Escape'||!anchor)return;
+    if(SEC!=='struct'||document.querySelector('dialog[open]')){clearAnchor();return;}
+    e.preventDefault();clearAnchor();
   });
 })();
 $('#bldBarName').addEventListener('input',()=>{
   const w=EDB&&EDB.sel?wingBy(EDB.sel):null; if(!w)return;
   w.name=$('#bldBarName').value.slice(0,40)||w.name;
-  const node=$('#bldGrid').querySelector('.bar.sel .bl');
+  /* shapes are drafted now — the live label is .slabel, not the old .bar .bl */
+  const node=$('#bldGrid').querySelector('.shape.sel .slabel');
   if(node)node.textContent=w.name;
 });
 $('#bldBarName').addEventListener('blur',()=>{
   const w=EDB&&EDB.sel?wingBy(EDB.sel):null; if(!w)return;
-  w.name=($('#bldBarName').value.trim()||w.name).slice(0,40);
+  const nn=($('#bldBarName').value.trim()||w.name).slice(0,40);
+  if(nn!==w.name){snapshot();w.name=nn;}
+  else w.name=nn;
   save();bldPaint();render();
 });
 $('#bldBarOpen').addEventListener('click',()=>{
@@ -6368,6 +6449,7 @@ $('#bldBarDel').addEventListener('click',()=>{
   if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
   if(!confirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
     +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\nCtrl+Z מחזיר.'))return;
+  dropBldAnchor();
   snapshot();
   dropRooms(rooms.map(r=>r.num));
   S.wings=S.wings.filter(x=>x.id!==w.id);
@@ -6428,13 +6510,17 @@ $('#bldDel').addEventListener('click',()=>{
 /* ---------------- wing: details, template, layout ---------------- */
 let EDW=null;
 function openWing(id,bldId){
+  dropLayAnchor();
   const w=id?wingBy(id):null;
   const cells=[];
+  /* the drawn size travels into the draft — without it, merely opening the wing
+     flattened every rectangle back to one square and the next save made it permanent */
   if(w)for(const c of w.plan||[]){
     if(c.t==='room'){
       const r=roomBy(c.num);
-      if(r)cells.push({t:'room',num:r.num,beds:r.beds,orig:r.num,x:c.x,y:c.y});
-    }else cells.push({t:c.t,label:c.label||'',x:c.x,y:c.y});
+      if(r)cells.push({t:'room',num:r.num,beds:r.beds,orig:r.num,x:c.x,y:c.y,w:cellW(c),h:cellH(c)});
+    }else cells.push({t:c.t,label:c.label||'',x:c.x,y:c.y,
+                      ...(c.t==='hall'?{}:{w:cellW(c),h:cellH(c)})});
   }
   EDW={id:id||null,building:w?w.building:(bldId||S.buildings[0].id),tpl:null};
   WLAY={root:$('#wgLayEd'),cells,sel:null,numbered:true,tool:cells.length?'move':'hall',
@@ -6568,12 +6654,12 @@ function renderLay(){
         if(LAY.tool===t){o.selected=true;o0.textContent='▾ '+CELL_TYPES[t].he;}
         sel.appendChild(o);
       }
-      sel.addEventListener('change',()=>{if(sel.value){LAY.tool=sel.value;renderLay();}});
+      sel.addEventListener('change',()=>{if(sel.value){dropLayAnchor();LAY.tool=sel.value;renderLay();}});
       tools.appendChild(sel);
       continue;
     }
     const b=el('button','le-tool'+(LAY.tool===k?' on':''),lbl);
-    b.addEventListener('click',()=>{LAY.tool=k;renderLay();});
+    b.addEventListener('click',()=>{dropLayAnchor();LAY.tool=k;renderLay();});
     tools.appendChild(b);
   }
 
@@ -6628,6 +6714,9 @@ function wireLeGrid(grid){
   const IDLE='📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית.';
   const setHint=t=>{const n=hint(); if(n)n.textContent=t;};
   const dropAnchor=()=>{anchor=null;band.hide();setHint(IDLE);};
+  /* reachable from outside: a parked corner must not survive a tool change,
+     a dialog close, or moving to a different wing */
+  grid.__dropAnchor=dropAnchor;
   const cellXY=e=>{
     const r=grid.getBoundingClientRect();
     return {x:clampI(Math.floor((e.clientX-r.left)/LE_CELL),0,PW-1),
@@ -6743,8 +6832,12 @@ function wireLeGrid(grid){
   };
   grid.addEventListener('pointerup',up);
   grid.addEventListener('pointercancel',up);
+  /* only when THIS grid is the one on screen — the template editor and the wing
+     editor share the code but not the moment */
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&anchor&&LAY&&LAY.root&&LAY.root.offsetParent){e.preventDefault();dropAnchor();}
+    if(e.key!=='Escape'||!anchor)return;
+    if(!grid.isConnected||!grid.offsetParent){dropAnchor();return;}
+    e.preventDefault();dropAnchor();
   });
 }
 function nextFreeNum(){
@@ -6973,6 +7066,7 @@ $('#tmClose').addEventListener('click',()=>$('#dlgTplMgr').close());
 $('#tmNew').addEventListener('click',()=>openTplEdit(null,false));
 
 function openTplEdit(src,dup){
+  dropLayAnchor();
   let cells;
   if(src){
     cells=tplPlanOf(src).map(c=>c.t==='room'
@@ -7085,7 +7179,16 @@ $('#wgSave').addEventListener('click',()=>{
      Deleting after the rename let a reused number (erase 103, renumber 102→103)
      match the surviving room too — and silently evict its occupants and rules. */
   dropRooms(gone);
-  for(const [o,n] of Object.entries(ren))moveNote('room',o,n);
+  /* sequential moves clobber each other when two numbers are swapped —
+     lift every note out first, then put them all back under the new keys */
+  if(Object.keys(ren).length){
+    const lifted={};
+    for(const o of Object.keys(ren)){
+      const v=noteOf('room',o);
+      if(v){lifted[ren[o]]=v;delete S.notes[noteKey('room',o)];}
+    }
+    for(const [k,v] of Object.entries(lifted))S.notes[noteKey('room',k)]=v;
+  }
 
   S.rooms=S.rooms.map(r=>r.wing===wid?{...r,num:mapR(r.num)}:r);
   const remap=asg=>{const o={};for(const [b,rm] of Object.entries(asg))o[b]=mapR(rm);return o;};
