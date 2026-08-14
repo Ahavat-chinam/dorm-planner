@@ -668,9 +668,26 @@ label.row.compact small{font-size:11px}
   position:fixed;bottom:28px;right:50%;transform:translateX(50%) translateY(20px);
   background:var(--card2);border:1px solid var(--hover);color:var(--tx);
   padding:12px 24px;border-radius:13px;font-size:14px;font-weight:800;
-  opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 12px 34px var(--sh4);
+  /* above the rail (50), the sticky topbar (55), the assign drawer (65) and the AI
+     button (70). Nothing that is not a modal dialog may cover a message. */
+  opacity:0;pointer-events:none;transition:.25s;z-index:90;box-shadow:0 12px 34px var(--sh4);
 }
 #toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+/* the same message, but painted INSIDE the open dialog. A modal <dialog> lives in
+   the browser's top layer, which is above every z-index there is — a toast on the
+   page behind it is simply invisible, so a dialog that refused to save looked like
+   a dead button. The dialog also has translate/scale, so it is a containing block
+   for fixed children: this one is absolute against the dialog itself. */
+.dlg-toast{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%) translateY(12px);
+  max-width:min(520px,88%);text-align:center;
+  background:var(--card2);border:1px solid var(--hover);color:var(--tx);
+  padding:11px 20px;border-radius:13px;font-size:13.5px;font-weight:800;line-height:1.5;
+  opacity:0;pointer-events:none;transition:.22s;box-shadow:0 14px 36px var(--sh4);
+  white-space:pre-line;
+}
+.dlg-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.dlg-toast.warn{border-color:color-mix(in srgb,var(--amber) 60%,transparent)}
 dialog{
   background:linear-gradient(180deg,var(--sheen),transparent 22%),var(--card);
   color:var(--tx);border:1px solid var(--line2);border-radius:20px;
@@ -2597,7 +2614,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <label class="row"><span class="sw"><input type="checkbox" id="setSuggest"><i></i></span>
           <span><b>הצעות תיקון אוטומטיות</b><small>הצגת מהלכים שמפחיתים הפרות</small></span></label>
         <label class="row"><span class="sw"><input type="checkbox" id="setConfirm"><i></i></span>
-          <span><b>אישור לפני פעולות הרסניות</b><small>ניקוי לוח, מחיקת סימולציה, שיבוץ מחדש</small></span></label>
+          <span><b>אישור לפני פעולות על הלוח</b><small>ניקוי הלוח, שיבוץ מחדש, מחיקת גרסה. מחיקת אגף, חדר, בניין או פרויקט תמיד שואלת.</small></span></label>
         <label class="row"><span class="sw"><input type="checkbox" id="setAiFab"><i></i></span>
           <span><b>כפתור היועץ ✨ על המסך</b><small>אפשר לכבות; היועץ נשאר זמין דרך ההגדרות</small></span></label>
       </div>
@@ -3506,10 +3523,67 @@ function avPaint(name){
 const avColor=name=>avPaint(name).bg;
 /* Windows forbids \ / : * ? " < > | in filenames */
 const safeFile=s=>String(s).replace(/[\/\\:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,90)||'שיבוץ';
+/* The dialog on top of the stack, if any — that is where the user is looking.
+   querySelectorAll returns DOM order, not open order, so a dialog opened on top of
+   another one would be missed. The real order is the order showModal ran in, so we
+   record it once, at the source. */
+const DLG_STACK=[];
+(function trackDialogs(){
+  const P=window.HTMLDialogElement&&HTMLDialogElement.prototype;
+  if(!P||P.__stacked)return;
+  P.__stacked=true;
+  const drop=d=>{const i=DLG_STACK.indexOf(d);if(i>=0)DLG_STACK.splice(i,1);};
+  const open=P.showModal;
+  P.showModal=function(...a){const r=open.apply(this,a);drop(this);DLG_STACK.push(this);return r;};
+  const shut=P.close;
+  P.close=function(...a){drop(this);return shut.apply(this,a);};
+  /* Esc closes without calling .close(), and a dialog can be removed from the DOM */
+  document.addEventListener('close',e=>drop(e.target),true);
+})();
+function topDialog(){
+  for(let i=DLG_STACK.length-1;i>=0;i--){
+    const d=DLG_STACK[i];
+    if(d.open&&d.isConnected)return d;
+    DLG_STACK.splice(i,1);
+  }
+  /* belt and braces: if the patch never ran, fall back to DOM order */
+  const open=[...document.querySelectorAll('dialog[open]')];
+  return open.length?open[open.length-1]:null;
+}
+/* Where a message has to appear to actually be seen. A modal dialog is in the top
+   layer, above every z-index there is. The assign drawer is z-index 65 and covers
+   the bottom of the screen — exactly where the page toast sits. In both cases the
+   message belongs INSIDE the thing the user is looking at, not behind it. */
+function toastHost(){
+  const dlg=topDialog();
+  if(dlg)return dlg;
+  const ab=$('#assignBar');
+  return ab&&!ab.hidden?ab:null;
+}
 function toast(msg){
+  const host=toastHost();
+  /* only one message on screen at a time — otherwise closing an overlay reveals an
+     old message underneath it that has nothing to do with what just happened */
+  document.querySelectorAll('.dlg-toast.show').forEach(b=>{if(b.parentElement!==host)b.classList.remove('show');});
+  if(host){
+    $('#toast').classList.remove('show');
+    let box=host.querySelector(':scope > .dlg-toast');
+    /* createElement, not el() — a toast can fire during start-up, before el exists */
+    if(!box){box=document.createElement('div');box.className='dlg-toast';host.appendChild(box);}
+    box.textContent=msg;
+    /* restart the entrance transition even when the same box is reused */
+    box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
+    clearTimeout(toast._d); toast._d=setTimeout(()=>box.classList.remove('show'),3200);
+    return;
+  }
   const t=$('#toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600);
 }
+/* a message must not outlive the dialog that raised it */
+document.addEventListener('close',e=>{
+  const b=e.target&&e.target.querySelector&&e.target.querySelector(':scope > .dlg-toast');
+  if(b)b.classList.remove('show');
+},true);
 
 /* ---------- alarm (hard-rule violation) ---------- */
 function buzz(){
@@ -6943,9 +7017,11 @@ function renderStructBasic(){
     head.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
     const del=el('button','ed-x','✕'); del.title='מחיקת האגף וכל חדריו';
     del.addEventListener('click',()=>{
-      if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
+      if(S.wings.length<2){toast('לא ניתן למחוק את האגף האחרון — לפרויקט חייב להישאר אגף אחד לפחות.\nאפשר לשנות את שמו, למחוק את חדריו, או להוסיף אגף אחר ואז למחוק את זה.');return;}
       const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
-      if(!askConfirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
+      /* raw confirm, like the pro-mode wing delete — the "אישור לפני פעולות הרסניות"
+         setting covers board actions, not structural deletes. Basic must not be laxer. */
+      if(!confirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
         +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\n♻️ ניתן לשחזר מסל המיחזור.'))return;
       snapshot();trashWing(w);dropRooms(rooms.map(r=>r.num),false);
       S.wings=S.wings.filter(x=>x.id!==w.id);
@@ -6986,7 +7062,7 @@ function renderStructBasic(){
       if(occ)row.appendChild(el('span','bl',`${occ} בפנים`));
       const x=el('button','ed-x','✕'); x.title='מחיקת החדר';
       x.addEventListener('click',()=>{
-        if(occ&&!askConfirm(`בחדר ${r.num} יש ${occ} בחורים — הם יחזרו לממתינים.\nלמחוק?`))return;
+        if(occ&&!confirm(`בחדר ${r.num} יש ${occ} בחורים — הם יחזרו לממתינים.\nלמחוק?`))return;
         snapshot();dropRooms([r.num]);save();render();
         toast('החדר נמחק — ♻️ ניתן לשחזר');
       });
@@ -7401,7 +7477,7 @@ $('#bldBarDel').addEventListener('click',()=>{
   const w=EDB&&EDB.sel?wingBy(EDB.sel):null; if(!w)return;
   const rooms=roomsOf(w.id);
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
-  if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
+  if(S.wings.length<2){toast('לא ניתן למחוק את האגף האחרון — לפרויקט חייב להישאר אגף אחד לפחות.\nאפשר לשנות את שמו, למחוק את חדריו, או להוסיף אגף אחר ואז למחוק את זה.');return;}
   if(!confirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
     +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\nCtrl+Z מחזיר.'))return;
   dropBldAnchor();
@@ -7445,17 +7521,22 @@ $('#bldSave').addEventListener('click',()=>{
 });
 $('#bldDel').addEventListener('click',()=>{
   const b=bldBy(EDB.id); if(!b)return;
-  if(S.buildings.length<2){toast('חייב להישאר לפחות בניין אחד');return;}
+  if(S.buildings.length<2){
+    toast('לא ניתן למחוק את הבניין האחרון — לפרויקט חייב להישאר בניין אחד לפחות.\nאפשר לשנות את שמו, או להוסיף בניין אחר ואז למחוק את זה.');
+    return;
+  }
   const ws=wingsOf(b.id),wid=new Set(ws.map(w=>w.id));
   const rooms=S.rooms.filter(r=>wid.has(r.wing));
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
-  if(!confirm(`למחוק את "${b.name}"?\n\nיימחקו גם ${ws.length} אגפים ו־${rooms.length} חדרים`
+  if(!askConfirm(`למחוק את "${b.name}"?\n\nיימחקו גם ${ws.length} אגפים ו־${rooms.length} חדרים`
     +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
   snapshot();
+  /* exactly once, and BEFORE the wings are unlinked — a second call after the filter
+     would file a second copy that has already lost its wings, and restoring that one
+     would bring the building back empty */
   trashBuilding(b);
   dropRooms(rooms.map(r=>r.num),false);
   S.wings=S.wings.filter(w=>!wid.has(w.id));
-  trashBuilding(b);
   S.buildings=S.buildings.filter(x=>x.id!==b.id);
   if(!S.wings.length)S.wings=[{id:'w'+uid(),name:'אגף ראשי',building:S.buildings[0].id,plan:[]}];
   save();$('#dlgBld').close();
@@ -8209,7 +8290,7 @@ $('#wgSave').addEventListener('click',()=>{
 });
 $('#wgDel').addEventListener('click',()=>{
   const w=wingBy(EDW.id); if(!w)return;
-  if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
+  if(S.wings.length<2){toast('לא ניתן למחוק את האגף האחרון — לפרויקט חייב להישאר אגף אחד לפחות.\nאפשר לשנות את שמו, למחוק את חדריו, או להוסיף אגף אחר ואז למחוק את זה.');return;}
   const rooms=roomsOf(w.id);
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
   if(!confirm(`למחוק את "${w.name}"?\n\nיימחקו ${rooms.length} חדרים`
