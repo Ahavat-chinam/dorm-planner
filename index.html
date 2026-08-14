@@ -1738,6 +1738,49 @@ body.nopulse .pb-room.warn-hard{animation:none}
 #aiPanel{left:calc(var(--railW) + 22px)}
 body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 
+/* ---- basic vs pro: the drafting board simply is not there in basic ---- */
+body.basic #bldFloors,body.basic #bldTools,body.basic #bldCanvas,
+body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:none!important}
+.mode-bar{
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:16px;
+  background:linear-gradient(180deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:15px;padding:11px 14px;
+}
+.mode-seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px;flex:none}
+.mode-seg button{
+  background:none;border:none;color:var(--dim);cursor:pointer;font:inherit;
+  font-size:12.5px;font-weight:800;padding:7px 15px;border-radius:8px;transition:.13s;
+}
+.mode-seg button:hover{color:var(--tx)}
+.mode-seg button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onAcc)}
+.mode-note{font-size:12px;color:var(--dim);font-weight:700;line-height:1.6;flex:1;min-width:180px}
+/* the flat wing list of basic mode */
+.bw{
+  background:linear-gradient(170deg,var(--sheen),transparent 45%),var(--card);
+  border:1px solid var(--line2);border-radius:16px;padding:13px 15px;margin-bottom:11px;
+}
+.bw-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.bw-head .wicon{font-size:16px;flex:none}
+.bw-head input.bwn{
+  flex:1;min-width:130px;background:none;border:none;
+  border-bottom:1.5px dashed color-mix(in srgb,var(--acc) 35%,transparent);
+  color:var(--tx);font:inherit;font-size:15px;font-weight:900;outline:none;padding:3px 4px;
+}
+.bw-head input.bwn:focus{border-bottom-color:var(--acc)}
+.bw-sum{font-size:12px;font-weight:800;color:var(--dim);white-space:nowrap}
+.bw-rooms{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.bw-room{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:4px 6px 4px 9px;
+}
+.bw-room input{
+  width:62px;background:none;border:none;color:var(--tx);font:inherit;
+  font-size:13.5px;font-weight:900;text-align:center;outline:none;border-radius:6px;padding:3px;
+}
+.bw-room input:focus{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.bw-room .bl{font-size:11px;color:var(--muted);font-weight:800}
+.bw-add{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+
 /* =====================================================================
    ==========================  narrow screens  =========================
    ===================================================================== */
@@ -1805,7 +1848,24 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
 
 <div class="vpane" data-v="struct">
   <div id="guideStruct"></div>
-  <section class="panel">
+  <div class="mode-bar" id="modeBar"></div>
+  <section class="panel" id="structBasic" hidden>
+    <h2>🏗️ האגפים <span class="cnt" id="bwCnt"></span></h2>
+    <p class="hint" style="margin-bottom:12px">כל אגף הוא רשימת חדרים. אין כאן שרטוט —
+      רק שם, מספרי חדרים וכמה מיטות בכל אחד.</p>
+    <div id="bwList"></div>
+    <div class="bw-add">
+      <div class="wiz-f" style="flex:1;min-width:150px">
+        <label>שם האגף החדש</label>
+        <input type="text" id="bwName" placeholder="למשל: אגף 400" style="width:100%">
+      </div>
+      <div class="wiz-f"><label>כמה חדרים</label><input type="text" id="bwCount" value="10"></div>
+      <div class="wiz-f"><label>מיטות בחדר</label><input type="text" id="bwBeds" value="4"></div>
+      <div class="wiz-f"><label>מהחדר</label><input type="text" id="bwStart" value="401"></div>
+      <button class="btn accent" id="bwAdd">+ הוספת אגף</button>
+    </div>
+  </section>
+  <section class="panel" id="structPro">
     <h2>🏢 הבניין <span class="cnt" id="structBldName"></span></h2>
     <div class="dlgbtns wrap" id="structBldBar" style="margin:0 0 12px"></div>
     <div class="fl-tabs" id="bldFloors"></div>
@@ -1821,7 +1881,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
       <button class="btn mini danger" id="bldBarDel">🗑️ מחיקת האגף</button>
     </div>
   </section>
-  <section class="panel">
+  <section class="panel" id="structWingsSec">
     <h2>🚪 החדרים בכל אגף</h2>
     <p class="hint" style="margin-bottom:12px">כל אגף צריך פריסה: בוחרים תבנית מוכנה או מציירים חופשי —
       מסדרון, חדרים, מקלחות, שירותים. לחיצה על אגף פותחת את העורך שלו.</p>
@@ -2246,6 +2306,14 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         <input type="text" id="projDesc" placeholder="למשל: הבניין הישן, מחזור ל״ה" style="width:100%">
         <p class="hint" style="margin:10px 0 0">אפשר לנהל כמה פרויקטים במקביל — זמן אחר, מחזור אחר, או סתם ניסיון צדדי — והם לא מתערבבים.</p>
       </div>
+      <div class="ed-sec" id="projModeSec">
+        <h4>🎚️ מצב עבודה</h4>
+        <div class="mode-seg" id="projMode" style="margin-bottom:9px">
+          <button data-m="basic">🙂 פשוט</button>
+          <button data-m="pro">📐 מתקדם</button>
+        </div>
+        <p class="hint" id="projModeNote" style="margin:0"></p>
+      </div>
       <div class="ed-sec" id="projActions" hidden>
         <h4>⚙️ פעולות</h4>
         <div class="dlgbtns wrap">
@@ -2308,10 +2376,12 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
       </div>
 
       <div class="ed-sec">
-        <h4>📐 תבנית <span class="cnt">בוחרים פריסה — והאגף נבנה לבד</span></h4>
-        <p class="hint">רוב הפנימיות בנויות אותו דבר: מסדרון, חדרים לצדדים, ובנקודות מסוימות מקלחות,
-          שירותים, מדרגות או שטח מת. בחרו את התבנית הקרובה ביותר, ואחר כך תזיזו מה שצריך.</p>
-        <div class="tpl-grid" id="wgTpls"></div>
+        <h4 id="wgRoomsH">📐 תבנית <span class="cnt">בוחרים פריסה — והאגף נבנה לבד</span></h4>
+        <div id="wgTplPick">
+          <p class="hint">רוב הפנימיות בנויות אותו דבר: מסדרון, חדרים לצדדים, ובנקודות מסוימות מקלחות,
+            שירותים, מדרגות או שטח מת. בחרו את התבנית הקרובה ביותר, ואחר כך תזיזו מה שצריך.</p>
+          <div class="tpl-grid" id="wgTpls"></div>
+        </div>
         <div class="wiz-row">
           <div class="wiz-f"><label>כמה חדרים</label><input type="text" id="wgCount" value="10"></div>
           <div class="wiz-f"><label>מיטות בחדר</label><input type="text" id="wgBeds" value="4"></div>
@@ -2321,7 +2391,7 @@ body.ab-open #aiFab,body.ab-open #aiPanel{display:none}
         <p class="hint" id="wgTplNote" style="margin:9px 0 0"></p>
       </div>
 
-      <div class="ed-sec">
+      <div class="ed-sec" id="wgLaySec">
         <h4>🧱 הפריסה <span class="cnt">בוחרים כלי ומציירים — לכל כיוון</span></h4>
         <p class="hint">המסדרון יכול להתפתל לכל צורה — גררו אותו כמו מכחול, גם בפניות.
           חדרים ושטחי שירות מניחים סביבו מכל צד: מעל, מתחת, מימין ומשמאל.
@@ -3096,11 +3166,11 @@ function migrate(s){
     return {num,beds:Math.max(1,Math.min(12,+r.beds||2)),wing:r.wing};
   });
   if(!s.assign||typeof s.assign!=='object')s.assign={};
-  /* a hand-edited or older backup may hold numbers where the app keys by string */
   for(const k of Object.keys(s.assign))s.assign[k]=String(s.assign[k]);
-  s.rules.forEach(r=>{if(r&&r.room!=null)r.room=String(r.room);});
   if(!Array.isArray(s.rules))s.rules=[];
   s.rules=s.rules.filter(r=>r&&typeof r==='object');
+  /* an older or hand-edited backup may hold numbers where the app keys by string */
+  s.rules.forEach(r=>{if(r&&r.room!=null)r.room=String(r.room);});
   if(!Array.isArray(s.sims))s.sims=[];
   s.sims=s.sims.filter(x=>x&&x.assign&&typeof x.assign==='object');
   if(typeof s.zman!=='string'||!s.zman.trim())s.zman='הזמן הבא';
@@ -3206,6 +3276,15 @@ function migrate(s){
                     s.rooms.filter(r=>r.wing===w.id));
     delete w.layout;
   });
+  /* two ways to work, one data model. "basic" is a flat list of wings with rooms —
+     no buildings, no floors, no drawing; "pro" is the full drafting board.
+     A project that was never told which one is judged by what it actually contains. */
+  if(s.mode!=='basic'&&s.mode!=='pro'){
+    const drawn=s.buildings.length>1
+      ||s.buildings.some(b=>(b.floors||[]).length>1)
+      ||s.wings.some(w=>(w.plan||[]).some(c=>c.t!=='room'&&c.t!=='hall'));
+    s.mode=drawn?'pro':'basic';
+  }
 
   if(!Array.isArray(s.locks))s.locks=[];
   s.rules.forEach(r=>{
@@ -3350,10 +3429,11 @@ function openProject(id){
   render();
   return true;
 }
-function createProject(name,desc){
+function createProject(name,desc,mode){
   const id='p'+uid();
   PID=id; S=blankProject();
   S.zman=name; S.desc=desc||'';
+  if(mode==='basic'||mode==='pro')S.mode=mode;
   IX.projects.push({id,name,desc:desc||'',created:Date.now(),modified:Date.now(),sum:projSummary()});
   IX.active=id;
   save(); saveIndex();
@@ -3463,7 +3543,8 @@ function alarm(txt){
 /* ---------- undo ---------- */
 const UNDO=[];
 const UNDO_KEYS=['assign','locks','rules','boys','rooms','wings','buildings',
-                 'templates','groups','sims','zman','desc','notes','trash'];
+                 'templates','groups','sims','zman','desc','notes','trash','mode'];
+const isPro=()=>S.mode==='pro';
 function snapshot(){
   const o={};
   for(const k of UNDO_KEYS)o[k]=S[k];
@@ -4291,15 +4372,18 @@ function renderWing(host,ev){
   st.appendChild(el('span','pill'+(t.beds&&t.taken>=t.beds?' good':''),`${t.taken}/${t.beds} מיטות`));
   st.appendChild(el('span','pill',`${t.n} חדרים`));
   barRow.appendChild(st);
-  const modes=el('div','wg-modes');
-  [['plan','🏗️ תוכנית'],['grid','▦ רשת']].forEach(([v,lbl])=>{
-    const b=el('button',S.settings.display.planMode===v?'on':'',lbl);
-    b.addEventListener('click',()=>{
-      S.settings.display.planMode=v;save();render();
+  /* the plan view only means something when there is a drawn plan */
+  if(isPro()){
+    const modes=el('div','wg-modes');
+    [['plan','🏗️ תוכנית'],['grid','▦ רשת']].forEach(([v,lbl])=>{
+      const b=el('button',S.settings.display.planMode===v?'on':'',lbl);
+      b.addEventListener('click',()=>{
+        S.settings.display.planMode=v;save();render();
+      });
+      modes.appendChild(b);
     });
-    modes.appendChild(b);
-  });
-  barRow.appendChild(modes);
+    barRow.appendChild(modes);
+  }
   /* fill this wing straight from a group — "שיעור א׳ נכנס לאגף 3" in one click */
   if(S.groups.length&&rooms.length){
     const sel=document.createElement('select');
@@ -4321,7 +4405,8 @@ function renderWing(host,ev){
     barRow.appendChild(sel);
   }
   barRow.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
-  barRow.appendChild(mini('⚙️ פריסה וחדרים',()=>openWing(w.id)));
+  barRow.appendChild(mini(isPro()?'⚙️ פריסה וחדרים':'⚙️ חדרים',
+    ()=>{if(isPro())openWing(w.id);else setTab('struct');}));
   host.appendChild(barRow);
   const wnl=noteLine('wing',w.id);
   if(wnl){wnl.style.marginTop='-6px';wnl.style.marginBottom='14px';host.appendChild(wnl);}
@@ -4330,14 +4415,16 @@ function renderWing(host,ev){
     const box=el('div','blank');
     box.appendChild(el('div','bi','🚪'));
     box.appendChild(el('b',null,'האגף הזה עדיין בלי חדרים'));
-    box.appendChild(el('p',null,'בחרו תבנית מוכנה וקבעו כמה חדרים וכמה מיטות — הפריסה כולה תיבנה בבת אחת.'));
-    const b=el('button','btn accent','🧱 בניית הפריסה');
-    b.addEventListener('click',()=>openWing(w.id));
+    box.appendChild(el('p',null,isPro()
+      ? 'בחרו תבנית מוכנה וקבעו כמה חדרים וכמה מיטות — הפריסה כולה תיבנה בבת אחת.'
+      : 'הוסיפו לו חדרים במדור המבנה — שם קובעים כמה חדרים וכמה מיטות בכל אחד.'));
+    const b=el('button','btn accent',isPro()?'🧱 בניית הפריסה':'🏗️ למדור המבנה');
+    b.addEventListener('click',()=>{if(isPro())openWing(w.id);else setTab('struct');});
     box.appendChild(b);
     host.appendChild(box);
     return;
   }
-  if(S.settings.display.planMode==='grid')host.appendChild(gridEl(w,ev));
+  if(!isPro()||S.settings.display.planMode==='grid')host.appendChild(gridEl(w,ev));
   else{
     host.appendChild(planEl(w,ev));
     if(RSEL&&roomsOf(w.id).some(r=>r.num===RSEL)){
@@ -4623,7 +4710,15 @@ function renderAssign(ev){
           :mark==='✨'?'שיבוץ לכאן דווקא מתקן הפרה קיימת'
           :`שיבוץ ${name} לחדר ${r.num}`;
         if(!full&&!here)pill.addEventListener('click',e=>{e.stopPropagation();assignBoy(name,r.num);});
-        else pill.addEventListener('click',e=>e.stopPropagation());
+        else{
+          /* a dead click teaches nothing — say why, and where to change it */
+          pill.setAttribute('aria-disabled','true');
+          pill.addEventListener('click',e=>{
+            e.stopPropagation();
+            toast(here?`${name} כבר בחדר ${r.num}`
+                      :`חדר ${r.num} מלא — ${r.beds} מיטות תפוסות. פנו מקום, או הוסיפו מיטה במדור המבנה`);
+          });
+        }
         box.appendChild(pill);
         shown++;
       }
@@ -5011,10 +5106,14 @@ function paintGuides(){
   const gs=$('#guideStruct'); gs.innerHTML='';
   gs.appendChild(hasRooms
     ? guideEl('✓','המבנה מוגדר.',`${S.wings.length} אגפים · ${S.rooms.length} חדרים. אפשר לחזור לכאן ולשנות בכל רגע.`,
-        [next({t:'לשלב הבא: הבחורים',v:'boys'})],true,'struct')
-    : guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
-        'מסמנים מלבן על הרשת לכל אגף — בגרירה, או בלחיצה על שתי פינות. אחר כך לוחצים על האגף ובוחרים לו תבנית חדרים.',
-        [['❔ איך משרטטים',()=>openHelp('struct'),false]],false,'struct'));
+        [next({t:'לשלב הבא: הבחורים',v:'boys'})],true,isPro()?'struct':'structB')
+    : isPro()
+      ? guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
+          'מסמנים מלבן על הרשת לכל אגף — בגרירה, או בלחיצה על שתי פינות. אחר כך לוחצים על האגף ובוחרים לו תבנית חדרים.',
+          [['❔ איך משרטטים',()=>openHelp('struct'),false]],false,'struct')
+      : guideEl('🏗️','שלב 1 — אילו אגפים יש?',
+          'ממלאים שם אגף, כמה חדרים וכמה מיטות בכל חדר — ולוחצים "הוספת אגף". זהו.',
+          [['❔ איך מוסיפים אגף',()=>openHelp('structB'),false]],false,'structB'));
 
   const gb=$('#guideBoys'); gb.innerHTML='';
   gb.appendChild(hasBoys
@@ -5205,10 +5304,15 @@ $('#btnAuto').addEventListener('click',()=>{
   }
   const btn=$('#btnAuto');
   btn.disabled=true;btn.textContent='⏳ מחשב…';
-  /* the search blocks the thread for a second or two. Yielding a frame first lets
-     the browser actually paint the label — otherwise the page just freezes with
-     the button looking untouched, and people click it again. */
-  requestAnimationFrame(()=>setTimeout(()=>{
+  /* the search can block the thread for a moment. Yielding a frame first lets the
+     browser actually paint the label — otherwise the page just freezes with the
+     button looking untouched, and people click it again.
+     rAF alone is not enough: in a background tab it never fires, and the button
+     would sit on "מחשב…" until the user came back. The timer is the safety net,
+     and the flag makes sure the work runs exactly once whichever wins. */
+  let ran=false;
+  const go=()=>{
+    if(ran)return; ran=true;
     let res=null;
     try{ res=optimize(locked); }
     finally{ btn.disabled=false; btn.textContent='🤖 שיבוץ אוטומטי'; }
@@ -5217,7 +5321,9 @@ $('#btnAuto').addEventListener('click',()=>{
     S.assign=res.asg;S.activeSim=null;clearSel();save();render();
     if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
     else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
-  },0));
+  };
+  requestAnimationFrame(()=>setTimeout(go,0));
+  setTimeout(go,120);
 });
 
 /* ---------- sims save ---------- */
@@ -5820,13 +5926,42 @@ const HELP=[
          'הקובץ יכול להכיל רק שמות, או גם עמודות של חדר, מיטות ואגף — ואז הכול נבנה בבת אחת.',
          'לא בטוחים במבנה? <b>📄 הורדת קובץ תבנית</b> נותן לכם דוגמה מוכנה למילוי.']},
     {h:'אין קובץ — בונים מאפס'},
-    {ol:['<b>🧱 בניית אגף מתבנית</b> — בוחרים פריסה מוכנה וקובעים כמה חדרים.',
+    {ol:['מדור <b>1 מבנה</b>: במצב הפשוט ממלאים שם אגף, כמה חדרים וכמה מיטות — וזהו. במצב המתקדם בוחרים תבנית פריסה או משרטטים.',
          'אחר כך מדור <b>2 בחורים</b> להזנת השמות.']},
+    {p:'לא בטוחים באיזה מצב לבחור? ראו <b>שני מצבי עבודה</b> ברשימה שמימין. אפשר להחליף מתי שרוצים.'},
     {h:'ממשיכים עבודה קודמת'},
     {ol:['<b>📂 שחזור מגיבוי</b> טוען קובץ גיבוי שנשמר בעבר.']},
     {tip:'התוכנה בנויה כחמישה שלבים ממוספרים בסרגל העליון: מבנה ← בחורים ← כללים ← שיבוץ ← השוואה. אפשר לדלג ביניהם חופשי, והבאנר בכל מדור אומר מה חסר כדי להמשיך.'}
    ]},
-  {id:'struct',ico:'🏗️',t:'1 · מבנה: בניין ואגפים',lead:'כאן משרטטים את הפנימייה כמו שהיא באמת.',
+  {id:'modes',ico:'🎚️',t:'שני מצבי עבודה',lead:'פשוט או מתקדם — ההבדל הוא רק בשלב המבנה.',
+   body:[
+    {p:'בראש מדור <b>1 מבנה</b> יש מתג. הוא משנה דבר אחד בלבד: איך מגדירים את המקום. כל השאר — בחורים, כללים, שיבוץ, השוואה, קבוצות, הערות, חיפוש, סל מיחזור והדפסה — זהה לחלוטין בשני המצבים.'},
+    {h:'🙂 פשוט'},
+    {ul:['רשימת אגפים שטוחה. לכל אגף שם, חדרים ומספר מיטות.',
+         'ממלאים שורה אחת — שם, כמה חדרים, כמה מיטות — ולוחצים "הוספת אגף".',
+         'אין בניינים, אין קומות, אין שרטוט. האגפים גנריים.',
+         'מתאים לרוב הפנימיות, ולמי שרוצה להתחיל לשבץ עכשיו.']},
+    {h:'📐 מתקדם'},
+    {ul:['בניינים, קומות, ושרטוט האגפים על רשת.',
+         'פריסה פנימית לכל אגף: מסדרון שמתפתל, חדרים בגדלים שונים, מקלחות, שירותים, כניסה ויציאת חירום.',
+         'תבניות קומה לשכפול בין קומות דומות.']},
+    {tip:'המעבר בין המצבים חופשי ולא מוחק כלום. מה ששרטטתם נשמר גם כשעוברים לפשוט, ויחזור כשתחזרו למתקדם.'}
+   ]},
+  {id:'structB',basic:true,ico:'🏗️',t:'1 · מבנה: אגפים וחדרים',lead:'רשימה אחת — אגף, כמה חדרים, כמה מיטות.',
+   body:[
+    {p:'במצב הפשוט אין בניינים, אין קומות ואין שרטוט. יש רשימת <b>אגפים</b>, ובכל אגף <b>חדרים</b>.'},
+    {h:'להוסיף אגף'},
+    {ol:['ממלאים את השורה התחתונה: שם האגף, כמה חדרים, כמה מיטות בחדר, ומאיזה מספר להתחיל.',
+         'לוחצים <b>+ הוספת אגף</b>. כל החדרים נוצרים בבת אחת.',
+         'מספר החדר הראשון של האגף הבא מוצע לבד — אפשר לשנות.']},
+    {h:'לשנות אחרי זה'},
+    {ul:['<b>שם האגף</b> — לוחצים על השם ומקלידים.',
+         '<b>מספר חדר</b> — לוחצים על המספר ומקלידים. מי שיושב בחדר, ההערות והכללים עוברים אתו.',
+         '<b>מיטות</b> — כפתורי − ו־+. הורדת מיטות מחזירה לממתינים את מי שכבר לא נכנס.',
+         '<b>+ חדר</b> מוסיף חדר בודד לאגף; ✕ מוחק חדר או אגף שלם.']},
+    {tip:'מחיקה אף פעם לא סופית — כל אגף וחדר שנמחקו יושבים ב<b>🗑️ סל המיחזור</b> וניתן להחזיר אותם.'}
+   ]},
+  {id:'struct',pro:true,ico:'🏗️',t:'1 · מבנה: בניין ואגפים',lead:'כאן משרטטים את הפנימייה כמו שהיא באמת.',
    body:[
     {p:'בניין מורכב מ<b>קומות</b>, וכל קומה מורכבת מ<b>אגפים</b>. אגף הוא מסדרון עם החדרים שסביבו.'},
     {h:'לשרטט אגף'},
@@ -5842,7 +5977,7 @@ const HELP=[
          '<b>🧽 מחיקה</b> — מלבן שמוחק. מחיקת כל האגף שואלת אישור.']},
     {tip:'קומות: כפתור <b>+ קומה</b> מוסיף קומה. לחיצה כפולה על שם קומה משנה אותו. כל קומה היא שרטוט נפרד.'}
    ]},
-  {id:'plan',ico:'📐',t:'הפריסה בתוך אגף',lead:'מסדרון, חדרים, מקלחות — הכול על רשת אחת.',
+  {id:'plan',pro:true,ico:'📐',t:'הפריסה בתוך אגף',lead:'מסדרון, חדרים, מקלחות — הכול על רשת אחת.',
    body:[
     {p:'לוחצים על אגף ← <b>🚪 בניית החדרים</b>. נפתח עורך הפריסה.'},
     {h:'הסדר שעובד'},
@@ -5854,7 +5989,7 @@ const HELP=[
          'שם משנים מספר חדר, מספר מיטות, כיתוב — וגם <b>רוחב וגובה</b> על השרטוט.']},
     {tip:'הדלת של כל חדר מצוירת אוטומטית בצד שנוגע במסדרון. חדר שלא נוגע במסדרון פשוט לא יקבל דלת — סימן טוב שמשהו בפריסה לא מדויק.'}
    ]},
-  {id:'templates',ico:'⭐',t:'תבניות קומה',lead:'רוב הקומות דומות — מציירים פעם אחת.',
+  {id:'templates',pro:true,ico:'⭐',t:'תבניות קומה',lead:'רוב הקומות דומות — מציירים פעם אחת.',
    body:[
     {p:'בעורך האגף יש גלריית תבניות: קומה קלאסית, שירותים באמצע, חדרים בצד אחד ועוד. בוחרים אחת, קובעים כמה חדרים וכמה מיטות, ולוחצים <b>החלת התבנית</b> — הפריסה כולה נבנית.'},
     {h:'תבנית משלכם'},
@@ -5973,6 +6108,9 @@ const HELP=[
 ];
 let HP={topic:'start',q:''};
 function openHelp(topic){
+  /* "1 · מבנה" is a different chapter in each mode — F1 and the ❔ buttons
+     must land on the one that describes the screen actually on display */
+  if(topic==='struct'&&!isPro())topic='structB';
   HP.topic=topic&&HELP.some(h=>h.id===topic)?topic:HP.topic;
   renderHelp();
   if(!$('#dlgHelp').open)$('#dlgHelp').showModal();
@@ -5992,7 +6130,9 @@ function helpText(h){
 function renderHelp(){
   const nav=$('#hpNav'); nav.innerHTML='';
   const q=HP.q.trim();
-  const list=q?HELP.filter(h=>hits(helpText(h),q)):HELP;
+  /* a topic about drawing is noise in the simple mode, and vice versa */
+  const mine=HELP.filter(h=>!(h.pro&&!isPro())&&!(h.basic&&isPro()));
+  const list=q?mine.filter(h=>hits(helpText(h),q)):mine;
   if(!list.some(h=>h.id===HP.topic)&&list.length)HP.topic=list[0].id;
   for(const h of list){
     const b=el('button',h.id===HP.topic?'on':'');
@@ -6617,12 +6757,28 @@ function fillWingFromGroup(wingId,groupId){
 
 /* ---------------- project dialog ---------------- */
 let EDP=null;
+const MODE_NOTE={
+  basic:'רק אגפים וחדרים — בלי בניינים, בלי קומות ובלי שרטוט. הכי מהיר להתחיל, ומספיק לרוב הפנימיות.',
+  pro:'בניינים, קומות ושרטוט פריסה: מסדרון שמתפתל, חדרים בגדלים שונים, מקלחות ושירותים במקומם.'
+};
+let PROJ_MODE='basic';
+function paintProjMode(){
+  document.querySelectorAll('#projMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===PROJ_MODE));
+  $('#projModeNote').textContent=MODE_NOTE[PROJ_MODE];
+}
+$('#projMode').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  PROJ_MODE=b.dataset.m; paintProjMode();
+});
 function openProjDlg(id){
   EDP=id||null;
   const p=id?projMeta(id):null;
   $('#projTtl').textContent=p?'📁 '+p.name:'📁 פרויקט חדש';
   $('#projName').value=p?p.name:'';
   $('#projDesc').value=p?p.desc:'';
+  /* the mode is chosen once here, and can be flipped later on the structure page */
+  $('#projModeSec').hidden=!!p;
+  PROJ_MODE='basic'; paintProjMode();
   $('#projActions').hidden=!p;
   $('#projDel').hidden=!p;
   $('#dlgProj').showModal();
@@ -6637,9 +6793,11 @@ $('#projSave').addEventListener('click',()=>{
   const nm=$('#projName').value.trim(), ds=$('#projDesc').value.trim().slice(0,240);
   if(!nm){toast('צריך שם לפרויקט');return;}
   if(!EDP){
-    createProject(nm,ds);
+    createProject(nm,ds,PROJ_MODE);
     $('#dlgProj').close();
-    toast('הפרויקט נוצר ✓ — עכשיו נגדיר את הבניין והאגפים');
+    toast(PROJ_MODE==='basic'
+      ? 'הפרויקט נוצר ✓ — עכשיו נוסיף אגפים וחדרים'
+      : 'הפרויקט נוצר ✓ — עכשיו נשרטט את הבניין');
     return;
   }
   const m=projMeta(EDP);
@@ -6725,8 +6883,179 @@ function openBld(id){
    The building canvas, in the page instead of behind a dialog: pick a building,
    draw wings per floor, and the wings-with-rooms status right underneath. */
 let STR={bld:null};
+/* =====================================================================
+   ==================  basic mode: a flat list of wings  ===============
+   =====================================================================
+   Same data underneath — buildings, floors and a corridor plan still exist and
+   are generated quietly — so switching modes never loses anything. */
+function setMode(m){
+  if(S.mode===m)return;
+  snapshot();
+  S.mode=m;
+  /* nothing is moved, flattened or dropped. The simple list shows every wing no
+     matter which building or floor it sits on, so collapsing them onto one floor
+     would buy nothing and would silently destroy the drawing of anyone who merely
+     looked at the simple mode and went back. */
+  save();render();
+  toast(m==='basic'
+    ? 'מצב פשוט — רשימת אגפים בלבד. השרטוט נשמר ויחזור אם תעברו למתקדם.'
+    : 'מצב מתקדם — בניין, קומות ושרטוט פריסה.');
+}
+function renderModeBar(){
+  const bar=$('#modeBar'); bar.innerHTML='';
+  const seg=el('div','mode-seg');
+  [['basic','🙂 פשוט'],['pro','📐 מתקדם']].forEach(([m,lbl])=>{
+    const b=el('button',S.mode===m?'on':'',lbl);
+    b.addEventListener('click',()=>setMode(m));
+    seg.appendChild(b);
+  });
+  bar.append(seg,el('span','mode-note',isPro()
+    ? 'מתקדם: בניינים, קומות ושרטוט פריסה — מסדרון, חדרים בגדלים שונים, מקלחות ושירותים.'
+    : 'פשוט: רק רשימת אגפים וחדרים. בלי בניינים, בלי קומות ובלי שרטוט — הכי מהיר להתחיל.'));
+  bar.appendChild(qmark('modes','ההבדל בין המצבים'));
+}
+function renderStructBasic(){
+  renderModeBar();
+  const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
+  $('#bwCnt').textContent=S.wings.length
+    ? `${S.wings.length} אגפים · ${S.rooms.length} חדרים · ${beds} מיטות` : 'עדיין אין';
+  const box=$('#bwList'); box.innerHTML='';
+  if(!S.wings.length||!S.rooms.length&&S.wings.length===1&&!roomsOf(S.wings[0].id).length){
+    /* a fresh project: one empty default wing is noise, so say what to do instead */
+    if(!S.rooms.length)box.appendChild(el('div','empty-note',
+      'עדיין אין חדרים. מלאו את השורה למטה — שם האגף, כמה חדרים וכמה מיטות — ולחצו "הוספת אגף".'));
+  }
+  for(const w of S.wings){
+    const rooms=roomsOf(w.id);
+    const card=el('div','bw');
+    const head=el('div','bw-head');
+    head.appendChild(el('span','wicon','🏗️'));
+    const nm=el('input','bwn'); nm.type='text'; nm.value=w.name;
+    const was=w.name;
+    nm.addEventListener('blur',()=>{
+      const nn=(nm.value.trim()||was).slice(0,40);
+      if(nn!==was){snapshot();w.name=nn;save();render();}
+    });
+    nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur();}});
+    head.appendChild(nm);
+    head.appendChild(el('span','bw-sum',
+      `${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות`));
+    head.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
+    const del=el('button','ed-x','✕'); del.title='מחיקת האגף וכל חדריו';
+    del.addEventListener('click',()=>{
+      if(S.wings.length<2){toast('חייב להישאר לפחות אגף אחד');return;}
+      const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
+      if(!askConfirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
+        +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\n♻️ ניתן לשחזר מסל המיחזור.'))return;
+      snapshot();trashWing(w);dropRooms(rooms.map(r=>r.num),false);
+      S.wings=S.wings.filter(x=>x.id!==w.id);
+      save();render();toast('האגף נמחק — ♻️ ניתן לשחזר');
+    });
+    head.appendChild(del);
+    card.appendChild(head);
+
+    const rl=el('div','bw-rooms');
+    for(const r of rooms){
+      const row=el('span','bw-room');
+      row.appendChild(el('span','bl','חדר'));
+      const num=el('input'); num.type='text'; num.value=r.num;
+      const oldNum=r.num;
+      num.addEventListener('blur',()=>{
+        const nn=String(num.value).trim();
+        if(!nn||nn===oldNum){num.value=oldNum;return;}
+        if(S.rooms.some(x=>x.num===nn)){toast(`מספר החדר ${nn} כבר קיים`);num.value=oldNum;return;}
+        snapshot();
+        renumberRoom(oldNum,nn);
+        save();render();
+      });
+      num.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();num.blur();}});
+      row.appendChild(num);
+      const st=el('span','stepn');
+      const minus=el('button',null,'−'),val=el('span','val',String(r.beds)),plus=el('button',null,'+');
+      minus.addEventListener('click',()=>{
+        if(r.beds<=1)return;
+        snapshot();r.beds--;trimOverfull();save();render();
+      });
+      plus.addEventListener('click',()=>{
+        if(r.beds>=12)return;
+        snapshot();r.beds++;save();render();
+      });
+      st.append(minus,val,plus);
+      row.append(el('span','bl','מיטות'),st);
+      const occ=occupants(r.num).length;
+      if(occ)row.appendChild(el('span','bl',`${occ} בפנים`));
+      const x=el('button','ed-x','✕'); x.title='מחיקת החדר';
+      x.addEventListener('click',()=>{
+        if(occ&&!askConfirm(`בחדר ${r.num} יש ${occ} בחורים — הם יחזרו לממתינים.\nלמחוק?`))return;
+        snapshot();dropRooms([r.num]);save();render();
+        toast('החדר נמחק — ♻️ ניתן לשחזר');
+      });
+      row.appendChild(x);
+      rl.appendChild(row);
+    }
+    const add=el('button','btn mini','+ חדר');
+    add.addEventListener('click',()=>{
+      snapshot();
+      const num=nextRoomNumFor(w.id);
+      S.rooms.push({num,beds:4,wing:w.id});
+      save();render();
+    });
+    rl.appendChild(add);
+    card.appendChild(rl);
+    const nl=noteLine('wing',w.id); if(nl)card.appendChild(nl);
+    box.appendChild(card);
+  }
+}
+/* a free room number that continues this wing's own numbering */
+function nextRoomNumFor(wid){
+  const mine=roomsOf(wid);
+  let max=0;
+  for(const r of mine){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
+  if(!max)for(const r of S.rooms){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
+  let n=max?max+1:101;
+  while(roomBy(String(n)))n++;
+  return String(n);
+}
+/* renaming a room number has to chase it through everything that points at it */
+function renumberRoom(oldNum,nn){
+  const r=roomBy(oldNum); if(!r)return;
+  r.num=nn;
+  for(const b of Object.keys(S.assign))if(S.assign[b]===oldNum)S.assign[b]=nn;
+  S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(s.assign[b]===oldNum)s.assign[b]=nn;});
+  S.rules.forEach(x=>{if(x.room===oldNum)x.room=nn;});
+  moveNote('room',oldNum,nn);
+  for(const w of S.wings)for(const c of (w.plan||[]))if(c.t==='room'&&c.num===oldNum)c.num=nn;
+}
+$('#bwAdd').addEventListener('click',()=>{
+  const nm=$('#bwName').value.trim();
+  const count=Math.max(1,Math.min(200,parseInt($('#bwCount').value,10)||1));
+  const beds=Math.max(1,Math.min(12,parseInt($('#bwBeds').value,10)||4));
+  if(!nm){toast('צריך שם לאגף');$('#bwName').focus();return;}
+  const nums=roomNums($('#bwStart').value,count);
+  const clash=nums.filter(n=>roomBy(n));
+  if(clash.length){toast(`מספרי החדרים ${clash.slice(0,3).join(', ')} כבר קיימים — שנו את מספר ההתחלה`);return;}
+  snapshot();
+  const b=S.buildings[0];
+  const w={id:'w'+uid(),name:nm.slice(0,40),building:b.id,floor:b.floors[0].id,plan:[],geom:null};
+  S.wings.push(w);
+  nums.forEach(n=>S.rooms.push({num:n,beds,wing:w.id}));
+  $('#bwName').value='';
+  $('#bwStart').value=roomNums(nums[nums.length-1],2)[1];
+  save();render();
+  toast(`"${w.name}" נוסף — ${count} חדרים`);
+});
+['#bwName','#bwCount','#bwBeds','#bwStart'].forEach(s=>$(s).addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();$('#bwAdd').click();}
+}));
+
 function renderStruct(){
   if(!PID)return;
+  document.body.classList.toggle('basic',!isPro());
+  $('#structBasic').hidden=isPro();
+  $('#structPro').hidden=!isPro();
+  $('#structWingsSec').hidden=!isPro();
+  if(!isPro()){renderStructBasic();return;}
+  renderModeBar();
   if(!STR.bld||!bldBy(STR.bld))STR.bld=S.buildings[0].id;
   const b=bldBy(STR.bld);
   /* the canvas machinery (bldPaint/wireCanvas) drives off EDB */
@@ -7169,7 +7498,17 @@ function openWing(id,bldId){
   $('#wgStart').value=suggestStart();
   $('#wgCount').value=String(Math.max(1,layRooms().length||10));
   $('#wgBeds').value=String(layRooms()[0]?layRooms()[0].beds:4);
-  renderTpls(); renderLay(); tplNote();
+  /* in the simple mode there is no drawing at all: no template gallery, no canvas.
+     A wing is a name and a run of rooms, and that is the whole dialog. */
+  const pro=isPro();
+  $('#wgTplPick').hidden=!pro;
+  $('#wgLaySec').hidden=!pro;
+  $('#wgRoomsH').innerHTML=pro
+    ? '📐 תבנית <span class="cnt">בוחרים פריסה — והאגף נבנה לבד</span>'
+    : '🚪 החדרים <span class="cnt">כמה חדרים, כמה מיטות בכל אחד</span>';
+  $('#wgApplyTpl').textContent=pro?'🧱 בניית הפריסה':'🚪 בניית החדרים';
+  if(pro)renderTpls();
+  renderLay(); tplNote();
   $('#dlgWing').showModal();
   if(!w)$('#wgName').focus();
 }
@@ -7209,7 +7548,7 @@ function renderTpls(){
 }
 function tplNote(){
   const n=$('#wgTplNote');
-  if(!EDW.tpl){n.textContent='בחרו תבנית כדי לבנות את הפריסה בבת אחת — או סדרו ידנית למטה.';return;}
+  if(isPro()&&!EDW.tpl){n.textContent='בחרו תבנית כדי לבנות את הפריסה בבת אחת — או סדרו ידנית למטה.';return;}
   const count=Math.max(1,Math.min(200,parseInt($('#wgCount').value,10)||1));
   const nums=roomNums($('#wgStart').value,count);
   const have=new Set(layRooms().map(c=>c.num));
@@ -7223,21 +7562,25 @@ $('#wgBeds').addEventListener('input',()=>{
   if(WLAY)WLAY.defBeds=Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4));
 });
 $('#wgApplyTpl').addEventListener('click',()=>{
-  if(!EDW.tpl){toast('בחרו קודם תבנית');return;}
-  const t=[...WING_TEMPLATES,...S.templates].find(x=>x.id===EDW.tpl);
-  if(!t)return;
+  const pro=isPro();
+  if(pro&&!EDW.tpl){toast('בחרו קודם תבנית');return;}
+  const t=pro?[...WING_TEMPLATES,...S.templates].find(x=>x.id===EDW.tpl):null;
+  if(pro&&!t)return;
   const count=Math.max(1,Math.min(200,parseInt($('#wgCount').value,10)||1));
   const beds=Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4));
   const nums=roomNums($('#wgStart').value,count);
   /* a number that already lives in this wing keeps its identity, so whoever
-     sits there stays put when the template is re-applied */
+     sits there stays put when the layout is rebuilt */
   const prev=new Map();
   for(const c of layRooms())if(c.orig)prev.set(c.num,c.orig);
-  LAY.cells=tplPlan(t,nums,beds).map(c=>c.t==='room'   /* keeps w/h from the template */
-    ?{...c,orig:prev.get(c.num)||null}:c);
+  LAY.cells=(pro?tplPlan(t,nums,beds):plainRooms(nums,beds))
+    .map(c=>c.t==='room'   /* keeps w/h from the template */
+      ?{...c,orig:prev.get(c.num)||null}:c);
   LAY.sel=null;
   renderLay(); tplNote();
-  toast(`הפריסה נבנתה — ${count} חדרים. אפשר עכשיו לעקם, להזיז ולהוסיף בכלי הציור`);
+  toast(pro
+    ? `הפריסה נבנתה — ${count} חדרים. אפשר עכשיו לעקם, להזיז ולהוסיף בכלי הציור`
+    : `${count} חדרים מוכנים. שמירה — והם ברשימה`);
 });
 
 /* ================= the layout editor: a free canvas =================
@@ -7614,6 +7957,15 @@ const packPlan=cells=>cells.map(c=>{
 const tplPlanOf=t=>t.make?sidesToPlan(t.make(roomNums('1',8))):t.plan;
 const tplRoomCount=t=>t.make?0:tplPlanOf(t).filter(c=>c.t==='room').length;
 /* instantiating a template: numbers flow along the plan in reading order */
+/* the simple mode's whole geometry: rooms in reading order, wrapped to the grid.
+   No corridor, no services — the plan exists only so every wing has one shape the
+   rest of the app can draw, print and search. */
+function plainRooms(nums,defBeds){
+  const out=[];
+  nums.forEach((n,i)=>out.push({t:'room',num:n,beds:defBeds,
+    x:i%PW,y:Math.min(PH-1,Math.floor(i/PW)),w:1,h:1}));
+  return out;
+}
 function tplPlan(t,nums,defBeds){
   /* a built-in grows its corridor to the REAL room count — routing it through the
      8-room preview skeleton dumped every room past the eighth in a corridor-less
@@ -8632,9 +8984,13 @@ function aiSystem(){
   return `שמך "${c.name}" ואתה יועץ שיבוץ חדרים בפנימיית ישיבה, משולב בתוך אפליקציית שיבוץ. ענה בעברית, קצר ותכליתי.\n`
     +`רמת ההרשאה שלך: ${LEVEL_SHORT[c.level]}.\n`
     +'תפקידך: לייעץ, להציע שיבוצים ולזהות בעיות בשיבוץ הנוכחי.\n'
-    +'מבנה הנתונים: פרויקט ← בניינים ← קומות ← אגפים ← חדרים ← מיטות. '
-    +'לכל אגף יש פריסת מסדרון עם חדרים ושטחי שירות (מקלחות, שירותים, כניסה, יציאת חירום, שטח מת). '
-    +'את הבניינים, הקומות והפריסה המשתמש משרטט בעצמו בממשק — אתה עובד על הבחורים, החדרים והכללים.\n'
+    +(isPro()
+      ? 'מבנה הנתונים: פרויקט ← בניינים ← קומות ← אגפים ← חדרים ← מיטות. '
+       +'לכל אגף יש פריסת מסדרון עם חדרים ושטחי שירות (מקלחות, שירותים, כניסה, יציאת חירום, שטח מת). '
+       +'את הבניינים, הקומות והפריסה המשתמש משרטט בעצמו בממשק — אתה עובד על הבחורים, החדרים והכללים.\n'
+      : 'הפרויקט פתוח ב<מצב פשוט>: מבנה הנתונים הוא פרויקט ← אגפים ← חדרים ← מיטות, בלי בניינים, בלי קומות ובלי שרטוט. '
+       +'אל תדבר על שרטוט, פריסה, תבניות קומה, מסדרון או שטחי שירות — הם לא קיימים כאן. '
+       +'אם המשתמש רוצה אותם, אמור שאפשר לעבור ל"מצב מתקדם" במתג שבראש מדור 1 מבנה, ושהמעבר לא מוחק כלום.\n')
     +aiProtocol()
     +'\n=== כללי עבודה חשובים ===\n'
     +'1. חדר מלא: אי אפשר להוסיף אליו בחור. יש שתי דרכים — swap (החלפה בין שניים), '
@@ -9577,6 +9933,7 @@ function renderWelcome(){
   const empty=!S.boys.length&&!S.rooms.length;
   const wel=inProj&&SEC==='board'&&empty;
   $('#welcome').hidden=!wel;
+  $('#welWing').textContent=isPro()?'🧱 בניית אגף מתבנית':'🧱 הוספת אגף וחדרים';
   $('#guideBoard').style.display=wel?'none':'';
   $('#view').style.display=wel?'none':'';
   $('#mainTabs').hidden=!inProj;
@@ -9596,7 +9953,12 @@ $('#welImport').addEventListener('click',()=>$('#fileNames').click());
 $('#welTemplate').addEventListener('click',downloadTemplate);
 $('#welRestore').addEventListener('click',()=>$('#fileImport').click());
 $('#welManual').addEventListener('click',()=>{setTab('boys');$('#byNew').focus();});
-$('#welWing').addEventListener('click',()=>openWing(S.wings.length===1&&!S.rooms.length?S.wings[0].id:null));
+$('#welWing').addEventListener('click',()=>{
+  /* the simple mode has no template gallery — its wings are added straight on
+     the structure page, so send people there with the cursor already waiting */
+  if(!isPro()){setTab('struct');const n=$('#bwName');if(n){n.focus();n.scrollIntoView({block:'center'});}return;}
+  openWing(S.wings.length===1&&!S.rooms.length?S.wings[0].id:null);
+});
 
 /* ---------- settings panel ---------- */
 const SET_MAP={sound:'#setSound',flash:'#setFlash',pulse:'#setPulse',
