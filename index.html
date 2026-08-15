@@ -3532,14 +3532,68 @@ const DLG_STACK=[];
   const P=window.HTMLDialogElement&&HTMLDialogElement.prototype;
   if(!P||P.__stacked)return;
   P.__stacked=true;
-  const drop=d=>{const i=DLG_STACK.indexOf(d);if(i>=0)DLG_STACK.splice(i,1);};
   const open=P.showModal;
-  P.showModal=function(...a){const r=open.apply(this,a);drop(this);DLG_STACK.push(this);return r;};
+  P.showModal=function(...a){const r=open.apply(this,a);dlgOpened(this);return r;};
   const shut=P.close;
-  P.close=function(...a){drop(this);return shut.apply(this,a);};
-  /* Esc closes without calling .close(), and a dialog can be removed from the DOM */
-  document.addEventListener('close',e=>drop(e.target),true);
+  P.close=function(...a){const r=shut.apply(this,a);dlgClosed(this);return r;};
+  /* Three nets, because no single one covers every browser and every exit:
+     the patch above catches every ✕ / ביטול (they all call .close()); 'cancel'
+     fires on Esc, which closes natively without going through the method; and
+     'close' is the spec event — which the embedded browser used for testing here
+     does not fire at all, so nothing may depend on it alone. */
+  document.addEventListener('cancel',e=>setTimeout(()=>dlgClosed(e.target),0),true);
+  document.addEventListener('close',e=>dlgClosed(e.target),true);
 })();
+function dlgOpened(d){
+  const i=DLG_STACK.indexOf(d); if(i>=0)DLG_STACK.splice(i,1);
+  DLG_STACK.push(d);
+  if(d)d.__shut=false;
+}
+function dlgClosed(d){
+  if(!d||d.open)return;               /* 'cancel' can be prevented — respect that */
+  const i=DLG_STACK.indexOf(d); if(i>=0)DLG_STACK.splice(i,1);
+  if(d.__shut)return;                 /* the three nets must fire the reset once */
+  d.__shut=true;
+  const box=d.querySelector&&d.querySelector(':scope > .dlg-toast');
+  if(box)box.classList.remove('show');
+  const reset=d.id&&DRAFT_RESET[d.id];
+  if(reset)reset(d);
+}
+/* ---------- what "ביטול" means, in one place ----------
+   Every editor writes its draft into a shared global the moment its dialog OPENS,
+   before the user has committed anything, and until now no exit path put it back.
+   That is why cancelling "+ בניין נוסף" left the whole structure canvas inert: EDB
+   described a building that was never created, and every control on the canvas
+   short-circuits on it. The stack patch above already sees every close, so the
+   discard hangs off it once — and a dialog added later inherits the behaviour just
+   by naming itself here, instead of inheriting the bug. */
+const DRAFT_RESET={
+  /* runs on both paths: after שמירה renderStruct picks up the saved building,
+     after ביטול it rebuilds the one that was on screen all along */
+  dlgBld(d){
+    /* stashed by openBld before it overwrote EDB.floor */
+    const keepFloor=d&&d.__prevFloor;
+    EDB=null;
+    if(SEC!=='struct'||!isPro())return;
+    renderStruct();
+    /* renderStruct always lands on the first floor; put the user back on the one
+       they were actually looking at, which openBld had quietly discarded */
+    const b=EDB&&bldBy(EDB.id);
+    if(b&&keepFloor&&EDB.floor!==keepFloor&&b.floors.some(f=>f.id===keepFloor)){
+      EDB.floor=keepFloor;
+      bldPaint();
+    }
+  },
+  dlgTplEdit(){
+    TLAY=null;
+    LAY=WLAY;
+    if($('#dlgWing').open&&LAY)renderLay();
+  },
+  dlgWing(){
+    if($('#dlgTplEdit').open)return;   /* template editor stacked above stays live */
+    EDW=null;WLAY=null;LAY=TLAY||null;
+  }
+};
 function topDialog(){
   for(let i=DLG_STACK.length-1;i>=0;i--){
     const d=DLG_STACK[i];
@@ -3579,11 +3633,6 @@ function toast(msg){
   const t=$('#toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600);
 }
-/* a message must not outlive the dialog that raised it */
-document.addEventListener('close',e=>{
-  const b=e.target&&e.target.querySelector&&e.target.querySelector(':scope > .dlg-toast');
-  if(b)b.classList.remove('show');
-},true);
 
 /* ---------- alarm (hard-rule violation) ---------- */
 function buzz(){
@@ -6943,6 +6992,9 @@ function nextWingName(bid){
    the drawing itself lives on the structure page */
 function openBld(id){
   const b=id?bldBy(id):null;
+  /* the floor being looked at, remembered before this line discards it — the reset
+     in DRAFT_RESET puts the user back on it instead of dumping them on floor א׳ */
+  $('#dlgBld').__prevFloor=EDB&&EDB.floor;
   EDB={id:id||null,icon:b?b.icon:'🏢',floor:b?b.floors[0].id:(EDB&&EDB.floor),sel:null};
   $('#bldTtl').textContent=b?'🏢 '+b.name:'🏢 בניין חדש';
   $('#bldName').value=b?b.name:'';
@@ -7151,7 +7203,7 @@ function renderStruct(){
   }
   bar.appendChild(mini('✏️ שם וסמל',()=>openBld(b.id)));
   bar.appendChild(mini('+ בניין נוסף',()=>openBld(null)));
-  if(S.buildings.length>1)bar.appendChild(mini('🗑️ מחיקת הבניין',()=>{EDB={id:b.id};$('#bldDel').click();},'danger'));
+  if(S.buildings.length>1)bar.appendChild(mini('🗑️ מחיקת הבניין',()=>deleteBuilding(b.id),'danger'));
 
   bldPaint();
   renderStructWings();
@@ -7519,8 +7571,11 @@ $('#bldSave').addEventListener('click',()=>{
   setTab('struct');
   toast('הבניין נוצר — עכשיו מותחים קו על הרשת לכל אגף');
 });
-$('#bldDel').addEventListener('click',()=>{
-  const b=bldBy(EDB.id); if(!b)return;
+/* takes the building explicitly. The struct-page shortcut used to pass it by
+   overwriting EDB and then clicking this button — so pressing Cancel left the
+   canvas describing a selection, floor and tool that EDB no longer had. */
+function deleteBuilding(id){
+  const b=bldBy(id); if(!b)return;
   if(S.buildings.length<2){
     toast('לא ניתן למחוק את הבניין האחרון — לפרויקט חייב להישאר בניין אחד לפחות.\nאפשר לשנות את שמו, או להוסיף בניין אחר ואז למחוק את זה.');
     return;
@@ -7544,7 +7599,8 @@ $('#bldDel').addEventListener('click',()=>{
   STR.bld=S.buildings[0].id; EDB=null;
   if(SEC==='struct')renderStruct(); else render();
   toast('הבניין נמחק — Ctrl+Z מחזיר');
-});
+}
+$('#bldDel').addEventListener('click',()=>deleteBuilding(EDB&&EDB.id));
 
 /* ---------------- wing: details, template, layout ---------------- */
 let EDW=null;
@@ -8158,15 +8214,6 @@ function openTplEdit(src,dup){
    <dialog> natively without touching our buttons) can never leave LAY pointing
    at a dead template draft and brick the wing editor underneath */
 function closeTplEdit(){$('#dlgTplEdit').close();}
-$('#dlgTplEdit').addEventListener('close',()=>{
-  TLAY=null;
-  LAY=WLAY;
-  if($('#dlgWing').open&&LAY)renderLay();
-});
-$('#dlgWing').addEventListener('close',()=>{
-  if($('#dlgTplEdit').open)return;   /* template editor stacked above stays live */
-  EDW=null;WLAY=null;LAY=TLAY||null;
-});
 $('#teCancel').addEventListener('click',closeTplEdit);
 $('#teX').addEventListener('click',closeTplEdit);
 $('#teSave').addEventListener('click',()=>{
