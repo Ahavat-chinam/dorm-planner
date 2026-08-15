@@ -3990,6 +3990,26 @@ function syncLayouts(){
     }
   }
 }
+/* ---------- repainting while a finger is still down ----------
+   An inline editor that commits on blur and then repaints the list destroys the
+   very button the user is pressing: the press fired the blur, the node is gone
+   before the click completes, and the click lands on nothing. Press again and it
+   works — so it reads as a flaky button, not as a bug. This is the second of the
+   two root causes from the 14.8 audit; it had three separate instances.
+   The fix is to hold the repaint until the press in flight is over. pointerup runs
+   before click, and the flush is a macrotask, so the click always reaches its
+   original target and the repaint lands immediately after. */
+let PRESSING=false,PENDING_PAINT=null;
+document.addEventListener('pointerdown',()=>{PRESSING=true;},true);
+['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>{
+  PRESSING=false;
+  if(PENDING_PAINT){const f=PENDING_PAINT;PENDING_PAINT=null;setTimeout(f,0);}
+},true));
+function renderSoon(fn){
+  const f=fn||render;
+  if(PRESSING){PENDING_PAINT=f;return;}
+  f();
+}
 function render(){
   if(batchDepth){batchDirty=true;return;}
   syncLayouts();
@@ -6574,7 +6594,7 @@ function byRow(name){
     if(S.boys.includes(nn)){toast('השם "'+nn+'" כבר קיים');inp.value=name;return;}
     snapshot();
     renameBoyEverywhere(name,nn);
-    save();initDynamic();render();
+    save();initDynamic();renderSoon();
     toast(`"${name}" ← "${nn}"`);
   });
   inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();inp.blur();}});
@@ -6784,8 +6804,9 @@ function renderGroups(){
     const wasName=g.name;
     nm.addEventListener('blur',()=>{
       const nn=(nm.value.trim()||'קבוצה').slice(0,40);
-      if(nn!==wasName){snapshot();g.name=nn;save();}
-      renderGroups();render();
+      if(nn===wasName)return;          /* nothing changed — do not repaint at all */
+      snapshot();g.name=nn;save();
+      renderSoon(()=>{renderGroups();render();});
     });
     const cnt=el('span','gr-n',`${g.members.length} בחורים`);
     const pick=el('button','btn mini',GSEL===g.id?'סגירת הבחירה':'בחירת בחורים');
@@ -7060,7 +7081,7 @@ function renderStructBasic(){
     const was=w.name;
     nm.addEventListener('blur',()=>{
       const nn=(nm.value.trim()||was).slice(0,40);
-      if(nn!==was){snapshot();w.name=nn;save();render();}
+      if(nn!==was){snapshot();w.name=nn;save();renderSoon();}
     });
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur();}});
     head.appendChild(nm);
@@ -7094,7 +7115,7 @@ function renderStructBasic(){
         if(S.rooms.some(x=>x.num===nn)){toast(`מספר החדר ${nn} כבר קיים`);num.value=oldNum;return;}
         snapshot();
         renumberRoom(oldNum,nn);
-        save();render();
+        save();renderSoon();
       });
       num.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();num.blur();}});
       row.appendChild(num);
@@ -7519,7 +7540,7 @@ $('#bldBarName').addEventListener('blur',()=>{
   const nn=($('#bldBarName').value.trim()||w.name).slice(0,40);
   if(nn!==w.name){snapshot();w.name=nn;}
   else w.name=nn;
-  save();bldPaint();render();
+  save();renderSoon(()=>{bldPaint();render();});
 });
 $('#bldBarOpen').addEventListener('click',()=>{
   if(!EDB||!EDB.sel)return;
