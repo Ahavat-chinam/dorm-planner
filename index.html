@@ -1478,9 +1478,10 @@ body.nopulse .pb-room.warn-hard{animation:none}
      pointercancel, and the stroke dies halfway — "the line does not stretch" */
   user-select:none;-webkit-user-select:none;
   width:calc(var(--cell) * 24);height:calc(var(--cell) * 16);
-  background-image:
-    linear-gradient(to left,var(--line) 1px,transparent 1px),
-    linear-gradient(to bottom,var(--line) 1px,transparent 1px);
+  /* a full 24×16 mesh of lines read as "a confusing net". Faint dots at the snap
+     points give the same guidance with a tenth of the ink — like drafting paper. */
+  background-image:radial-gradient(circle,var(--line2) 1.5px,transparent 1.5px);
+  background-position:calc(var(--cell) / -2) calc(var(--cell) / -2);
   background-size:var(--cell) var(--cell);
   border-radius:10px;touch-action:pan-x pan-y;
 }
@@ -1987,7 +1988,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
     <h2>📥 ייבוא רשימה</h2>
     <div class="drop" id="byDrop">
       <div class="dz-ico">📄</div>
-      <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="byPickFile">בחרו קובץ מהמחשב</span></div>
+      <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="byPickFile">בחרו קובץ מהמכשיר</span></div>
       <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
         קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא גם את המבנה ·
         <span class="lnk" id="byTemplate">הורדת תבנית</span></div>
@@ -2032,7 +2033,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         עמודת האגף אינה חובה. אפשר גם קובץ עם שמות בלבד, ולבנות את החדרים במדור המבנה.
       </div>
       <p class="wel-foot" id="welFoot" hidden>
-        עובדים מהאינטרנט? <span class="lnk" id="welDownload">הורידו את התוכנה למחשב</span> —
+        עובדים מהאינטרנט? <span class="lnk" id="welDownload">הורידו את התוכנה למכשיר</span> —
         היא תעבוד בדיוק אותו דבר גם בלי חיבור.
       </p>
     </div>
@@ -2271,13 +2272,13 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
       </div>
       <div class="ed-sec">
         <h4>📦 מה זה</h4>
-        <p class="hint">קובץ HTML אחד עצמאי, בלי התקנה ובלי שרת. אפשר להוריד אותו למחשב
+        <p class="hint">קובץ HTML אחד עצמאי, בלי התקנה ובלי שרת. אפשר להוריד אותו לכל מכשיר
           ולהפעיל בלחיצה כפולה — הוא עובד בדיוק אותו דבר גם בלי חיבור לאינטרנט.</p>
       </div>
       <div class="ed-sec">
         <h4>🔒 פרטיות</h4>
         <p class="hint">כל הנתונים — הבחורים, החדרים, הכללים והשיבוץ — נשמרים
-          <b>מקומית בדפדפן במחשב הזה בלבד</b>. שום דבר לא נשלח לשום שרת.<br>
+          <b>מקומית בדפדפן במכשיר הזה בלבד</b>. שום דבר לא נשלח לשום שרת.<br>
           היוצא היחיד מן הכלל הוא יועץ ה־AI, אם הפעלתם אותו: ההודעות ותמונת מצב הלוח נשלחות
           ל־Google Gemini. מפתח ה־API נשמר רק בדפדפן ואינו נכלל בקובצי הגיבוי.</p>
       </div>
@@ -2294,7 +2295,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור הזה:</p>
         <div class="linkbox" id="autLinkBox"></div>
         <div class="dlgbtns wrap">
-          <button class="btn accent" id="autDownload">⬇️ הורדת התוכנה למחשב</button>
+          <button class="btn accent" id="autDownload">⬇️ הורדת התוכנה — עובדת גם בלי אינטרנט</button>
           <button class="btn" id="autCopyLink">🔗 העתקת הקישור</button>
         </div>
       </div>
@@ -2761,7 +2762,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
             </ol>
           </div>
         </details>
-        <p class="hint" style="margin-top:9px">המפתח נשמר רק בדפדפן במחשב הזה ואינו נכלל בקובצי הגיבוי.</p>
+        <p class="hint" style="margin-top:9px">המפתח נשמר רק בדפדפן במכשיר הזה ואינו נכלל בקובצי הגיבוי.</p>
       </div>
       <div class="ed-sec">
         <h4>📊 מצב</h4>
@@ -2789,7 +2790,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <p class="hint">הגרסה העדכנית תמיד נמצאת בקישור אחד. אפשר להוריד את הקובץ ולהפעיל
           אותו מקומית — הוא עובד בדיוק אותו דבר גם בלי אינטרנט.</p>
         <div class="dlgbtns wrap">
-          <button class="btn accent" id="btnDownloadApp">⬇️ הורדת התוכנה למחשב</button>
+          <button class="btn accent" id="btnDownloadApp">⬇️ הורדת התוכנה — עובדת גם בלי אינטרנט</button>
           <button class="btn" id="btnCopyLink">🔗 העתקת הקישור</button>
           <button class="btn" id="btnXlsx" hidden>📊 אקסל</button>
         </div>
@@ -2834,7 +2835,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <summary>📥 ייבוא שמות — מקובץ או בהדבקה</summary>
         <div class="drop" id="edDrop">
           <div class="dz-ico">📄</div>
-          <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="edPickFile">בחרו קובץ מהמחשב</span></div>
+          <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="edPickFile">בחרו קובץ מהמכשיר</span></div>
           <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
             קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא הכול בבת אחת ·
             <span class="lnk" id="edTemplate">הורדת תבנית</span></div>
@@ -3484,7 +3485,7 @@ function markSaved(ok){
   n.textContent=ok
     ? `נשמר ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`
     : '⛔ לא נשמר — גבו לקובץ';
-  n.title=ok?'כל השינויים נכתבו לדפדפן במחשב הזה':'הכתיבה לדפדפן נכשלה. השינויים קיימים בזיכרון בלבד ויאבדו ברענון.';
+  n.title=ok?'כל השינויים נכתבו לדפדפן במכשיר הזה':'הכתיבה לדפדפן נכשלה. השינויים קיימים בזיכרון בלבד ויאבדו ברענון.';
 }
 
 /* while a batch is open, save() and render() only mark the work as pending —
@@ -3814,7 +3815,7 @@ function alarm(txt){
     clearTimeout(alarm._t); alarm._t=setTimeout(()=>al.classList.remove('on'),1750);
   }
   if(st.sound)buzz();
-  if(!st.flash&&!st.sound)toast('⛔ אסור! '+txt);
+  if(!st.flash&&!st.sound)toast('⛔ '+txt);
 }
 
 /* ---------- undo ---------- */
@@ -4336,7 +4337,7 @@ function renderProjects(host){
   const h1=el('h1'); h1.appendChild(el('span','grad','הפרויקטים שלי'));
   L.appendChild(h1);
   L.appendChild(el('div','empty-note',
-    'כל פרויקט הוא שיבוץ נפרד — זמן, מחזור או בניין. הכול נשמר במחשב הזה בלבד.'));
+    'כל פרויקט הוא שיבוץ נפרד — זמן, מחזור או בניין. הכול נשמר במכשיר הזה בלבד.'));
   hero.appendChild(L);
   host.appendChild(hero);
 
@@ -4493,7 +4494,7 @@ function heroEl(ev){
   h1.appendChild(zmanEl);
   L.appendChild(h1);
   const heroNote=el('div','empty-note');
-  heroNote.append(document.createTextNode('לחיצה על שם הזמן משנה אותו · הכול נשמר מקומית במחשב הזה '));
+  heroNote.append(document.createTextNode('לחיצה על שם הזמן משנה אותו · הכול נשמר מקומית במכשיר הזה '));
   heroNote.appendChild(noteBtn('project','','הערה על הפרויקט'));
   L.appendChild(heroNote);
   const pnl=noteLine('project','');
@@ -4650,7 +4651,8 @@ function miniPlan(w,ev){
   box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
   const map=new Map();
   for(const c of w.plan)for(const p of cellSquares(c))map.set(pk(p.x,p.y),c);
-  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
+  /* mirrored like the big plan: the run starts at the right, as on the paper */
+  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x1;x>=bb.x0;x--){
     const c=map.get(pk(x,y));
     let cls='mini2-c';
     if(!c)cls+=' void';
@@ -4741,6 +4743,7 @@ function renderWing(host,ev){
     barRow.appendChild(sel);
   }
   barRow.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
+  if(isPro())barRow.appendChild(mini('🖨️ דף הקומה',()=>printFloorSheet(w.building,w.floor)));
   barRow.appendChild(mini(isPro()?'⚙️ פריסה וחדרים':'⚙️ חדרים',
     ()=>{if(isPro())openWing(w.id);else setTab('struct');}));
   host.appendChild(barRow);
@@ -4782,8 +4785,11 @@ function planEl(w,ev){
   inn.style.height=((bb.y1-bb.y0+1)*C)+'px';
   const at=new Map();
   for(const c of w.plan)for(const p of cellSquares(c))at.set(pk(p.x,p.y),c);
+  /* the sheet is Hebrew: the first room hangs at the RIGHT end of the corridor,
+     exactly like the paper on the wall — so x is mirrored for display */
+  const mx=c=>(bb.x1-(c.x+cellW(c)-1))*C;
   const place=(node,c)=>{
-    node.style.left=((c.x-bb.x0)*C)+'px';
+    node.style.left=mx(c)+'px';
     node.style.top=((c.y-bb.y0)*C)+'px';
     /* a room drawn 3×2 stays 3×2 on the board — the plan is what you see */
     if(cellW(c)>1)node.style.width=(cellW(c)*C-6)+'px';
@@ -4791,7 +4797,7 @@ function planEl(w,ev){
     inn.appendChild(node);
   };
   /* the corridor is one drafted floor — walls traced around the whole run */
-  const halls=w.plan.filter(c=>c.t==='hall').map(c=>({x:c.x-bb.x0,y:c.y-bb.y0}));
+  const halls=w.plan.filter(c=>c.t==='hall').map(c=>({x:bb.x1-c.x,y:c.y-bb.y0}));
   if(halls.length){
     const hf=el('div','hallfloor');
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -5741,7 +5747,7 @@ $('#btnExport').addEventListener('click',()=>{
   const d=new Date(),pad=n=>String(n).padStart(2,'0');
   a.download=`גיבוי-שיבוץ-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
   a.click();URL.revokeObjectURL(a.href);
-  toast('קובץ גיבוי ירד למחשב');
+  toast('קובץ גיבוי ירד 💾');
 });
 $('#btnImport').addEventListener('click',()=>$('#fileImport').click());
 $('#fileImport').addEventListener('change',e=>{
@@ -6509,7 +6515,7 @@ const HELP=[
          '<b>💾 גיבוי</b> — קובץ JSON עם הכול, לשחזור מלא.',
          '<b>🖨️ הדפסה</b> — דף נקי לתלייה על לוח המודעות.']},
     {p:'באותו מסך מוצג גם כמה מקום אחסון תפוס בדפדפן — כשמתקרבים למגבלה כדאי לגבות ולמחוק פרויקטים ישנים.'},
-    {warn:'הנתונים נשמרים בדפדפן במחשב הזה בלבד. ניקוי נתוני הדפדפן ימחק אותם. שמרו גיבוי לקובץ מדי פעם.'}
+    {warn:'הנתונים נשמרים בדפדפן במכשיר הזה בלבד. ניקוי נתוני הדפדפן ימחק אותם. שמרו גיבוי לקובץ מדי פעם.'}
    ]},
   {id:'projects',ico:'📁',t:'פרויקטים',lead:'כמה שיבוצים במקביל, בלי להתערבב.',
    body:[
@@ -6680,6 +6686,57 @@ function printDoc(title,inner){
   setTimeout(()=>{try{w.focus();w.print();}catch(e){}},250);
 }
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* ---------- the floor sheet — the page that actually hangs on the wall ----------
+   Every wing of the floor in order, each as a strip: room boxes with the occupant
+   names stacked inside, services shaded between them, the corridor as a bar. */
+function printFloorSheet(bid,fid){
+  const b=bldBy(bid),fl=b&&b.floors.find(f=>f.id===fid);
+  const ws=floorWingsOrdered(bid,fid).filter(w=>roomsOf(w.id).length);
+  if(!ws.length){toast('אין עדיין חדרים בקומה הזו — אין מה להדפיס');return;}
+  const roomBox=c=>{
+    const r=roomBy(c.num); if(!r)return '';
+    const occ=occupants(r.num);
+    return '<div class="fs-c fs-room" style="flex:'+stripW(c)+'">'
+      +'<div class="fs-num">'+esc(r.num)+'</div>'
+      +(occ.length?occ.map(n=>'<div class="fs-nm">'+esc(n)+'</div>').join('')
+                  :'<div class="fs-nm fs-dim">— ריק —</div>')
+      +'</div>';
+  };
+  const svcBox=c=>{
+    const T=CELL_TYPES[c.t]||{he:c.t};
+    return '<div class="fs-c fs-svc" style="flex:'+stripW(c)+'">'+esc(c.label||T.he)+'</div>';
+  };
+  let h='<style>'
+    +'.fs-strip{margin:6px 0 18px}'
+    +'.fs-row{display:flex;direction:rtl;gap:0;align-items:stretch}'
+    +'.fs-c{border:1.5px solid #333;padding:4px 6px;min-width:52px;text-align:center;margin-inline-end:-1.5px}'
+    +'.fs-num{font-weight:800;font-size:13px;border-bottom:1px solid #999;margin-bottom:3px}'
+    +'.fs-nm{font-size:11px;line-height:1.55}'
+    +'.fs-dim{color:#999}'
+    +'.fs-svc{background:#eee;display:flex;align-items:center;justify-content:center;font-size:11px;color:#444}'
+    +'.fs-hall{border:1.5px solid #333;border-block:none;background:repeating-linear-gradient(45deg,#fff,#fff 7px,#f0f0f0 7px,#f0f0f0 14px);'
+    +'text-align:center;font-size:10px;letter-spacing:6px;color:#666;padding:3px}'
+    +'</style>'
+    +'<h1>'+esc(fl?fl.name:'קומה')+(S.buildings.length>1&&b?' · '+esc(b.name):'')+'</h1>'
+    +'<p class="sub">'+esc(S.zman||'')+' · הופק '+new Date().toLocaleDateString('he-IL')+'</p>';
+  for(const w of ws){
+    h+='<h2>'+esc(w.name)+'</h2>';
+    const s=cellsToStrip((w.plan||[]).map(c=>({...c})));
+    if(s&&(s.a.length||s.b.length)){
+      const row=arr=>'<div class="fs-row">'+arr.map(c=>c.t==='room'?roomBox(c):svcBox(c)).join('')+'</div>';
+      h+='<div class="fs-strip">'+(s.a.length?row(s.a):'')
+        +'<div class="fs-hall">מ ס ד ר ו ן</div>'
+        +(s.b.length?row(s.b):'')+'</div>';
+    }else{
+      /* a free-drawn wing falls back to its table — better honest than mangled */
+      h+='<table><tr><th style="width:70px">חדר</th><th>הבחורים</th></tr>'
+        +roomsOf(w.id).map(r=>'<tr><td><b>'+esc(r.num)+'</b></td><td>'
+          +(occupants(r.num).map(esc).join(' · ')||'<span style="color:#999">ריק</span>')+'</td></tr>').join('')
+        +'</table>';
+    }
+  }
+  printDoc('דף קומה — '+(fl?fl.name:''),h);
+}
 function printHelp(){
   let h='<h1>שיבוץ חדרים לפנימייה — מדריך ההפעלה</h1>'
        +'<p class="sub">גרסה '+esc(APP_VERSION)+' · '+esc(APP_HOME)+'</p>';
@@ -7332,7 +7389,7 @@ $('#projBackup').addEventListener('click',()=>{
   a.href=URL.createObjectURL(blob);
   a.download=safeFile('גיבוי-'+(projMeta(EDP)||{name:'פרויקט'}).name)+'.json';
   a.click();URL.revokeObjectURL(a.href);
-  toast('קובץ הגיבוי ירד למחשב 💾');
+  toast('קובץ הגיבוי ירד 💾');
 });
 $('#projDel').addEventListener('click',()=>{
   const p=projMeta(EDP); if(!p)return;
@@ -8826,7 +8883,8 @@ function tplPreview(t){
   box.style.gridTemplateColumns=`repeat(${cols},var(--mc))`;
   const map=new Map();
   for(const c of plan)for(const p of cellSquares(c))map.set(pk(p.x,p.y),c);
-  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x0;x<=bb.x1;x++){
+  /* mirrored like the big plan: the run starts at the right, as on the paper */
+  for(let y=bb.y0;y<=bb.y1;y++)for(let x=bb.x1;x>=bb.x0;x--){
     const c=map.get(pk(x,y));
     box.appendChild(el('span','mini2-c'+(
       !c?' void':c.t==='hall'?' hall':c.t==='room'?' r1':' svc')));
@@ -9308,7 +9366,7 @@ $('#btnXlsx').addEventListener('click',()=>{
     a.href=URL.createObjectURL(blob);
     a.download=safeFile(`שיבוץ-חדרים-${S.zman}`)+'.xlsx';
     a.click();URL.revokeObjectURL(a.href);
-    toast('קובץ אקסל ירד למחשב 📊');
+    toast('קובץ אקסל ירד 📊');
   }catch(e){toast('שגיאה בייצוא אקסל');}
 });
 
@@ -10615,7 +10673,7 @@ $('#setAiTest').addEventListener('click',async()=>{
   btn.disabled=false; btn.textContent='🔌 בדיקת חיבור';
 });
 $('#setAiKeyDel').addEventListener('click',()=>{
-  if(!askConfirm('למחוק את מפתח ה־API מהמחשב?'))return;
+  if(!askConfirm('למחוק את מפתח ה־API מהמכשיר הזה?'))return;
   localStorage.removeItem(GKEY);localStorage.removeItem(GLIST);
   $('#setAiKey').value='';fillModelSelect();applyAiIdentity();renderSetStats();
   toast('המפתח נמחק');
@@ -10768,7 +10826,7 @@ $('#btnDownloadApp').addEventListener('click',async()=>{
       toast('נפתח בלשונית חדשה — שמרו עם Ctrl+S');
     }
   }
-  btn.disabled=false;btn.textContent='⬇️ הורדת התוכנה למחשב';
+  btn.disabled=false;btn.textContent='⬇️ הורדת התוכנה — עובדת גם בלי אינטרנט';
 });
 $('#btnCopyLink').addEventListener('click',async()=>{
   try{ await navigator.clipboard.writeText(APP_HOME); toast('הקישור הועתק ✓'); }
