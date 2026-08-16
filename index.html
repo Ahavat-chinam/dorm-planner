@@ -1946,6 +1946,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
     <h2>🏢 הבניין <span class="cnt" id="structBldName"></span></h2>
     <div class="dlgbtns wrap" id="structBldBar" style="margin:0 0 12px"></div>
     <div class="fl-tabs" id="bldFloors"></div>
+    <div id="floorSeq"></div>
     <div class="le-tools" id="bldTools" style="margin-bottom:9px"></div>
     <div class="canvas" id="bldCanvas"><div class="canvas-in" id="bldGrid"></div></div>
     <div class="canvas-hint" id="structHint">📐 גוררים מלבן — או לוחצים על פינה אחת ואז על הפינה הנגדית. אגף מפותל: מלבן נוסף מתוך אגף שנבחר מתחבר אליו.</div>
@@ -2180,7 +2181,10 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <div class="dlgbtns wrap">
           <button class="btn accent" id="dtBackup">💾 שמירת גיבוי לקובץ</button>
           <button class="btn" id="dtRestore">📂 שחזור מגיבוי</button>
+          <button class="btn danger-btn" id="dtReset">🧨 ניקוי כל הנתונים</button>
         </div>
+        <p class="hint" style="margin:8px 0 0">ניקוי מוחק את כל תוכן הפרויקט הפתוח — מבנה, בחורים, כללים ושיבוץ.
+          פרויקטים אחרים לא נפגעים. שואל פעמיים לפני.</p>
       </div>
       <div class="ed-sec">
         <h4>📊 מה יש בפרויקט</h4>
@@ -5470,7 +5474,7 @@ function paintGuides(){
         [next({t:'לשלב הבא: הבחורים',v:'boys'})],true,isPro()?'struct':'structB')
     : isPro()
       ? guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
-          'מסמנים מלבן על הרשת לכל אגף — בגרירה, או בלחיצה על שתי פינות. אחר כך לוחצים על האגף ובוחרים לו תבנית חדרים.',
+          'בכל קומה מוסיפים אגפים לרצף — הם ממשיכים זה את זה לאורך המסדרון, וכל אגף נערך כרצועה כמו הדף המודפס. לבניין שבנוי אחרת יש שרטוט חופשי.',
           [['❔ איך משרטטים',()=>openHelp('struct'),false]],false,'struct')
       : guideEl('🏗️','שלב 1 — אילו אגפים יש?',
           'ממלאים שם אגף, כמה חדרים וכמה מיטות בכל חדר — ולוחצים "הוספת אגף". זהו.',
@@ -7381,7 +7385,70 @@ function openBld(id){
 /* ================= the structure page =================
    The building canvas, in the page instead of behind a dialog: pick a building,
    draw wings per floor, and the wings-with-rooms status right underneath. */
-let STR={bld:null};
+let STR={bld:null,canvas:false};
+/* ---------- the floor as a SEQUENCE of wings ----------
+   The rewrite Benyamin asked for: a floor is wings continuing one another down
+   the corridor — like his hand-drawn sheets — not free rectangles on a grid.
+   The sequence is the primary editor; reordering it lays the wings' shapes out
+   on the canvas automatically, end to end, wrapping when the corridor turns.
+   The free canvas stays one click away for buildings that really are irregular. */
+function floorWingsOrdered(bid,fid){
+  const ws=S.wings.filter(w=>w.building===bid&&w.floor===fid);
+  const key=w=>w.geom&&w.geom.cells&&w.geom.cells.length
+    ? Math.min(...w.geom.cells.map(c=>c.y))*100+Math.min(...w.geom.cells.map(c=>c.x)) : 9999;
+  return ws.sort((p,q)=>key(p)-key(q)||p.name.localeCompare(q.name,'he'));
+}
+function layoutFloorSequence(bid,fid,ids){
+  let x=0,y=2;
+  for(const id of ids){
+    const w=wingBy(id); if(!w)continue;
+    /* the drawn length mirrors the wing's real corridor length */
+    const halls=(w.plan||[]).filter(c=>c.t==='hall').length;
+    const len=Math.max(2,Math.min(9,Math.ceil(halls/2)||3));
+    if(x+len>GW){x=0;y=Math.min(GH-2,y+3);}      /* the corridor turns */
+    const cells=[];for(let i=0;i<len;i++)cells.push({x:x+i,y});
+    w.geom={cells};
+    x+=len;
+  }
+}
+function renderFloorSeq(b){
+  const host=$('#floorSeq'); if(!host)return; host.innerHTML='';
+  const ws=floorWingsOrdered(b.id,EDB.floor);
+  const box=el('div','strip-row'); box.style.marginBottom='10px';
+  if(!ws.length)box.appendChild(el('span','bl','עדיין אין אגפים בקומה הזו — מוסיפים בכפתור שמימין'));
+  ws.forEach((w,i)=>{
+    if(i){const ar=el('span','bl','←');ar.style.alignSelf='center';box.appendChild(ar);}
+    const d=el('div','sc');
+    d.append(el('b',null,w.name),el('small',null,cnt(roomsOf(w.id).length,'חדרים')));
+    d.title='לחיצה — פתיחת האגף · גרירה — שינוי הסדר לאורך הקומה';
+    d.addEventListener('click',()=>openWing(w.id));
+    d.draggable=true;
+    d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',w.id));
+    d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('dragover');});
+    d.addEventListener('dragleave',()=>d.classList.remove('dragover'));
+    d.addEventListener('drop',e=>{
+      e.preventDefault();
+      const src=e.dataTransfer.getData('text/plain');
+      if(!src||src===w.id||!wingBy(src))return;
+      const order=floorWingsOrdered(b.id,EDB.floor).map(x2=>x2.id).filter(x2=>x2!==src);
+      order.splice(order.indexOf(w.id),0,src);
+      snapshot();
+      layoutFloorSequence(b.id,EDB.floor,order);
+      save();bldPaint();render();
+      toast('סדר האגפים בקומה עודכן — Ctrl+Z מחזיר');
+    });
+    box.appendChild(d);
+  });
+  const add=el('button','btn mini accent','+ אגף בהמשך הקומה');
+  add.addEventListener('click',()=>openWing(null,b.id));
+  box.appendChild(add);
+  host.appendChild(box);
+  const tg=el('button','btn mini',
+    STR.canvas?'🖌️ סגירת השרטוט החופשי':'🖌️ שרטוט חופשי של הקומה — לבניין שבנוי אחרת');
+  tg.style.marginBottom='10px';
+  tg.addEventListener('click',()=>{dropBldAnchor();STR.canvas=!STR.canvas;bldPaint();});
+  host.appendChild(tg);
+}
 /* =====================================================================
    ==================  basic mode: a flat list of wings  ===============
    =====================================================================
@@ -7643,6 +7710,13 @@ function renderStructWings(){
 function bldPaint(){
   const b=bldBy(EDB.id); if(!b)return;
   if(!b.floors.some(f=>f.id===EDB.floor))EDB.floor=b.floors[0].id;
+  /* the sequence is the floor's primary face; the paint canvas shows on demand */
+  renderFloorSeq(b);
+  const cv=!!STR.canvas;
+  $('#bldTools').style.display=cv?'':'none';
+  $('#bldCanvas').style.display=cv?'':'none';
+  $('#structHint').style.display=cv?'':'none';
+  if(!cv)$('#bldBarEd').hidden=true;
   /* ---- floor tabs ---- */
   const ft=$('#bldFloors'); ft.innerHTML='';
   b.floors.forEach(f=>{
@@ -7706,7 +7780,11 @@ function bldPaint(){
 
   /* ---- the grid ---- */
   const grid=$('#bldGrid'); grid.innerHTML='';
-  for(const w of floorWings(b.id,EDB.floor))grid.appendChild(barEl(w,true));
+  /* a wing born outside the canvas (the sequence, the AI, an import) may not have
+     a spot on the drawing yet — syncLayouts adopts it on the next render, and until
+     then it must not crash the painter */
+  for(const w of floorWings(b.id,EDB.floor))
+    if(w.geom&&w.geom.cells&&w.geom.cells.length)grid.appendChild(barEl(w,true));
 
   /* ---- the selected wing ---- */
   const sel=EDB.sel?wingBy(EDB.sel):null;
@@ -10933,6 +11011,9 @@ $('#rstSims').addEventListener('click',()=>{
   S.sims=[];S.activeSim=null;save();render();renderSetStats();
   toast('הסימולציות נמחקו — Ctrl+Z מחזיר');
 });
+/* the same full reset, reachable from the Data center — the place people actually
+   look for "clear everything", instead of the bottom of the settings dialog */
+$('#dtReset').addEventListener('click',()=>$('#rstAll').click());
 $('#rstAll').addEventListener('click',()=>{
   if(!confirm(`איפוס הפרויקט "${S.zman}"!\n\nיימחקו: רשימת הבחורים, הבניינים, האגפים והחדרים, השיבוץ, הנעילות, הכללים, הקבוצות והסימולציות של הפרויקט הזה — וגם מפתח היועץ.\nפרויקטים אחרים לא ייפגעו.\n\nלהמשיך?`))return;
   if(!confirm('אישור אחרון — הפעולה אינה הפיכה.\nאם לא שמרתם גיבוי, בטלו עכשיו ושמרו קודם.\n\nלאפס?'))return;
