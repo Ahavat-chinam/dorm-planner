@@ -162,11 +162,15 @@ h1 .zman{
 .btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.7)}
 .btn:disabled:hover{transform:none;box-shadow:none;border-color:var(--line)}
 .btn.danger:hover{border-color:var(--red);color:var(--red2)}
-select,input[type=text]{
+/* textarea was missing here, so the paste boxes rendered as bare white native
+   controls in the middle of the dark UI — tiny black text on white, no radius,
+   wrong font. One selector heals all of them. */
+select,input[type=text],textarea{
   background:var(--card2);border:1px solid var(--line);color:var(--tx);
   padding:9px 11px;border-radius:11px;font:inherit;font-size:13.5px;font-weight:600;outline:none;
 }
-select:focus,input[type=text]:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+textarea{resize:vertical;min-height:74px;line-height:1.6}
+select:focus,input[type=text]:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
 
 /* ================= sections ================= */
 section{margin-bottom:24px}
@@ -774,6 +778,16 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
 }
 .step button:hover{background:var(--line2)}
 .step .val{min-width:34px;text-align:center;font-weight:900;font-size:13.5px}
+/* the inline stepper used in the basic room list and the cell editor. It had no
+   styling at all, so it rendered as three unstyled native buttons crushed into
+   "+4−" — tiny targets a mouse could barely hit and the eye could barely parse. */
+.stepn{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card2);vertical-align:middle}
+.stepn button{
+  background:none;border:none;color:var(--tx);width:24px;height:24px;cursor:pointer;
+  font-weight:900;font-size:14px;line-height:1;padding:0;
+}
+.stepn button:hover{background:var(--line2)}
+.stepn .val{min-width:26px;text-align:center;font-weight:900;font-size:13px}
 .dlgbtns{display:flex;gap:8px;margin-top:12px}
 
 /* ================= search boxes ================= */
@@ -7343,15 +7357,27 @@ function renderModeBar(){
 function renderStructBasic(){
   renderModeBar();
   const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
-  $('#bwCnt').textContent=S.wings.length
+  /* the seeded placeholder is a data-model convenience, not something the user made.
+     Showing it as an empty card under a message that says "עדיין אין" — while the
+     counter announces "אגף אחד" — read as the screen contradicting itself. As long
+     as it is the only wing and untouched, the screen honestly says: nothing yet. */
+  const ghost=S.wings.length===1&&S.wings[0].name==='אגף ראשי'
+    &&!S.rooms.length&&!(S.wings[0].plan||[]).length&&!noteOf('wing',S.wings[0].id);
+  $('#bwCnt').textContent=S.wings.length&&!ghost
     ? `${cnt(S.wings.length,"אגפים")} · ${cnt(S.rooms.length,"חדרים")} · ${cnt(beds,"מיטות")}` : 'עדיין אין';
+  /* the add row's start number: the markup default is 401, and after a reload it
+     came back even when rooms 401-410 already existed — so the very next "הוספת אגף"
+     bounced with "כבר קיימים". Suggest the next free number, but never overwrite a
+     value the user typed that does not clash. */
+  const st=$('#bwStart');
+  if(!st.value.trim()||roomBy(st.value.trim()))st.value=suggestStart();
   const box=$('#bwList'); box.innerHTML='';
-  if(!S.wings.length||!S.rooms.length&&S.wings.length===1&&!roomsOf(S.wings[0].id).length){
-    /* a fresh project: one empty default wing is noise, so say what to do instead */
-    if(!S.rooms.length)box.appendChild(el('div','empty-note',
+  if(ghost||!S.wings.length){
+    box.appendChild(el('div','empty-note',
       'עדיין אין חדרים. מלאו את השורה למטה — שם האגף, כמה חדרים וכמה מיטות — ולחצו "הוספת אגף".'));
   }
   for(const w of S.wings){
+    if(ghost)break;
     const rooms=roomsOf(w.id);
     const card=el('div','bw');
     const head=el('div','bw-head');
