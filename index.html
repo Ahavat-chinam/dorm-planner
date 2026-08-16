@@ -4669,6 +4669,32 @@ function renderWing(host,ev){
   const rooms=roomsOf(w.id);
   const t=tally(rooms);
 
+  /* a floor often holds two wings that physically CONTINUE each other — the real
+     sheet draws them as one run. Show the floor's wings in their drawn order,
+     the open one highlighted, one click to walk down the corridor to the next. */
+  if(isPro()){
+    const sibs=S.wings.filter(x=>x.building===w.building&&x.floor===w.floor);
+    if(sibs.length>1){
+      sibs.sort((p,q)=>{
+        const px=p.geom&&p.geom.cells&&p.geom.cells.length?Math.min(...p.geom.cells.map(c=>c.x)):99;
+        const qx=q.geom&&q.geom.cells&&q.geom.cells.length?Math.min(...q.geom.cells.map(c=>c.x)):99;
+        return px-qx;
+      });
+      const fb=el('div','dlgbtns wrap');
+      fb.style.marginBottom='10px';
+      const b2=bldBy(w.building);
+      const fl=b2&&b2.floors.find(f=>f.id===w.floor);
+      fb.appendChild(el('span','pill',(fl?fl.name:'קומה')+' — האגפים לפי הסדר:'));
+      sibs.forEach((x,i)=>{
+        if(i)fb.appendChild(el('span','bl','←'));
+        const btn=el('button','btn mini'+(x.id===w.id?' accent':''),'🏗️ '+x.name);
+        if(x.id!==w.id)btn.addEventListener('click',()=>{V.wing=x.id;render();});
+        fb.appendChild(btn);
+      });
+      host.appendChild(fb);
+    }
+  }
+
   const barRow=el('div','wg-bar');
   const ttl=el('div','wg-t');
   ttl.append(el('span',null,'🏗️'),el('span',null,w.name));
@@ -6707,6 +6733,16 @@ function printAssignment(){
   }
   const waiting=S.boys.filter(b=>!S.assign[b]);
   if(waiting.length)h+='<h2>ממתינים לשיבוץ ('+waiting.length+')</h2><p>'+waiting.map(esc).join(' · ')+'</p>';
+  /* the alphabetical index — on the yeshiva's real sheets this is its own page,
+     hung next to the floor plan: how anyone finds where a bochur sleeps */
+  if(placed){
+    const idx=[...S.boys].filter(b=>S.assign[b]).sort((p,q)=>p.localeCompare(q,'he'));
+    h+='<h2 style="page-break-before:always">אינדקס לפי שם — איפה כל אחד</h2>'
+      +'<div style="columns:3;column-gap:26px;font-size:12px;line-height:1.9">'
+      +idx.map(b=>'<div style="display:flex;justify-content:space-between;border-bottom:1px dotted #bbb">'
+        +'<span>'+esc(b)+'</span><b style="margin-inline-start:8px">'+esc(S.assign[b])+'</b></div>').join('')
+      +'</div>';
+  }
   if(ev.hard+ev.soft)h+='<div class="tip">שימו לב: '+ev.hard+' הפרות בלתי־מתפשרות ו־'+ev.soft+' הפרות קלות בשיבוץ הזה.</div>';
   printDoc(S.zman||'שיבוץ חדרים',h);
 }
@@ -8111,34 +8147,45 @@ const STRIP_SVC=[['toilet','🚻 שירותים'],['shower','🚿 מקלחות']
 function cellsToStrip(cells){
   if(!cells.length)return {a:[],b:[]};
   const halls=cells.filter(c=>c.t==='hall');
-  const mk0=c=>c.t==='room'?{t:'room',num:c.num,beds:c.beds,orig:c.orig||null}
-                           :{t:c.t,label:c.label||''};
+  /* the drawn WIDTH travels with the cell — a room is physically big or small on
+     the sheet regardless of how many beds it holds */
+  const mk=c=>c.t==='room'?{t:'room',num:c.num,beds:c.beds,orig:c.orig||null,w:cellW(c)}
+                          :{t:c.t,label:c.label||'',w:cellW(c)};
   if(!halls.length){
     /* a basic-mode wing has rooms and no corridor at all — reading order onto one
        side is an honest starting point, and dragging splits them across the hall */
-    if(cells.some(c=>cellW(c)!==1||cellH(c)!==1))return null;
+    if(cells.some(c=>cellH(c)!==1))return null;
     const flat=[...cells].sort((p,q)=>p.y-q.y||p.x-q.x);
-    return {a:flat.map(mk0),b:[]};
+    return {a:flat.map(mk),b:[]};
   }
   const hy=halls[0].y;
   if(halls.some(h=>h.y!==hy))return null;
   const a=[],b=[];
   for(const c of cells){
     if(c.t==='hall')continue;
-    if(cellW(c)!==1||cellH(c)!==1)return null;
+    if(cellH(c)!==1)return null;
     if(c.y===hy-1)a.push(c); else if(c.y===hy+1)b.push(c); else return null;
   }
   a.sort((p,q)=>p.x-q.x); b.sort((p,q)=>p.x-q.x);
-  const mk=c=>c.t==='room'?{t:'room',num:c.num,beds:c.beds,orig:c.orig||null}
-                          :{t:c.t,label:c.label||''};
   return {a:a.map(mk),b:b.map(mk)};
 }
+const stripW=c=>Math.max(1,Math.min(6,Math.round(+c.w||1)));
 function stripToCells(s){
+  /* cells are laid end to end; a wide room simply occupies more of the corridor */
   const out=[];
-  const len=Math.min(PW-2,Math.max(s.a.length,s.b.length,1));
+  const place=(arr,y)=>{
+    let x=1;
+    for(const c of arr){
+      const w=stripW(c);
+      if(x+w>PW-1)break;
+      out.push({...c,x,y,w,h:1});
+      x+=w;
+    }
+    return x;
+  };
+  const xa=place(s.a,1),xb=place(s.b,3);
+  const len=Math.min(PW-2,Math.max(xa-1,xb-1,1));
   for(let i=0;i<len;i++)out.push({t:'hall',x:i+1,y:2});
-  s.a.slice(0,PW-2).forEach((c,i)=>out.push({...c,x:i+1,y:1,w:1,h:1}));
-  s.b.slice(0,PW-2).forEach((c,i)=>out.push({...c,x:i+1,y:3,w:1,h:1}));
   return out;
 }
 function stripNextNum(){
@@ -8176,6 +8223,8 @@ function renderStrip(){
     STRIP[side].forEach((c,i)=>{
       const d=el('div','sc'+(c.t==='room'?'':' svc')
         +(STRIP_SEL&&STRIP_SEL.side===side&&STRIP_SEL.i===i?' on':''));
+      /* the drawn width IS the room's physical size on the sheet */
+      d.style.minWidth=(62+(stripW(c)-1)*58)+'px';
       if(c.t==='room'){d.append(el('b',null,String(c.num)),el('small',null,cnt(c.beds,'מיטות')));}
       else{
         const lbl=(STRIP_SVC.find(x=>x[0]===c.t)||[,CELL_TYPES[c.t]?CELL_TYPES[c.t].he:c.t])[1];
@@ -8255,6 +8304,18 @@ function renderStrip(){
         f.appendChild(inp);
         ed.appendChild(f);
       }
+      /* physical size on the sheet — nothing to do with the bed count. Some rooms
+         simply ARE big and some small, and the drawing must show that. */
+      const fw=el('div','wiz-f'); fw.appendChild(el('label',null,'גודל על השרטוט'));
+      const sw=el('span','stepn');
+      const wmi=el('button',null,'−'),wvl=el('span','val',String(stripW(c))),wpl=el('button',null,'+');
+      wmi.addEventListener('click',()=>{if(stripW(c)>1){c.w=stripW(c)-1;stripSync();}});
+      wpl.addEventListener('click',()=>{
+        if(stripW(c)>=6){toast('עד פי 6 — רחב מזה כבר לא נכנס בדף');return;}
+        c.w=stripW(c)+1;stripSync();
+      });
+      sw.append(wmi,wvl,wpl); fw.appendChild(sw);
+      ed.appendChild(fw);
       host.appendChild(ed);
     }
   }
