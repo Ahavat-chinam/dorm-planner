@@ -1744,9 +1744,13 @@ body.nopulse .pb-room.warn-hard{animation:none}
 .by-row input:focus{background:color-mix(in srgb,var(--acc) 9%,transparent)}
 .by-row .st{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap;padding-inline-end:3px}
 .by-row .st.in{color:var(--green)}
-/* the UA's [hidden] rule loses to .vpane.on / .tabbar on specificity — on the
-   first run the whole board would otherwise show through under the welcome panel */
-.vpane[hidden],.tabbar[hidden],footer[hidden],.stats[hidden]{display:none!important}
+/* The UA's [hidden] rule is display:none at the lowest possible specificity, so any
+   class that sets display beats it — and then hidden=true silently does nothing.
+   That has now bitten this file twice: the board once showed through the welcome
+   panel, and the five numbered tabs stayed on screen with no project open, where
+   clicking one dropped the user into an editor that could not save. Make it general
+   instead of listing the offenders one by one; nothing here wants to override it. */
+[hidden]{display:none!important}
 .tabbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--line)}
 .tabbar button{
   background:none;border:none;border-bottom:2.5px solid transparent;
@@ -3612,6 +3616,12 @@ function bootProjects(){
 }
 
 /* ---------- helpers ---------- */
+/* Hebrew has no "1 items". "1 אגפים" on the very first screen a customer sees reads
+   as a machine talking, so counts go through here: 1 → "אגף אחד", otherwise "N אגפים". */
+const HE_ONE={'אגפים':'אגף אחד','חדרים':'חדר אחד','בחורים':'בחור אחד','מיטות':'מיטה אחת',
+              'כללים':'כלל אחד','קבוצות':'קבוצה אחת','גרסאות':'גרסה אחת','משובצים':'אחד משובץ',
+              'הפרות':'הפרה אחת','פריטים':'פריט אחד','בניינים':'בניין אחד'};
+const cnt=(n,word)=>n===1&&HE_ONE[word]?HE_ONE[word]:`${n} ${word}`;
 const occupants=num=>S.boys.filter(b=>S.assign[b]===num);
 const roomBy=num=>S.rooms.find(r=>r.num===num);
 const isLocked=name=>S.locks.includes(name);
@@ -4429,10 +4439,10 @@ function heroEl(ev){
   const hero=el('div','hero');
   const L=el('div','hero-l');
   const bits=[];
-  if(S.buildings.length>1)bits.push(S.buildings.length+' בניינים');
-  bits.push(S.wings.length+(S.wings.length===1?' אגף':' אגפים'));
-  bits.push(S.rooms.length+' חדרים');
-  bits.push(beds+' מיטות');
+  if(S.buildings.length>1)bits.push(cnt(S.buildings.length,'בניינים'));
+  bits.push(cnt(S.wings.length,'אגפים'));
+  bits.push(cnt(S.rooms.length,'חדרים'));
+  bits.push(cnt(beds,'מיטות'));
   L.appendChild(el('div','overline',bits.join(' · ')));
   const h1=el('h1');
   h1.appendChild(el('span','grad','שיבוץ'));
@@ -4465,7 +4475,7 @@ function bldCard(b,ev){
   top.appendChild(el('span','card-ico',b.icon||'🏢'));
   const ttl=el('div','card-ttl');
   ttl.append(el('b',null,b.name),
-             el('small',null,`${ws.length} ${ws.length===1?'אגף':'אגפים'} · ${t.n} חדרים`));
+             el('small',null,`${cnt(ws.length,"אגפים")} · ${cnt(t.n,"חדרים")}`));
   top.append(ttl,el('span','card-go','←'));
   card.appendChild(top);
   card.appendChild(bar(t.taken,t.beds));
@@ -4553,7 +4563,7 @@ function wingCard(w,ev){
   const top=el('div','card-top');
   top.appendChild(el('span','card-ico','🏗️'));
   const ttl=el('div','card-ttl');
-  ttl.append(el('b',null,w.name),el('small',null,`${t.n} חדרים · ${t.beds} מיטות`));
+  ttl.append(el('b',null,w.name),el('small',null,`${cnt(t.n,"חדרים")} · ${cnt(t.beds,"מיטות")}`));
   top.append(ttl,el('span','card-go','←'));
   card.appendChild(top);
   card.appendChild(miniPlan(w,ev));
@@ -5317,6 +5327,15 @@ const dropLayAnchor=()=>{try{
   document.querySelectorAll('.lay .le-grid').forEach(g=>{if(g.__dropAnchor)g.__dropAnchor();});
 }catch(e){}};
 function setTab(v){
+  /* With no project open there is nowhere to put anything: save() returns early on
+     a null PID, so a name typed into the boys editor here would be lost on reload.
+     The tab bar is hidden in that state, but the digit shortcuts and the AI can
+     still call this — send them to pick a project instead of into a dead editor. */
+  if(!PID&&v!=='board'){
+    toast('קודם פותחים פרויקט — או יוצרים חדש');
+    if(V.level!=='projects'){V={level:'projects',bld:null,wing:null};render();}
+    return;
+  }
   dropBldAnchor();dropLayAnchor();
   const had=!!selected;
   SEC=v;
@@ -5382,7 +5401,7 @@ function paintGuides(){
 
   const gs=$('#guideStruct'); gs.innerHTML='';
   gs.appendChild(hasRooms
-    ? guideEl('✓','המבנה מוגדר.',`${S.wings.length} אגפים · ${S.rooms.length} חדרים. אפשר לחזור לכאן ולשנות בכל רגע.`,
+    ? guideEl('✓','המבנה מוגדר.',`${cnt(S.wings.length,"אגפים")} · ${cnt(S.rooms.length,"חדרים")}. אפשר לחזור לכאן ולשנות בכל רגע.`,
         [next({t:'לשלב הבא: הבחורים',v:'boys'})],true,isPro()?'struct':'structB')
     : isPro()
       ? guideEl('🏗️','שלב 1 — בונים את הפנימייה.',
@@ -5394,7 +5413,7 @@ function paintGuides(){
 
   const gb=$('#guideBoys'); gb.innerHTML='';
   gb.appendChild(hasBoys
-    ? guideEl('✓',`${S.boys.length} בחורים ברשימה.`,'אפשר להוסיף, לתקן שם או לחלק לקבוצות בכל רגע.',
+    ? guideEl('✓',`${cnt(S.boys.length,"בחורים")} ברשימה.`,'אפשר להוסיף, לתקן שם או לחלק לקבוצות בכל רגע.',
         [next({t:'לשלב הבא: השיבוץ',v:'board'})],true,'boys')
     : guideEl('👥','שלב 2 — רשימת הבחורים.',
         'הדרך המהירה: לגרור לכאן קובץ אקסל. אפשר גם להדביק רשימה שלמה או להקליד שם־שם.',
@@ -5674,7 +5693,7 @@ $('#fileImport').addEventListener('change',e=>{
         if(!PID){toast('לא הצלחתי ליצור פרויקט לשחזור');return;}
       }
       /* this replaces everything — and "everything" is not only the boys */
-      const cur=[S.boys.length&&S.boys.length+' בחורים',
+      const cur=[S.boys.length&&cnt(S.boys.length,'בחורים'),
                  S.wings.length&&S.wings.length+' אגפים',
                  S.rooms.length&&S.rooms.length+' חדרים',
                  S.rules.length&&S.rules.length+' כללים',
@@ -5910,7 +5929,7 @@ function trashWing(w){
   notes[noteKey('wing',w.id)]=noteOf('wing',w.id);
   for(const r of rooms){const v=noteOf('room',r.num);if(v)notes[noteKey('room',r.num)]=v;}
   for(const k of Object.keys(notes))if(!notes[k])delete notes[k];
-  trashPut('wing',w.name,`${rooms.length} חדרים · ${Object.keys(assign).length} משובצים`,
+  trashPut('wing',w.name,`${cnt(rooms.length,"חדרים")} · ${Object.keys(assign).length} משובצים`,
            {wing:JSON.parse(JSON.stringify(w)),rooms,assign,notes});
 }
 function trashBuilding(b){
@@ -7323,7 +7342,7 @@ function renderStructBasic(){
   renderModeBar();
   const beds=S.rooms.reduce((a,r)=>a+r.beds,0);
   $('#bwCnt').textContent=S.wings.length
-    ? `${S.wings.length} אגפים · ${S.rooms.length} חדרים · ${beds} מיטות` : 'עדיין אין';
+    ? `${cnt(S.wings.length,"אגפים")} · ${cnt(S.rooms.length,"חדרים")} · ${cnt(beds,"מיטות")}` : 'עדיין אין';
   const box=$('#bwList'); box.innerHTML='';
   if(!S.wings.length||!S.rooms.length&&S.wings.length===1&&!roomsOf(S.wings[0].id).length){
     /* a fresh project: one empty default wing is noise, so say what to do instead */
@@ -7344,7 +7363,7 @@ function renderStructBasic(){
     nm.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nm.blur();}});
     head.appendChild(nm);
     head.appendChild(el('span','bw-sum',
-      `${rooms.length} חדרים · ${rooms.reduce((a,r)=>a+r.beds,0)} מיטות`));
+      `${cnt(rooms.length,"חדרים")} · ${cnt(rooms.reduce((a,r)=>a+r.beds,0),"מיטות")}`));
     head.appendChild(noteBtn('wing',w.id,'הערה על '+w.name));
     const del=el('button','ed-x','✕'); del.title='מחיקת האגף וכל חדריו';
     del.addEventListener('click',()=>{
@@ -7454,10 +7473,17 @@ $('#bwAdd').addEventListener('click',()=>{
   const w={id:'w'+uid(),name:nm.slice(0,40),building:b.id,floor:b.floors[0].id,plan:[],geom:null};
   S.wings.push(w);
   nums.forEach(n=>S.rooms.push({num:n,beds,wing:w.id}));
+  /* A new project is seeded with one placeholder wing so the data model always has
+     somewhere to put a room. Once the user names a wing of their own, that untouched
+     placeholder is just a second card nobody asked for — and the guide counting
+     "2 אגפים" after adding one is exactly the kind of thing that makes people
+     distrust the screen. Drop it, but only while it is genuinely untouched. */
+  S.wings=S.wings.filter(x=>
+    x.id===w.id||!(x.name==='אגף ראשי'&&!roomsOf(x.id).length&&!noteOf('wing',x.id)&&!(x.plan||[]).length));
   $('#bwName').value='';
   $('#bwStart').value=roomNums(nums[nums.length-1],2)[1];
   save();render();
-  toast(`"${w.name}" נוסף — ${count} חדרים`);
+  toast(`"${w.name}" נוסף — ${cnt(count,"חדרים")}`);
 });
 ['#bwName','#bwCount','#bwBeds','#bwStart'].forEach(s=>$(s).addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();$('#bwAdd').click();}
@@ -10361,6 +10387,10 @@ $('#btnDownloadApp').addEventListener('click',async()=>{
       if(local.ok){const t=await local.text(); if(/<title>[^<]*שיבוץ/.test(t))html=t;}
     }catch(e){}
     if(!html){
+      /* fetching our own file fails on file://, and then the copy on GitHub is the
+         only source left — which needs a connection. Say that, instead of opening a
+         tab that cannot load. */
+      if(navigator.onLine===false)throw new Error('offline');
       const r=await fetch(APP_RAW,{cache:'no-store'});
       if(!r.ok)throw new Error('HTTP '+r.status);
       html=await r.text();
@@ -10368,8 +10398,12 @@ $('#btnDownloadApp').addEventListener('click',async()=>{
     saveBlobAs(new Blob([html],{type:'text/html;charset=utf-8'}),'שיבוץ-חדרים.html');
     toast('הקובץ ירד — אפשר להפעיל אותו בלחיצה כפולה');
   }catch(e){
-    window.open(APP_RAW,'_blank','noopener');
-    toast('נפתח בלשונית חדשה — שמרו עם Ctrl+S');
+    if(navigator.onLine===false||String(e.message)==='offline'){
+      toast('אין חיבור לאינטרנט. התוכנה שלפניכם כבר רצה מהמחשב — שמרו אותה עם Ctrl+S, או העתיקו את הקובץ עצמו.');
+    }else{
+      window.open(APP_RAW,'_blank','noopener');
+      toast('נפתח בלשונית חדשה — שמרו עם Ctrl+S');
+    }
   }
   btn.disabled=false;btn.textContent='⬇️ הורדת התוכנה למחשב';
 });
