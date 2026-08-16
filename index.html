@@ -5943,6 +5943,18 @@ function restoreTrash(id){
   const t=S.trash[i],d=t.data;
   snapshot();
   let msg='';
+  /* A number that was freed since the delete may now belong to a different, fuller
+     room. Re-seating blind pushed the old occupants in past the bed count and saved
+     it to disk. Whoever does not fit stays on the waiting list, and we say so. */
+  let noRoom=0;
+  const seat=(b,rm)=>{
+    if(!S.boys.includes(b)||S.assign[b])return;
+    const r=roomBy(rm);
+    if(!r)  {noRoom++;return;}
+    if(occupants(rm).length>=r.beds){noRoom++;return;}
+    S.assign[b]=rm;
+  };
+  const seatNote=()=>noRoom?` · ${noRoom} בחורים נשארו בהמתנה — אין מקום בחדר שלהם`:'';
   try{
     if(t.kind==='boy'){
       if(S.boys.includes(d.name)){toast('כבר קיים בחור בשם הזה');return;}
@@ -5951,7 +5963,19 @@ function restoreTrash(id){
       if(d.locked&&S.assign[d.name])S.locks.push(d.name);
       if(d.note)S.notes[noteKey('boy',d.name)]=d.note;
       (d.groups||[]).forEach(gid=>{const g=S.groups.find(x=>x.id===gid);if(g&&!g.members.includes(d.name))g.members.push(d.name);});
-      msg=`"${d.name}" הוחזר`;
+      /* the rules that died with him come back too, but only those still coherent:
+         a room they named may have been deleted in the meantime */
+      let backRules=0;
+      for(const r of (d.rules||[])){
+        if(S.rules.some(x=>x.id===r.id))continue;
+        if(r.room&&!roomBy(r.room))continue;
+        if(r.members&&r.members.some(b=>!S.boys.includes(b)))continue;
+        if(r.a&&!S.boys.includes(r.a))continue;
+        S.rules.push({...r}); backRules++;
+        const rn=(d.ruleNotes||{})[r.id];
+        if(rn)S.notes[noteKey('rule',r.id)]=rn;
+      }
+      msg=`"${d.name}" הוחזר`+(backRules?` · ${backRules} כללים חזרו איתו`:'');
     }else if(t.kind==='room'){
       if(roomBy(d.room.num)){toast('כבר קיים חדר עם המספר הזה');return;}
       if(!wingBy(d.room.wing)){toast('האגף של החדר כבר לא קיים — שחזרו אותו קודם');return;}
@@ -5963,21 +5987,22 @@ function restoreTrash(id){
       msg=`חדר ${d.room.num} הוחזר`;
     }else if(t.kind==='wing'){
       if(!bldBy(d.wing.building))d.wing.building=S.buildings[0].id;
+      /* its floor may have been the thing that was deleted */
+      const bw=bldBy(d.wing.building);
+      if(bw&&!bw.floors.some(f=>f.id===d.wing.floor))d.wing.floor=bw.floors[0].id;
       if(S.wings.some(w=>w.id===d.wing.id)){toast('האגף כבר קיים');return;}
       S.wings.push({...d.wing});
       for(const r of (d.rooms||[]))if(!roomBy(r.num))S.rooms.push({...r});
-      for(const [b,rm] of Object.entries(d.assign||{}))
-        if(S.boys.includes(b)&&roomBy(rm)&&!S.assign[b])S.assign[b]=rm;
+      for(const [b,rm] of Object.entries(d.assign||{}))seat(b,rm);
       Object.assign(S.notes,d.notes||{});
-      msg=`"${d.wing.name}" הוחזר עם ${(d.rooms||[]).length} חדרים`;
+      msg=`"${d.wing.name}" הוחזר עם ${(d.rooms||[]).length} חדרים`+seatNote();
     }else if(t.kind==='building'){
       if(S.buildings.some(b=>b.id===d.building.id)){toast('הבניין כבר קיים');return;}
       S.buildings.push({...d.building});
       for(const w of (d.wings||[]))if(!wingBy(w.id))S.wings.push({...w});
       for(const r of (d.rooms||[]))if(!roomBy(r.num))S.rooms.push({...r});
-      for(const [b,rm] of Object.entries(d.assign||{}))
-        if(S.boys.includes(b)&&roomBy(rm)&&!S.assign[b])S.assign[b]=rm;
-      msg=`"${d.building.name}" הוחזר`;
+      for(const [b,rm] of Object.entries(d.assign||{}))seat(b,rm);
+      msg=`"${d.building.name}" הוחזר`+seatNote();
     }else if(t.kind==='rule'){
       S.rules.push({...d.rule});
       if(d.note)S.notes[noteKey('rule',d.rule.id)]=d.note;
@@ -6519,9 +6544,17 @@ function removeBoyEverywhere(name,toTrash){
   if(!S.boys.includes(name))return false;
   if(toTrash!==false){
     const room=S.assign[name]||'';
+    /* the rules that will not survive him: a personal rule dies with him, and a
+       group rule dies when he was one of its last two members. They used to vanish
+       with no record at all, so restoring him brought back the boy and not the work */
+    const doomed=S.rules.filter(r=>r.members
+      ? r.members.includes(name)&&r.members.filter(b=>b!==name).length<2
+      : r.a===name).map(r=>({...r}));
     trashPut('boy',name,room?`היה בחדר ${room}`:'היה בממתינים',
       {name,room,locked:S.locks.includes(name),note:noteOf('boy',name),
-       groups:S.groups.filter(g=>g.members.includes(name)).map(g=>g.id)});
+       groups:S.groups.filter(g=>g.members.includes(name)).map(g=>g.id),
+       rules:doomed,
+       ruleNotes:doomed.reduce((a,r)=>{const v=noteOf('rule',r.id);if(v)a[r.id]=v;return a;},{})});
   }
   S.boys=S.boys.filter(b=>b!==name);
   delete S.notes['boy:'+name];
@@ -6697,7 +6730,18 @@ function renderBulk(shown){
     toast(`${n} שוחררו`);
   }));
   bar.appendChild(mini('🗑️ הסרה',()=>{
-    if(!confirm(`להסיר ${sel.length} בחורים מהרשימה?\n\nהם ימתינו בסל המיחזור וניתן יהיה לשחזר אותם.`))return;
+    /* the bin holds 60. A big removal files one entry per boy and pushes the oldest
+       out — its own earliest names first, and everything that was already in the bin.
+       Promising "ניתן לשחזר" without saying that is the bin lying to the user. */
+    const room=60-sel.length;
+    let warn='\n\nהם ימתינו בסל המיחזור וניתן יהיה לשחזר אותם.';
+    if(room<0)
+      warn=`\n\n⚠️ הסל מחזיק 60 פריטים. ${-room} מהראשונים שברשימה לא יישמרו בו, וגם כל `
+          +`${S.trash.length} הפריטים שכבר בסל יידחפו החוצה.\nשמרו גיבוי לפני, אם חשוב לכם לחזור.`;
+    else if(S.trash.length>room)
+      warn=`\n\nהם ימתינו בסל המיחזור. שימו לב: ${S.trash.length-room} פריטים ותיקים שכבר בסל `
+          +`יידחפו החוצה כדי לפנות מקום.`;
+    if(!confirm(`להסיר ${sel.length} בחורים מהרשימה?`+warn))return;
     snapshot();
     sel.forEach(b=>removeBoyEverywhere(b));
     PICK.clear();
@@ -7286,7 +7330,13 @@ function bldPaint(){
         const rooms=S.rooms.filter(r=>ws.some(w=>w.id===r.wing));
         if(!confirm(`למחוק את "${f.name}"?\n\n${ws.length} אגפים ו־${rooms.length} חדרים יימחקו איתה.\nCtrl+Z מחזיר.`))return;
         snapshot();
-        dropRooms(rooms.map(r=>r.num));
+        /* file the wings FIRST, then drop the rooms without filing them separately.
+           Filing rooms whose wing was deleted without a record of its own produced
+           trash entries that could never be redeemed — restoring a room requires its
+           wing to exist, and nothing anywhere held it. They just sat in the 60-item
+           bin pushing real entries out. */
+        ws.forEach(w=>trashWing(w));
+        dropRooms(rooms.map(r=>r.num),false);
         S.wings=S.wings.filter(w=>!ws.some(x2=>x2.id===w.id));
         b.floors=b.floors.filter(z=>z.id!==f.id);
         EDB.floor=b.floors[0].id;EDB.sel=null;
