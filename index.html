@@ -3058,7 +3058,18 @@ function normPlan(plan,rooms){
       cells.push(o);
     }
   }
-  if(!cells.length)return want.length?autoPlan(want):[];
+  if(!cells.length){
+    if(!want.length)return [];
+    /* autoPlan builds a corridor and alternates rooms onto its two sides, so reading
+       order comes out 401,403,405,…,402,404. In pro mode that IS the floor and the
+       order is real. In basic mode there is no drawing at all, and that invented
+       corridor made the board and the printout disagree with the structure list and
+       the Excel export — two outputs of the same app contradicting each other.
+       Simple mode gets rooms in the order they were created, in reading order. */
+    if(typeof isPro==='function'&&!isPro())
+      return want.map((n,i)=>({t:'room',num:n,x:i%PW,y:Math.floor(i/PW)%PH,w:1,h:1}));
+    return autoPlan(want);
+  }
   const missing=want.filter(n=>!seenNum.has(n));
   if(missing.length){
     /* free cells that touch a hall first, then any free cell */
@@ -5465,7 +5476,7 @@ function optimize(locked){
   const lockedAsg={};
   for(const b of locked) if(S.assign[b]) lockedAsg[b]=S.assign[b];
   const hardIn=S.rules.filter(r=>r.enabled!==false&&r.type==='inRoom'&&r.level==='hard');
-  let best=null,bestScore=Infinity;
+  let best=null,bestScore=Infinity,bestShort=Infinity;
   /* when the rules cannot all be met the perfect-score escape never fires, so the
      search needs a clock of its own — a frozen tab is worse than a good-enough board */
   const t0=Date.now(),BUDGET=2000;
@@ -5478,14 +5489,18 @@ function optimize(locked){
     });
     for(const r of hardIn) if(!asg[r.a]&&cap[r.room]>0){asg[r.a]=r.room;cap[r.room]--;}
     const rest=S.boys.filter(b=>!asg[b]).sort(()=>Math.random()-.5);
-    let ok=true;
+    /* Running out of beds used to throw the whole trial away, so with 30 boys and
+       29 beds every one of the 40 trials failed identically and the button placed
+       NOBODY — leaving free beds empty and saying only "אין מספיק מיטות לכולם".
+       A waiting list is the normal state in a dorm. Fill what there is; whoever
+       does not fit simply stays unassigned and the caller reports how many. */
+    let short=0;
     for(const b of rest){
       const opts=S.rooms.filter(r=>cap[r.num]>0);
-      if(!opts.length){ok=false;break;}
+      if(!opts.length){short++;continue;}
       const pick=opts[(Math.random()*opts.length)|0];
       asg[b]=pick.num;cap[pick.num]--;
     }
-    if(!ok)continue;
     let sc=scoreOf(asg),improved=true,rounds=0;
     while(improved&&sc>0&&rounds++<12&&Date.now()-t0<=BUDGET){
       improved=false;
@@ -5494,7 +5509,14 @@ function optimize(locked){
          searching only the boys actually involved turns C(300,2) into a few dozen */
       const now=evaluate(asg);
       const hot=free.filter(b=>now.badHard.has(b)||now.badSoft.has(b));
-      for(const a of hot)for(const b of free){
+      /* This is the hottest loop in the function — hot × free calls to scoreOf, each
+         of which walks every rule. It was the ONLY loop without a clock, so with 500
+         boys and 60 rules it ran millions of rule checks in one uninterruptible pass
+         and hard-froze the tab, blowing the 2s budget many times over. The label is
+         what makes the break leave the pair, not just the inner loop. */
+      let k1=0;
+      swaps: for(const a of hot)for(const b of free){
+        if((++k1&63)===0&&Date.now()-t0>BUDGET)break swaps;
         if(a===b||asg[a]===asg[b])continue;
         [asg[a],asg[b]]=[asg[b],asg[a]];
         const s2=scoreOf(asg);
@@ -5505,8 +5527,10 @@ function optimize(locked){
       S.rooms.forEach(r=>capNow.set(r.num,r.beds));
       for(const b of S.boys){const rm=asg[b]; if(capNow.has(rm))capNow.set(rm,capNow.get(rm)-1);}
       let k2=0;
-      for(const b of hot)for(const r of S.rooms){
-        if((++k2&63)===0&&Date.now()-t0>BUDGET)break;
+      /* an unlabelled break here only left the inner loop, so every remaining hot
+         boy still burned a full room sweep after the budget was already gone */
+      moves: for(const b of hot)for(const r of S.rooms){
+        if((++k2&63)===0&&Date.now()-t0>BUDGET)break moves;
         if(capNow.get(r.num)>0&&asg[b]!==r.num){
           const old=asg[b];asg[b]=r.num;
           const s2=scoreOf(asg);
@@ -5515,10 +5539,14 @@ function optimize(locked){
         }
       }
     }
-    if(sc<bestScore){bestScore=sc;best={...asg};}
-    if(bestScore===0)break;
+    /* fewer boys left over beats a prettier board: a trial that seats more people
+       always wins, and the rule score only breaks ties between equal-sized boards */
+    if(short<bestShort||(short===bestShort&&sc<bestScore)){
+      bestShort=short;bestScore=sc;best={...asg};
+    }
+    if(bestScore===0&&bestShort===0)break;
   }
-  return best?{asg:best,score:bestScore,ev:evaluate(best)}:null;
+  return best?{asg:best,score:bestScore,short:bestShort,ev:evaluate(best)}:null;
 }
 $('#btnAuto').addEventListener('click',()=>{
   let locked=new Set(S.locks.filter(b=>S.assign[b]));
@@ -5542,11 +5570,21 @@ $('#btnAuto').addEventListener('click',()=>{
     let res=null;
     try{ res=optimize(locked); }
     finally{ btn.disabled=false; btn.textContent='🤖 שיבוץ אוטומטי'; }
-    if(!res){toast('אין מספיק מיטות לכולם');return;}
+    if(!res){toast('אין בחורים או אין חדרים — אי אפשר לשבץ');return;}
     snapshot();                                 /* the most destructive click in the app */
     S.assign=res.asg;S.activeSim=null;clearSel();save();render();
-    if(res.score===0) toast(S.rules.some(r=>r.enabled!==false)?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨');
-    else toast(`זה המיטב שמצאתי — נשארו ${res.ev.hard} חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
+    const placed=Object.keys(S.assign).length,total=S.boys.length;
+    /* say what happened to the beds AND to the rules — a waiting list is a normal
+       outcome, not a failure, and the old message read as "I cannot help you" */
+    const bedNote=res.short
+      ? `שובצו ${placed} מתוך ${total} — חסרות ${res.short} מיטות, השאר בהמתנה`
+      : null;
+    if(res.score===0)
+      toast(bedNote||(S.rules.some(r=>r.enabled!==false)
+        ?'שיבוץ נקי — כל הכללים מתקיימים ✨':'כולם שובצו ✨'));
+    else
+      toast((bedNote?bedNote+'. ':'זה המיטב שמצאתי — ')
+        +`נשארו ${res.ev.hard} הפרות חמורות ו־${res.ev.soft} קלות. ראו הצעות למטה`);
   };
   requestAnimationFrame(()=>setTimeout(go,0));
   setTimeout(go,120);
@@ -6867,7 +6905,22 @@ $('#byPickFile').addEventListener('click',()=>$('#fileNames').click());
 /* plain name list applied straight to S — no draft dialog in the way */
 function applyNames(names,replace){
   const clean=cleanNames(names);
-  if(!clean.length){toast('לא נמצאו שמות');return;}
+  const skipped=cleanNames.skipped;
+  if(!clean.length){
+    toast(skipped.length?`לא נמצאו שמות — ${skipped.length} שורות ארוכות מדי (מעל ${NAME_MAX} תווים)`
+                        :'לא נמצאו שמות');
+    return false;
+  }
+  /* a line the app could not read must never cause a boy the user just re-listed to
+     be deleted from everywhere — say so and stop, rather than "succeed" */
+  if(replace&&skipped.length){
+    const hit=skipped.filter(n=>S.boys.some(b=>n.startsWith(b)||b.startsWith(n.slice(0,40))));
+    if(!confirm(`${skipped.length} שורות ארוכות מדי (מעל ${NAME_MAX} תווים) לא ייקראו:\n`
+      +skipped.slice(0,3).map(n=>'· '+n.slice(0,50)+'…').join('\n')
+      +(skipped.length>3?`\n· ועוד ${skipped.length-3}`:'')
+      +(hit.length?`\n\n⚠️ בחורים שכבר ברשימה עלולים להימחק בגללן.`:'')
+      +'\n\nלהמשיך בכל זאת?'))return false;
+  }
   snapshot();
   if(replace){
     const gone=S.boys.filter(b=>!clean.includes(b));
@@ -6876,11 +6929,14 @@ function applyNames(names,replace){
   let added=0;
   for(const nx of clean)if(!S.boys.includes(nx)){S.boys.push(nx);added++;}
   save();initDynamic();render();
-  toast(replace?`הרשימה הוחלפה — ${S.boys.length} בחורים`:`נוספו ${added} שמות`);
+  const tail=skipped.length?` · ${skipped.length} שורות דולגו (ארוכות מדי)`:'';
+  toast((replace?`הרשימה הוחלפה — ${S.boys.length} בחורים`:`נוספו ${added} שמות`)+tail);
+  return true;
 }
 $('#byPasteAdd').addEventListener('click',()=>{
-  applyNames(parseNameList($('#byPaste').value),false);
-  $('#byPaste').value='';
+  /* only clear the box when something actually went in — wiping a rejected paste
+     destroys the very list the user needs to fix */
+  if(applyNames(parseNameList($('#byPaste').value),false))$('#byPaste').value='';
 });
 $('#byPasteReplace').addEventListener('click',()=>{
   const names=parseNameList($('#byPaste').value);
@@ -7285,9 +7341,17 @@ function renderStructBasic(){
 /* a free room number that continues this wing's own numbering */
 function nextRoomNumFor(wid){
   const mine=roomsOf(wid);
+  /* keep the wing's own numbering scheme — prefix, zero padding and suffix.
+     roomNums already knows how; inventing a bare number here broke every building
+     numbered per floor (א-101, ב-101) the moment a room was added after setup. */
+  if(mine.length){
+    const last=String(mine[mine.length-1].num);
+    let n=roomNums(last,2)[1];
+    while(n&&roomBy(n))n=roomNums(n,2)[1];
+    if(n)return n;
+  }
   let max=0;
-  for(const r of mine){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
-  if(!max)for(const r of S.rooms){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
+  for(const r of S.rooms){const m=String(r.num).match(/\d+/);if(m)max=Math.max(max,+m[0]);}
   let n=max?max+1:101;
   while(roomBy(String(n)))n++;
   return String(n);
@@ -8916,17 +8980,26 @@ function namesFromJson(txt){
   if(data&&Array.isArray(data.boys))return data.boys;
   throw new Error('ה־JSON לא מכיל רשימת שמות');
 }
+/* Hebrew names routinely carry a title and a patronymic — "הרב ישראל מאיר בן ר׳
+   שלמה זלמן הכהן וויינטרויב" is 46 characters. The old cap of 40 dropped such a line
+   in silence, and in "החלפה" that silence deleted the boy from the roster, from his
+   room and from his notes while the toast reported success. The cap is now generous,
+   and whatever it does reject is handed back to the caller to show. */
+const NAME_MAX=90;
+cleanNames.skipped=[];
 function cleanNames(arr){
-  const out=[],seen=new Set();
+  const out=[],seen=new Set(),skipped=[];
   for(let raw of arr){
     if(raw==null)continue;
     let n=String(raw).replace(/^[\s\d.\-)(*•·–—]+/,'').replace(/\s+/g,' ').trim();
-    if(!n||n.length>40)continue;
+    if(n.length>NAME_MAX){skipped.push(n);continue;}
+    if(!n)continue;
     if(/^\d+$/.test(n))continue;                      // pure numbers = row indexes
     if(/^(שם|שמות|בחור|בחורים|מס|מספר|#|name|names)$/i.test(n))continue;  // headers
     if(seen.has(n))continue;
     seen.add(n);out.push(n);
   }
+  cleanNames.skipped=skipped;
   return out;
 }
 /* a table can be "1,לוי,כיתה א" — pick the column that actually holds names */
@@ -9601,11 +9674,11 @@ function runActions(acts){
           const nn=String(a.newRoom).trim();
           if(!nn)throw new Error('מספר החדר החדש ריק');
           if(nn!==old&&roomBy(nn))throw new Error('חדר '+nn+' כבר קיים');
-          r.num=nn;
-          moveNote('room',old,nn);
-          for(const b of Object.keys(S.assign))if(S.assign[b]===old)S.assign[b]=nn;
-          S.sims.forEach(s=>{for(const b of Object.keys(s.assign))if(s.assign[b]===old)s.assign[b]=nn;});
-          S.rules.forEach(x=>{if(x.room===old)x.room=nn;});
+          /* renumberRoom also chases the number through the wing's drawn plan.
+             Doing it by hand here left the plan cell on the old number, so
+             syncLayouts deleted the drawn rectangle and re-dropped the room as a
+             1×1 square somewhere else — a large room the user drew became a dot. */
+          renumberRoom(old,nn);
         }
         if(a.beds!=null)r.beds=Math.max(1,Math.min(12,+a.beds||1));
         if(a.wing){
@@ -10267,7 +10340,7 @@ function applyDisplay(){
      Publishing the real height in zoomed units keeps every such size honest. */
   const z=(d.text||100)/100;
   root.style.zoom=z;
-  root.style.setProperty('--vh',(window.innerHeight/z)+'px');
+  setVh(z);
   b.classList.toggle('d-compact',d.density==='compact');
   b.classList.toggle('d-roomy',d.density==='roomy');
   b.classList.toggle('nobeds',!d.emptyBeds);
@@ -10280,10 +10353,19 @@ function applyDisplay(){
 }
 if(prefersDark&&prefersDark.addEventListener)
   prefersDark.addEventListener('change',()=>{if(S.settings.display.theme==='auto')applyDisplay();});
-addEventListener('resize',()=>{
-  const z=(S.settings.display.text||100)/100;
-  document.documentElement.style.setProperty('--vh',(window.innerHeight/z)+'px');
-});
+/* Every dialog's max-height is a fraction of --vh. It had no floor and was written
+   only from 'resize', so a single measurement of 0 — which happens on minimise, on a
+   virtual-desktop switch and going full-screen — collapsed all sixteen dialogs to a
+   couple of pixels, permanently, with nothing in the app ever recomputing it. */
+function setVh(zoom){
+  const z=zoom||((S&&S.settings&&S.settings.display.text||100)/100);
+  const h=Math.max(360,window.innerHeight||0)/z;
+  document.documentElement.style.setProperty('--vh',h+'px');
+}
+addEventListener('resize',()=>setVh());
+addEventListener('orientationchange',()=>setVh());
+/* coming back from a minimised window or another desktop */
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setVh();});
 /* a second tab holding an older copy of the state would otherwise write straight
    over this one's work — last-writer-wins across the whole document */
 addEventListener('storage',e=>{
