@@ -3403,9 +3403,52 @@ function markSaved(ok){
 /* while a batch is open, save() and render() only mark the work as pending —
    the batch flushes once at the end */
 let batchDepth=0,batchDirty=false;
+/* ---------- the four things that must be true before anything reaches disk ----------
+   Half the 14.8 findings were individually small and collectively one fact: this app
+   could quietly persist a broken board. Each of them was a mutation path that forgot
+   one chase. Rather than trust every future path to remember, check the invariants at
+   the one door they all go through, repair what is repairable, and say so.
+   Returns a short Hebrew description of what it had to fix, or '' when all was well. */
+function repairState(){
+  const fixed=[];
+  const rooms=new Map(S.rooms.map(r=>[r.num,r]));
+  /* 1. every assignment points at a room that exists */
+  let ghosts=0;
+  for(const b of Object.keys(S.assign))
+    if(!rooms.has(S.assign[b])||!S.boys.includes(b)){delete S.assign[b];ghosts++;}
+  if(ghosts)fixed.push(`${ghosts} שיבוצים לחדר שאינו קיים`);
+  /* 2. no room holds more boys than it has beds */
+  let over=0;
+  for(const r of S.rooms){
+    const occ=S.boys.filter(b=>S.assign[b]===r.num);
+    if(occ.length<=r.beds)continue;
+    /* the locked ones keep their place; the rest go back to waiting */
+    const keep=new Set(occ.filter(b=>S.locks.includes(b)).slice(0,r.beds));
+    for(const b of occ){
+      if(keep.size<r.beds&&!keep.has(b))keep.add(b);
+      else if(!keep.has(b)){delete S.assign[b];over++;}
+    }
+  }
+  if(over)fixed.push(`${over} בחורים שישבו בחדר מעבר למספר המיטות`);
+  /* 3. a lock without an assignment means nothing */
+  const locks=S.locks.length;
+  S.locks=[...new Set(S.locks.filter(b=>S.assign[b]))];
+  if(S.locks.length!==locks)fixed.push(`${locks-S.locks.length} נעילות על בחור שאינו משובץ`);
+  /* 4. every rule still names people and rooms that exist */
+  const rules=S.rules.length;
+  S.rules=S.rules.filter(r=>{
+    if(r.room&&!rooms.has(r.room))return false;
+    if(r.members)return r.members.filter(b=>S.boys.includes(b)).length>=2;
+    return S.boys.includes(r.a)&&rooms.has(r.room);
+  });
+  if(S.rules.length!==rules)fixed.push(`${rules-S.rules.length} כללים שהצביעו על מי שכבר לא קיים`);
+  return fixed.join(' · ');
+}
 function save(){
   if(batchDepth){batchDirty=true;return;}
   if(!PID)return;
+  const repaired=repairState();
+  if(repaired)console.warn('[dorm-planner] תוקן לפני שמירה: '+repaired);
   try{
     localStorage.setItem(pKey(PID),JSON.stringify(S));
     const m=projMeta(PID);
