@@ -3179,7 +3179,8 @@ function clearSearches(){
   for(const [inp,clr] of [['#boardSearch','#boardSearchClr'],['#ruleSearch','#ruleSearchClr'],
                           ['#rulesSearch','#rulesSearchClr'],['#edSearch','#edSearchClr'],
                           ['#abSearch','#abSearchClr'],['#grSearch','#grSearchClr'],
-                          ['#hpSearch','#hpSearchClr']]){
+                          ['#hpSearch','#hpSearchClr'],
+                          ['#bySearch','#bySearchClr'],['#findInput',null]]){
     const i=$(inp); if(i)i.value='';
     const c=$(clr); if(c)c.hidden=true;
   }
@@ -3514,6 +3515,21 @@ function readProject(id){
   }catch(e){}
   return null;
 }
+/* Everything that lives in a module variable rather than in S, and therefore does not
+   travel with the project. Left behind, a tick list made in one project arrived in the
+   next with the destructive bulk bar armed over names the user never picked there, and
+   the advisor kept answering about a project that was no longer open. */
+function resetSessionState(){
+  if(typeof PICK!=='undefined')PICK.clear();
+  if(typeof GSEL!=='undefined')GSEL=null;
+  if(typeof railGroup!=='undefined')railGroup=null;
+  if(typeof RSEL!=='undefined')RSEL=null;
+  if(typeof NOTE_ED!=='undefined')NOTE_ED=null;
+  if(typeof AIH!=='undefined'){
+    AIH.length=0;
+    const m=$('#aiMsgs'); if(m)m.innerHTML='';
+  }
+}
 function openProject(id){
   const s=readProject(id);
   if(!s){toast('לא הצלחתי לפתוח את הפרויקט');return false;}
@@ -3522,6 +3538,7 @@ function openProject(id){
   UNDO.length=0; clearSel(); formMembers.clear(); editingRule=null; ED=null; EDW=null; EDB=null;
   STR={bld:null};
   clearSearches();
+  resetSessionState();
   V={level:'home',bld:null,wing:null};
   initDynamic(); applySettings(); paintDisplayUI();
   /* a project always opens on the board — one predictable landing, and the
@@ -3539,6 +3556,8 @@ function createProject(name,desc,mode){
   IX.active=id;
   save(); saveIndex();
   UNDO.length=0; clearSel();
+  clearSearches(); resetSessionState();
+  editingRule=null; formMembers.clear(); ED=null; EDW=null; EDB=null; STR={bld:null};
   V={level:'home',bld:null,wing:null};
   initDynamic(); applySettings();
   /* always the same landing — the welcome panel there offers the ways in */
@@ -5071,6 +5090,9 @@ function renderSims(){
       if(nn&&nn.trim()){snapshot();sim.name=nn.trim();save();render();}
     };
     nm.addEventListener('dblclick',renameSim);
+    /* both clicks of the double-click bubbled to the card first, so trying to rename
+       a saved version LOADED it over the live board before the rename box even opened */
+    nm.addEventListener('click',e=>e.stopPropagation());
 
     const st=document.createElement('div'); st.className='sstats';
     let vh='';
@@ -5083,6 +5105,11 @@ function renderSims(){
     if(snl){snl.style.marginTop='2px';card.appendChild(snl);}
     const btns=document.createElement('div'); btns.className='sbtns';
     btns.appendChild(noteBtn('sim',sim.id,'הערה על "'+sim.name+'"'));
+    /* a double-click is not discoverable — give the rename a button of its own */
+    const bRen=document.createElement('button'); bRen.className='btn mini'; bRen.textContent='✏️';
+    bRen.title='שינוי שם';
+    bRen.addEventListener('click',renameSim);
+    btns.appendChild(bRen);
     const bLoad=document.createElement('button'); bLoad.className='btn mini'; bLoad.textContent='טעינה';
     bLoad.addEventListener('click',e=>{e.stopPropagation();loadSim(sim);});
     const bUpd=document.createElement('button'); bUpd.className='btn mini'; bUpd.textContent='עדכון'; bUpd.title='דריסת הסימולציה במצב הנוכחי';
@@ -5280,8 +5307,15 @@ $('#tbHome').addEventListener('click',()=>{setTab('board');go('home');});
 /* which of the five sections is on screen; 'board' is the assignment section */
 let SEC='board';
 const dropBldAnchor=()=>{try{window.__bldClearAnchor&&window.__bldClearAnchor();}catch(e){}};
-const dropLayAnchor=()=>{try{const g=document.querySelector('.lay .le-grid');
-  if(g&&g.__dropAnchor)g.__dropAnchor();}catch(e){}};
+/* querySelector returns the FIRST match in the document, and the wing editor's grid
+   always precedes the template editor's — so the template editor could never drop
+   its own parked corner. Changing tool there left the corner armed while the dashed
+   band disappeared, and the next click applied a rectangle from the forgotten corner
+   with the NEW tool: with 🧽 that silently erased everything in between, and a layout
+   draft has no undo. Clear every live grid; that is correct for all four callers. */
+const dropLayAnchor=()=>{try{
+  document.querySelectorAll('.lay .le-grid').forEach(g=>{if(g.__dropAnchor)g.__dropAnchor();});
+}catch(e){}};
 function setTab(v){
   dropBldAnchor();dropLayAnchor();
   const had=!!selected;
@@ -5783,6 +5817,36 @@ $('#btnEditApply').addEventListener('click',()=>{
   }
   if(nums.length!==new Set(nums).size){toast('יש מספרי חדרים כפולים');return;}
   // rename maps
+  /* This dialog used to evict boys and delete rules in silence and then report
+     unqualified success, while the structure page files the same deletions in the
+     recycle bin and refuses to remove the last wing. Two doors into the same data
+     must not disagree about consequences — count the collateral and name it. */
+  {
+    const keepR=new Set(ED.rooms.map(r=>String(r.num)));
+    const keepB=new Set(ED.boys.map(b=>b.name.trim()).filter(Boolean));
+    const renB0={},renR0={};
+    ED.boys.forEach(b=>{const n=b.name.trim();if(b.orig&&n&&b.orig!==n)renB0[b.orig]=n;});
+    ED.rooms.forEach(r=>{if(r.orig&&r.orig!==r.num)renR0[r.orig]=r.num;});
+    let evicted=0;
+    const cap={};
+    for(const r of ED.rooms)cap[String(r.num)]=r.beds;
+    const seat={};
+    for(const [b,rm] of Object.entries(S.assign)){
+      const nb=renB0[b]||b, nr=renR0[rm]||rm;
+      if(!keepB.has(nb)||!keepR.has(String(nr))){evicted++;continue;}
+      seat[String(nr)]=(seat[String(nr)]||0)+1;
+      if(seat[String(nr)]>cap[String(nr)])evicted++;
+    }
+    const lostRules=S.rules.filter(r=>{
+      if(r.members)return r.members.map(x=>renB0[x]||x).filter(x=>keepB.has(x)).length<2;
+      return !keepB.has(renB0[r.a]||r.a)||!keepR.has(String(renR0[r.room]||r.room));
+    }).length;
+    const gone=S.wings.filter(w=>!ED.wings.some(x=>x.id===w.id)).length;
+    const bits=[gone&&`${gone} אגפים יימחקו`,evicted&&`${evicted} בחורים יצאו מחדריהם`,
+                lostRules&&`${lostRules} כללים יימחקו`].filter(Boolean);
+    if(bits.length&&!confirm('שמירת העריכה תגרור:\n· '+bits.join('\n· ')
+      +'\n\nCtrl+Z מחזיר. להמשיך?'))return;
+  }
   snapshot();
   const renB={},renR={};
   ED.boys.forEach(b=>{const n=b.name.trim();if(b.orig&&n&&b.orig!==n)renB[b.orig]=n;});
@@ -6809,14 +6873,19 @@ function renderBulk(shown){
     gs.appendChild(new Option('— הסרה מכל קבוצה —','__none'));
     gs.addEventListener('change',()=>{
       if(!gs.value)return;
+      /* capture before clearing — the message used to be chosen from a value that had
+         already been reset, so "הסרה מכל הקבוצות" always reported the opposite */
+      const mode=gs.value;
       snapshot();
       S.groups.forEach(g=>{g.members=g.members.filter(b=>!PICK.has(b));});
-      if(gs.value!=='__none'){
-        const g=S.groups.find(x=>x.id===gs.value);
-        if(g)g.members.push(...sel);
+      let gname='';
+      if(mode!=='__none'){
+        const g=S.groups.find(x=>x.id===mode);
+        if(g){g.members.push(...sel);gname=g.name;}
       }
       gs.value='';save();render();
-      toast(gs.value==='__none'?`${sel.length} הוסרו מקבוצותיהם`:`${sel.length} שויכו לקבוצה`);
+      toast(mode==='__none'?`${sel.length} הוסרו מקבוצותיהם`
+                           :`${sel.length} שויכו ל"${gname}"`);
     });
     bar.appendChild(gs);
   }
@@ -7842,8 +7911,11 @@ function openWing(id,bldId){
                       ...(c.t==='hall'?{}:{w:cellW(c),h:cellH(c)})});
   }
   EDW={id:id||null,building:w?w.building:(bldId||S.buildings[0].id),tpl:null};
-  WLAY={root:$('#wgLayEd'),cells,sel:null,numbered:true,tool:cells.length?'move':'hall',
-        defBeds:Math.max(1,Math.min(12,parseInt($('#wgBeds').value,10)||4))};
+  /* one value for both the field and the draft. It used to be read from #wgBeds
+     BEFORE the line below overwrote that field, and nothing resets the field on
+     close — so a hand-drawn room got a bed count contradicting the one on screen. */
+  const defBeds=Math.max(1,Math.min(12,(cells.find(c=>c.t==='room')||{}).beds||4));
+  WLAY={root:$('#wgLayEd'),cells,sel:null,numbered:true,tool:cells.length?'move':'hall',defBeds};
   LAY=WLAY;
   $('#wgTtl').textContent=w?'🏗️ '+w.name:'🏗️ אגף חדש';
   $('#wgName').value=w?w.name:'';
@@ -7858,7 +7930,7 @@ function openWing(id,bldId){
   $('#wgDel').hidden=!w;
   $('#wgStart').value=suggestStart();
   $('#wgCount').value=String(Math.max(1,layRooms().length||10));
-  $('#wgBeds').value=String(layRooms()[0]?layRooms()[0].beds:4);
+  $('#wgBeds').value=String(defBeds);
   /* in the simple mode there is no drawing at all: no template gallery, no canvas.
      A wing is a name and a run of rooms, and that is the whole dialog. */
   const pro=isPro();
@@ -8474,6 +8546,17 @@ $('#wgName').addEventListener('input',()=>{});
 $('#wgSave').addEventListener('click',()=>{
   const nm=$('#wgName').value.trim();
   if(!nm){toast('צריך שם לאגף');return;}
+  /* The hint above the button promises "ייבנו 10 חדרים", but those fields only take
+     effect when בניית החדרים is pressed. Saving straight away created a wing with no
+     rooms at all — so build them here rather than quietly contradicting the hint. */
+  if(!layRooms().length&&$('#wgCount').value.trim()){
+    const c=Math.max(0,Math.min(200,parseInt($('#wgCount').value,10)||0));
+    if(c>0){
+      if(isPro()&&!EDW.tpl){toast('בחרו תבנית ולחצו "בניית הפריסה", או הורידו את מספר החדרים ל־0');return;}
+      $('#wgApplyTpl').click();
+      if(!layRooms().length)return;      /* the build reported its own reason */
+    }
+  }
   /* reading order on the grid becomes the room order everywhere else */
   const rooms=layRooms().slice().sort((p,q)=>p.y-q.y||p.x-q.x);
   const seen=new Set();
@@ -9085,11 +9168,19 @@ function parseSetupTable(rows){
       if(map.room!==undefined){
         const rn=String(row[map.room]||'').trim();
         /* a room number is short and has no sentence punctuation — captions are not rooms */
-        if(rn&&rn.length<=12&&!/[.:·—]/.test(rn)&&!seenR.has(rn)){
-          seenR.add(rn);
-          rooms.push({num:rn,
-            beds:Math.max(1,Math.min(12,parseInt(row[map.beds],10)||2)),
-            wingName:map.wing!==undefined?String(row[map.wing]||'').trim():''});
+        if(rn&&rn.length<=12&&!/[.:·—]/.test(rn)){
+          const wn=map.wing!==undefined?String(row[map.wing]||'').trim():'';
+          /* Key by wing+number, not number alone. A building numbered per floor
+             legitimately has 101 in every wing; de-duplicating on the number alone
+             dropped every repeat AND never created its wing, so half the building
+             vanished while the import reported success. */
+          const key=wn+'|'+rn;
+          if(!seenR.has(key)){
+            seenR.add(key);
+            rooms.push({num:rn,
+              beds:Math.max(1,Math.min(12,parseInt(row[map.beds],10)||2)),
+              wingName:wn});
+          }
         }
       }
     }
