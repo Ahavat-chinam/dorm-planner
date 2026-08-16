@@ -1030,10 +1030,18 @@ body.rail-off .rl-toggle{inset-inline-end:8px}
   position:absolute;inset-block-end:11px;inset-inline-end:11px;
   background:var(--card2);border:1px solid var(--line);color:var(--dim);
   cursor:pointer;font-size:12px;padding:4px 8px;border-radius:9px;
-  opacity:0;pointer-events:none;transition:.13s;
+  /* fades in on hover but stays CLICKABLE always. It used to be pointer-events:none
+     until hover — and on a touch screen there is no hover, so the project ⋯ menu,
+     the only route to rename, duplicate or delete a project, could not be reached
+     at all on a tablet. Opacity hides it; it must never swallow the tap. */
+  opacity:0;transition:.13s;
 }
-.card:hover .card-edit,.card-edit:focus-visible{opacity:1;pointer-events:auto}
+.card:hover .card-edit,.card-edit:focus-visible{opacity:1}
 .card-edit:hover{color:var(--tx);border-color:var(--hover)}
+/* no hover to reveal it — show it outright */
+@media (hover:none){
+  .card-edit{opacity:.85}
+}
 
 /* miniature corridor drawn on a wing card — the plan at a glance */
 .mini{display:flex;flex-direction:column;gap:2.5px;padding:8px 9px;border-radius:11px;background:var(--sunk2);border:1px solid var(--line)}
@@ -1818,7 +1826,17 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
   body.rail-off .rl-toggle{bottom:96px;inset-inline-end:14px}
   #assignBar{inset-inline-end:0;max-height:min(calc(.62 * var(--vh,100vh)),420px)}
   #aiFab,#aiPanel{left:16px}
-  body:not(.rail-off) #aiFab,body:not(.rail-off) #aiPanel{display:none}
+  /* Only the floating button hides behind the open rail — it is what collides with
+     it. Hiding the PANEL too left the advisor with no entry point at all at this
+     width: the ✨ button was gone and "פתיחת השיחה ✨" in settings did nothing at
+     all. The panel gets a narrow-screen layout instead, above the rail. */
+  body:not(.rail-off) #aiFab{display:none}
+  #aiPanel{
+    inset-inline:12px;width:auto;
+    bottom:calc(min(calc(.46 * var(--vh,100vh)),320px) + 12px);
+    max-height:min(calc(.5 * var(--vh,100vh)),460px);
+  }
+  body.rail-off #aiPanel{bottom:88px}
 }
 </style>
 </head>
@@ -3162,7 +3180,13 @@ function wireSearch(inputSel,clrSel,key,after,delay){
   };
   inp.addEventListener('input',()=>sync(false));
   inp.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();inp.value='';sync(true);}
+    /* only swallow Esc when there is actually something to clear. The assign
+       drawer auto-focuses its search box, so an unconditional stopPropagation
+       here ate every Esc and the drawer could not be closed with it — while the
+       close button, the board footer and the shortcuts dialog all promised it. */
+    if(e.key!=='Escape'||!inp.value)return;
+    e.preventDefault();e.stopPropagation();
+    inp.value='';sync(true);
   });
   clr.addEventListener('click',()=>{inp.value='';sync(true);inp.focus();});
 }
@@ -4053,6 +4077,17 @@ function renderSoon(fn){
   if(PRESSING){PENDING_PAINT=f;return;}
   f();
 }
+/* The project list is painted into #view, and #view lives inside the board pane —
+   every other section's pane is display:none. Arriving here from section 1/2/3/5
+   built the grid inside a hidden pane, hid the tab bar, and hid the very button
+   that got you here: a dead end whose only exit was the logo or F5. The section
+   has to come along, so every route in goes through here. */
+function gotoProjects(){
+  clearSel();
+  if(SEC!=='board')setTab('board');
+  V={level:'projects',bld:null,wing:null};
+  render();
+}
 function render(){
   if(batchDepth){batchDirty=true;return;}
   syncLayouts();
@@ -4283,7 +4318,7 @@ function renderCrumbs(){
   const b=bldBy(V.level==='building'?V.bld:(w?w.building:null));
   /* the project is always the first step back, so there is never a dead end */
   const parts=[{t:'📁 '+(S.zman||'הפרויקט'),
-                fn:()=>{clearSel();V={level:'projects',bld:null,wing:null};render();}}];
+                fn:()=>gotoProjects()}];
   if(V.level!=='home')parts.push({t:'🏠 פתיחה',fn:()=>go('home')});
   else parts.push({t:'🏠 פתיחה',fn:null});
   if(b&&(S.buildings.length>1||V.level==='building'))
@@ -5209,6 +5244,11 @@ railSec.addEventListener('drop',e=>{
 });
 railSec.addEventListener('click',e=>{
   e.stopPropagation();
+  /* the rail is the waiting list, so a click on its empty space means "put him
+     back here". But its controls live in that same space, and clicking the search
+     box, a group pill or the groups gear was silently pulling the selected boy out
+     of his room with no message at all. Operating a control is not a drop. */
+  if(e.target.closest('input,button,select,textarea,label,a,#railGroups'))return;
   if(selected&&S.assign[selected])assignBoy(selected,null);
 });
 /* clicking anywhere that is not part of the picking flow puts the boy down */
@@ -5546,8 +5586,12 @@ $('#fileImport').addEventListener('change',e=>{
       const s=JSON.parse(rd.result);
       if(!s||!Array.isArray(s.boys)||!Array.isArray(s.rooms))throw 0;
       /* restoring with no project open used to report success and write nothing —
-         a backup that cannot be restored is not a backup */
-      if(!PID){
+         a backup that cannot be restored is not a backup.
+         The projects screen counts as "no project open": its whole semantic is
+         choose-or-add, and PID still points at whatever was open behind the card
+         grid. Restoring there used to silently overwrite THAT project — it vanished
+         from the list and came back wearing the backup's name. */
+      if(!PID||V.level==='projects'){
         createProject(String(s.zman||'שוחזר מגיבוי').slice(0,80),String(s.desc||'').slice(0,240));
         if(!PID){toast('לא הצלחתי ליצור פרויקט לשחזור');return;}
       }
@@ -7049,8 +7093,7 @@ $('#projDup').addEventListener('click',()=>{
   const nid=duplicateProject(EDP);
   if(!nid){toast('השכפול נכשל');return;}
   $('#dlgProj').close();
-  V={level:'projects',bld:null,wing:null};
-  render(); toast('הפרויקט שוכפל 📄');
+  gotoProjects(); toast('הפרויקט שוכפל 📄');
 });
 $('#projBackup').addEventListener('click',()=>{
   const s=(EDP===PID)?S:readProject(EDP);
@@ -7071,14 +7114,11 @@ $('#projDel').addEventListener('click',()=>{
     +`אם יש ספק — סגרו, לחצו "גיבוי לקובץ", ורק אז מחקו.`))return;
   deleteProject(EDP);
   $('#dlgProj').close();
-  V={level:'projects',bld:null,wing:null};
   if(!PID){S=blankProject();initDynamic();}
-  render(); toast('הפרויקט נמחק');
+  gotoProjects(); toast('הפרויקט נמחק');
 });
 $('#btnProjects').addEventListener('click',()=>{
-  clearSel();
-  V={level:'projects',bld:null,wing:null};
-  render();
+  gotoProjects();
   window.scrollTo({top:0,behavior:S.settings.display.motion?'smooth':'auto'});
 });
 
@@ -8282,8 +8322,11 @@ function renderTplMgr(){
       snapshot();
       trashPut('template',t.name,t.desc||'',{template:JSON.parse(JSON.stringify(t))});
       S.templates=S.templates.filter(x=>x.id!==t.id);
+      /* the wing dialog may still be pointing at the template that just died —
+         leaving it there made "🧱 בניית הפריסה" a permanently silent no-op */
+      if(EDW&&EDW.tpl===t.id)EDW.tpl=null;
       save();renderTplMgr();
-      if($('#dlgWing').open)renderTpls();
+      if($('#dlgWing').open){renderTpls();tplNote();}
     },'danger'));
     card.appendChild(row);
     box.appendChild(card);
@@ -10417,7 +10460,17 @@ document.addEventListener('keydown',e=>{
   const dlgOpen=!!document.querySelector('dialog[open]');
   /* help is reachable from anywhere, even mid-dialog — that is the point of F1 */
   if(e.key==='F1'){e.preventDefault();openHelp(HELP_FOR_SEC[SEC]||'start');return;}
-  if(e.ctrlKey&&(e.key==='k'||e.key==='K')){e.preventDefault();if(PID)openFind();return;}
+  if(e.ctrlKey&&(e.key==='k'||e.key==='K')){
+    e.preventDefault();
+    if(!PID)return;
+    /* every search result navigates the board. Opening the finder on top of another
+       modal meant the result took effect behind it: the finder closed, the original
+       dialog snapped back, and from the user's side nothing had happened. Clear the
+       stack first so the result lands somewhere visible. */
+    for(let d=topDialog();d&&d.id!=='dlgFind';d=topDialog())d.close();
+    openFind();
+    return;
+  }
   if(e.key==='?'&&!typing){e.preventDefault();openKeys();return;}
   if(e.ctrlKey&&(e.key==='z'||e.key==='Z')&&!typing&&!dlgOpen){e.preventDefault();undo();return;}
   if(e.ctrlKey&&(e.key==='s'||e.key==='S')){
@@ -10425,6 +10478,10 @@ document.addEventListener('keydown',e=>{
     if(!dlgOpen)$('#btnSaveSim').click();
     return;
   }
+  /* The assign drawer auto-focuses its search box, so "typing" is the normal state
+     there rather than an exception — Esc has to be handled before the guard, or the
+     drawer can never be dismissed with the key three places in the UI advertise. */
+  if(e.key==='Escape'&&selected&&!dlgOpen){e.preventDefault();clearSel();render();return;}
   if(typing||dlgOpen)return;   // board shortcuts must not reach through an open dialog
   if(e.key==='/'||e.key==='f'&&e.ctrlKey){
     e.preventDefault();$('#boardSearch').focus();$('#boardSearch').select();return;
