@@ -1975,6 +1975,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
     <div class="searchrow">
       <span class="search"><input type="text" id="bySearch" placeholder="חיפוש שם…">
         <button class="clr" id="bySearchClr" hidden title="ניקוי">✕</button></span>
+      <button class="btn mini" id="bySort" title="מיון התצוגה לפי א״ב — ליד כל שם רואים את החדר שלו">🔤 מיון א־ב</button>
       <span class="hitcount" id="byHits"></span>
     </div>
     <div class="bulk-bar" id="byBulk" hidden></div>
@@ -3322,7 +3323,12 @@ function migrate(s){
   s.buildings=s.buildings.filter(b=>b&&b.id!=null).map(b=>({
     id:String(b.id),
     name:String(b.name==null?'':b.name).trim()||'בניין',
-    icon:String(b.icon||'🏢').slice(0,4)
+    icon:String(b.icon||'🏢').slice(0,4),
+    /* floors MUST survive this rebuild. Omitting them here meant every load
+       rediscovered a building with no floors and invented a single one — so a
+       multi-floor building silently collapsed to one floor on every reload,
+       taking the floor names and the per-floor wing layout with it. */
+    floors:Array.isArray(b.floors)?b.floors:[]
   }));
   if(!s.buildings.length)s.buildings=[{id:'bld1',name:'הבניין',icon:'🏢'}];
   const bldIds=new Set(s.buildings.map(b=>b.id));
@@ -6924,11 +6930,16 @@ function removeBoyEverywhere(name,toTrash){
    ===================================================================== */
 /* names ticked for a bulk action */
 let PICK=new Set();
+let BY_SORT=false;
 function renderBoys(){
   if(!PID)return;
-  $('#byCnt').textContent=S.boys.length?`${S.boys.length} בחורים`:'הרשימה ריקה';
+  $('#byCnt').textContent=S.boys.length?cnt(S.boys.length,'בחורים'):'הרשימה ריקה';
+  $('#bySort').classList.toggle('accent',BY_SORT);
   const box=$('#byList'); box.innerHTML='';
-  const shown=S.boys.filter(b=>hits(b,Q.by));
+  /* the answer to "איפה השיבוץ כרשימה אלפביתית": sort the VIEW, never the data —
+     each row already shows the boy's room, so sorted it reads name → room */
+  let shown=S.boys.filter(b=>hits(b,Q.by));
+  if(BY_SORT)shown=[...shown].sort((p,q)=>p.localeCompare(q,'he'));
   /* a tick on a name that no longer exists must not linger */
   PICK=new Set([...PICK].filter(b=>S.boys.includes(b)));
   let n=0;
@@ -10789,6 +10800,7 @@ $('#setOpenHelp').addEventListener('click',()=>{$('#dlgSettings').close();openHe
 $('#setOpenKeys').addEventListener('click',()=>{$('#dlgSettings').close();openKeys();});
 $('#setOpenAbout').addEventListener('click',()=>{$('#dlgSettings').close();openAbout();});
 wireSearch('#bySearch','#bySearchClr','by',()=>{if(SEC==='boys')renderBoys();},150);
+$('#bySort').addEventListener('click',()=>{BY_SORT=!BY_SORT;renderBoys();});
 
 /* ---------- download & share ---------- */
 const APP_HOME='https://ahavat-chinam.github.io/dorm-planner/';
