@@ -9028,6 +9028,10 @@ $('#wgSave').addEventListener('click',()=>{
     const b3=bldBy(EDW.building)||S.buildings[0];
     w={id:wid,name:nm,building:EDW.building,floor:b3.floors[0].id,plan:[]};
     S.wings.push(w);
+    /* the seeded placeholder bows out once a real wing exists — same rule as the
+       basic list, otherwise the floor sequence opens with an empty chip nobody made */
+    S.wings=S.wings.filter(x=>
+      x.id===wid||!(x.name==='אגף ראשי'&&!roomsOf(x.id).length&&!noteOf('wing',x.id)&&!(x.plan||[]).length));
   }
   w.name=nm;
   if(w.building!==EDW.building){
