@@ -4299,10 +4299,12 @@ function renderProjects(host){
   hero.appendChild(L);
   host.appendChild(hero);
 
-  host.appendChild(secHead('📁 פרויקטים',[
+  /* on the very first run the empty-state block below offers the same two actions,
+     bigger and with context — a second, smaller copy of each above it was noise */
+  host.appendChild(secHead('📁 פרויקטים',IX.projects.length?[
     mini('+ פרויקט חדש',()=>openProjDlg(null)),
     mini('📂 שחזור מגיבוי',()=>$('#fileImport').click())
-  ]));
+  ]:[]));
 
   if(!IX.projects.length){
     const box=el('div','blank');
