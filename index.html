@@ -1810,17 +1810,23 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
    ==========================  narrow screens  =========================
    ===================================================================== */
 @media (max-width:980px){
-  body{padding-inline-end:clamp(14px,3.5vw,46px);padding-bottom:96px}
+  /* the rail moves to the bottom of the screen here and is up to 320px tall, but the
+     page only reserved 96px — so the last couple of hundred pixels of every section
+     sat underneath it, unreachable at any scroll position. The add-name row, the last
+     names in the list and "ניהול הקבוצות" were all buried. Reserve the real height. */
+  :root{--railBottom:min(calc(.46 * var(--vh,100vh)),320px)}
+  body{padding-inline-end:clamp(14px,3.5vw,46px);padding-bottom:calc(var(--railBottom) + 26px)}
+  body.rail-off{padding-bottom:110px}
   #topbar{margin-left:calc(clamp(14px,3.5vw,46px) * -1);padding-left:clamp(14px,3.5vw,46px)}
   #rail{
-    top:auto;inset-inline:0;bottom:0;width:auto;height:min(calc(.46 * var(--vh,100vh)),320px);
+    top:auto;inset-inline:0;bottom:0;width:auto;height:var(--railBottom);
     border-inline-start:none;border-top:1px solid var(--line2);
     border-radius:20px 20px 0 0;box-shadow:0 -12px 36px var(--sh3);
   }
   body.rail-off #rail{transform:translateY(calc(100% - 46px))}
   .rl-toggle{
     inset-inline-end:14px;top:auto;transform:none;
-    bottom:calc(min(calc(.46 * var(--vh,100vh)),320px) + 10px);width:54px;height:28px;
+    bottom:calc(var(--railBottom) + 10px);width:54px;height:28px;
   }
   /* clear of the ✨ button, which owns the corner when the rail is closed */
   body.rail-off .rl-toggle{bottom:96px;inset-inline-end:14px}
@@ -1833,7 +1839,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
   body:not(.rail-off) #aiFab{display:none}
   #aiPanel{
     inset-inline:12px;width:auto;
-    bottom:calc(min(calc(.46 * var(--vh,100vh)),320px) + 12px);
+    bottom:calc(var(--railBottom) + 12px);
     max-height:min(calc(.5 * var(--vh,100vh)),460px);
   }
   body.rail-off #aiPanel{bottom:88px}
