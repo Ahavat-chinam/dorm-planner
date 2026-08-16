@@ -788,6 +788,24 @@ dialog h3{font-size:17.5px;font-weight:900;margin:0}
 }
 .stepn button:hover{background:var(--line2)}
 .stepn .val{min-width:26px;text-align:center;font-weight:900;font-size:13px}
+/* the strip editor — the floor the way the yeshiva actually draws it on paper:
+   two rows of room boxes along the corridor, services as marked cells between */
+#wgStrip{direction:rtl}
+.strip-row{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;min-height:54px;padding:7px;border:1.5px dashed var(--line2);border-radius:12px}
+.strip-hall{margin:6px 0;padding:5px;text-align:center;border-radius:9px;
+  background:repeating-linear-gradient(45deg,var(--card2),var(--card2) 9px,var(--sunk2) 9px,var(--sunk2) 18px);
+  color:var(--dim);font-size:11px;font-weight:900;letter-spacing:3px}
+.sc{position:relative;min-width:62px;padding:7px 9px 5px;border:1.5px solid var(--line);border-radius:10px;background:var(--card2);cursor:grab;text-align:center}
+.sc b{display:block;font-size:14.5px}
+.sc small{display:block;color:var(--dim);font-size:10.5px;font-weight:700}
+.sc.svc{background:var(--sunk2);border-style:dashed;color:var(--muted)}
+.sc.on{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent)}
+.sc .x{position:absolute;top:-7px;inset-inline-start:-7px;width:18px;height:18px;border-radius:50%;
+  border:1px solid var(--line);background:var(--card);color:var(--dim);font-size:10px;line-height:1;cursor:pointer;display:none;padding:0}
+.sc:hover .x{display:block}
+.sc.dragover{outline:2px dashed var(--acc);outline-offset:2px}
+.strip-add{display:inline-flex;gap:5px;align-items:center}
+.strip-ed{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
 .dlgbtns{display:flex;gap:8px;margin-top:12px}
 
 /* ================= search boxes ================= */
@@ -2451,8 +2469,13 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
       </div>
 
       <div class="ed-sec" id="wgLaySec">
-        <h4>🧱 הפריסה <span class="cnt">בוחרים כלי ומציירים — לכל כיוון</span></h4>
-        <p class="hint">המסדרון יכול להתפתל לכל צורה — גררו אותו כמו מכחול, גם בפניות.
+        <h4>🧱 הפריסה <span class="cnt">כמו דף הקומה המודפס</span></h4>
+        <div class="dlgbtns" style="margin:0 0 10px">
+          <button class="btn mini accent" id="wgModeStrip">📋 רצועה — שתי שורות לאורך המסדרון</button>
+          <button class="btn mini" id="wgModeGrid">🖌️ שרטוט חופשי — לקומה שבנויה אחרת</button>
+        </div>
+        <div id="wgStrip" hidden></div>
+        <p class="hint" id="wgGridHint">המסדרון יכול להתפתל לכל צורה — גררו אותו כמו מכחול, גם בפניות.
           חדרים ושטחי שירות מניחים סביבו מכל צד: מעל, מתחת, מימין ומשמאל.
           בכלי 🖐️ בוחרים משבצת לעריכה או גוררים אותה למקום אחר.</p>
         <div class="layout-editor" id="wgLayEd">
@@ -7995,7 +8018,13 @@ function openWing(id,bldId){
     : '🚪 החדרים <span class="cnt">כמה חדרים, כמה מיטות בכל אחד</span>';
   $('#wgApplyTpl').textContent=pro?'🧱 בניית הפריסה':'🚪 בניית החדרים';
   if(pro)renderTpls();
-  renderLay(); tplNote();
+  if(pro){
+    /* the strip is the default — it is what the yeshiva's own sheets look like.
+       A wing painted too freely for it opens in the grid, no questions asked. */
+    STRIP=cellsToStrip(cells.map(c=>({...c}))); STRIP_SEL=null;
+    setLayView(STRIP?'strip':'grid');
+  }else renderLay();
+  tplNote();
   $('#dlgWing').showModal();
   if(!w)$('#wgName').focus();
 }
@@ -8064,11 +8093,178 @@ $('#wgApplyTpl').addEventListener('click',()=>{
     .map(c=>c.t==='room'   /* keeps w/h from the template */
       ?{...c,orig:prev.get(c.num)||null}:c);
   LAY.sel=null;
-  renderLay(); tplNote();
+  renderLay(); tplNote(); stripAfterCellsChanged();
   toast(pro
-    ? `הפריסה נבנתה — ${count} חדרים. אפשר עכשיו לעקם, להזיז ולהוסיף בכלי הציור`
+    ? `הפריסה נבנתה — ${count} חדרים. אפשר לסדר אותם ברצועה או בכלי הציור`
     : `${count} חדרים מוכנים. שמירה — והם ברשימה`);
 });
+
+/* ================= the strip editor =================
+   Benyamin photographed the real floor sheets: a horizontal strip, two rows of
+   room boxes along the corridor, services (שירותים/מקלחות) as marked cells between
+   them. A wing is a SEQUENCE, not a painting. This editor is that sheet, editable;
+   the free grid stays one click away for floors built differently. */
+let STRIP=null,STRIP_SEL=null;
+const STRIP_SVC=[['toilet','🚻 שירותים'],['shower','🚿 מקלחות'],['stairs','🪜 מדרגות'],
+  ['entrance','🚶 כניסה'],['exit','🆘 יציאת חירום'],['elevator','🛗 מעלית'],
+  ['dead','⬛ שטח מת'],['madrich','🧑‍🏫 חדר מדריך'],['study','📚 חדר לימוד']];
+function cellsToStrip(cells){
+  if(!cells.length)return {a:[],b:[]};
+  const halls=cells.filter(c=>c.t==='hall');
+  const mk0=c=>c.t==='room'?{t:'room',num:c.num,beds:c.beds,orig:c.orig||null}
+                           :{t:c.t,label:c.label||''};
+  if(!halls.length){
+    /* a basic-mode wing has rooms and no corridor at all — reading order onto one
+       side is an honest starting point, and dragging splits them across the hall */
+    if(cells.some(c=>cellW(c)!==1||cellH(c)!==1))return null;
+    const flat=[...cells].sort((p,q)=>p.y-q.y||p.x-q.x);
+    return {a:flat.map(mk0),b:[]};
+  }
+  const hy=halls[0].y;
+  if(halls.some(h=>h.y!==hy))return null;
+  const a=[],b=[];
+  for(const c of cells){
+    if(c.t==='hall')continue;
+    if(cellW(c)!==1||cellH(c)!==1)return null;
+    if(c.y===hy-1)a.push(c); else if(c.y===hy+1)b.push(c); else return null;
+  }
+  a.sort((p,q)=>p.x-q.x); b.sort((p,q)=>p.x-q.x);
+  const mk=c=>c.t==='room'?{t:'room',num:c.num,beds:c.beds,orig:c.orig||null}
+                          :{t:c.t,label:c.label||''};
+  return {a:a.map(mk),b:b.map(mk)};
+}
+function stripToCells(s){
+  const out=[];
+  const len=Math.min(PW-2,Math.max(s.a.length,s.b.length,1));
+  for(let i=0;i<len;i++)out.push({t:'hall',x:i+1,y:2});
+  s.a.slice(0,PW-2).forEach((c,i)=>out.push({...c,x:i+1,y:1,w:1,h:1}));
+  s.b.slice(0,PW-2).forEach((c,i)=>out.push({...c,x:i+1,y:3,w:1,h:1}));
+  return out;
+}
+function stripNextNum(){
+  const nums=[...STRIP.a,...STRIP.b].filter(c=>c.t==='room').map(c=>String(c.num));
+  const used=new Set(nums);
+  let n=nums.length?roomNums(nums[nums.length-1],2)[1]
+                   :String(parseInt($('#wgStart').value,10)||101);
+  let guard=0;
+  while((used.has(n)||S.rooms.some(r=>r.num===n&&!(EDW.id&&r.wing===EDW.id)))&&guard++<500)
+    n=roomNums(n,2)[1]||String((+n||100)+1);
+  return n;
+}
+function stripSync(){LAY.cells=stripToCells(STRIP);LAY.sel=null;tplNote();renderStrip();}
+function setLayView(v,autoNote){
+  const strip=v==='strip';
+  $('#wgStrip').hidden=!strip;
+  $('#wgLayEd').hidden=strip;
+  $('#wgGridHint').hidden=strip;
+  $('#wgModeStrip').classList.toggle('accent',strip);
+  $('#wgModeGrid').classList.toggle('accent',!strip);
+  if(strip)renderStrip(); else renderLay();
+  if(autoNote)toast('הפריסה הזו חופשית מדי לרצועה — ממשיכים בשרטוט החופשי');
+}
+function stripAfterCellsChanged(){
+  if(!$('#wgStrip')||$('#wgStrip').hidden)return;
+  const s=cellsToStrip(LAY.cells.map(c=>({...c})));
+  if(s){STRIP=s;STRIP_SEL=null;renderStrip();} else setLayView('grid',true);
+}
+function renderStrip(){
+  const host=$('#wgStrip'); host.innerHTML='';
+  host.appendChild(el('p','hint',
+    'כמו הדף שתולים על הקיר: שורה מכל צד של המסדרון. לוחצים על תא כדי לערוך אותו, גוררים כדי לסדר מחדש.'));
+  const row=side=>{
+    const r=el('div','strip-row'); r.dataset.side=side;
+    STRIP[side].forEach((c,i)=>{
+      const d=el('div','sc'+(c.t==='room'?'':' svc')
+        +(STRIP_SEL&&STRIP_SEL.side===side&&STRIP_SEL.i===i?' on':''));
+      if(c.t==='room'){d.append(el('b',null,String(c.num)),el('small',null,cnt(c.beds,'מיטות')));}
+      else{
+        const lbl=(STRIP_SVC.find(x=>x[0]===c.t)||[,CELL_TYPES[c.t]?CELL_TYPES[c.t].he:c.t])[1];
+        d.append(el('b',null,lbl.split(' ')[0]),el('small',null,c.label||lbl.split(' ').slice(1).join(' ')));
+      }
+      const x=el('button','x','✕'); x.title='הסרה';
+      x.addEventListener('click',e=>{e.stopPropagation();STRIP[side].splice(i,1);STRIP_SEL=null;stripSync();});
+      d.appendChild(x);
+      d.addEventListener('click',()=>{STRIP_SEL={side,i};renderStrip();});
+      d.draggable=true;
+      d.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',side+':'+i);});
+      d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('dragover');});
+      d.addEventListener('dragleave',()=>d.classList.remove('dragover'));
+      d.addEventListener('drop',e=>{
+        e.preventDefault();e.stopPropagation();
+        const [fs,fi]=e.dataTransfer.getData('text/plain').split(':');
+        const cell=STRIP[fs].splice(+fi,1)[0]; if(!cell)return;
+        let ti=i; if(fs===side&&+fi<i)ti--;
+        STRIP[side].splice(ti,0,cell); STRIP_SEL=null; stripSync();
+      });
+      r.appendChild(d);
+    });
+    const add=el('span','strip-add');
+    const ar=el('button','btn mini','+ חדר');
+    ar.addEventListener('click',()=>{
+      STRIP[side].push({t:'room',num:stripNextNum(),beds:WLAY&&WLAY.defBeds||4,orig:null});
+      STRIP_SEL={side,i:STRIP[side].length-1};stripSync();
+    });
+    const sv=document.createElement('select');
+    sv.innerHTML='<option value="">+ שירות…</option>'
+      +STRIP_SVC.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+    sv.addEventListener('change',()=>{
+      if(!sv.value)return;
+      STRIP[side].push({t:sv.value,label:''});sv.value='';
+      STRIP_SEL={side,i:STRIP[side].length-1};stripSync();
+    });
+    add.append(ar,sv); r.appendChild(add);
+    r.addEventListener('dragover',e=>e.preventDefault());
+    r.addEventListener('drop',e=>{
+      e.preventDefault();
+      const [fs,fi]=e.dataTransfer.getData('text/plain').split(':');
+      const cell=STRIP[fs].splice(+fi,1)[0]; if(!cell)return;
+      STRIP[side].push(cell); STRIP_SEL=null; stripSync();
+    });
+    return r;
+  };
+  host.appendChild(row('a'));
+  host.appendChild(el('div','strip-hall','מ ס ד ר ו ן'));
+  host.appendChild(row('b'));
+  if(STRIP_SEL){
+    const c=STRIP[STRIP_SEL.side]&&STRIP[STRIP_SEL.side][STRIP_SEL.i];
+    if(c){
+      const ed=el('div','strip-ed');
+      if(c.t==='room'){
+        const f1=el('div','wiz-f'); f1.appendChild(el('label',null,'מספר החדר'));
+        const inp=el('input'); inp.type='text'; inp.value=String(c.num); inp.style.width='90px';
+        inp.addEventListener('change',()=>{
+          const nn=inp.value.trim();
+          if(!nn){inp.value=String(c.num);return;}
+          const clash=[...STRIP.a,...STRIP.b].some(x=>x!==c&&x.t==='room'&&String(x.num)===nn);
+          if(clash){toast('המספר הזה כבר ברצועה');inp.value=String(c.num);return;}
+          c.num=nn;stripSync();
+        });
+        f1.appendChild(inp);
+        const f2=el('div','wiz-f'); f2.appendChild(el('label',null,'מיטות'));
+        const st=el('span','stepn');
+        const mi=el('button',null,'−'),vl=el('span','val',String(c.beds)),pl=el('button',null,'+');
+        mi.addEventListener('click',()=>{if(c.beds>1){c.beds--;stripSync();}});
+        pl.addEventListener('click',()=>{if(c.beds<12){c.beds++;stripSync();}});
+        st.append(mi,vl,pl); f2.appendChild(st);
+        ed.append(f1,f2);
+      }else{
+        const f=el('div','wiz-f'); f.style.flex='1';
+        f.appendChild(el('label',null,'כיתוב (לא חובה)'));
+        const inp=el('input'); inp.type='text'; inp.value=c.label||''; inp.style.width='100%';
+        inp.addEventListener('change',()=>{c.label=inp.value.trim().slice(0,24);stripSync();});
+        f.appendChild(inp);
+        ed.appendChild(f);
+      }
+      host.appendChild(ed);
+    }
+  }
+}
+$('#wgModeStrip').addEventListener('click',()=>{
+  const s=cellsToStrip(LAY.cells.map(c=>({...c})));
+  if(!s){toast('הפריסה הזו חופשית מדי לרצועה — יש בה מסדרון מפותל או חדרים גדולים');return;}
+  STRIP=s;STRIP_SEL=null;setLayView('strip');
+});
+$('#wgModeGrid').addEventListener('click',()=>setLayView('grid'));
 
 /* ================= the layout editor: a free canvas =================
    One editor, two users: the wing dialog (cells carry real room numbers) and the
