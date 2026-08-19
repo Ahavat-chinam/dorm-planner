@@ -4279,10 +4279,25 @@ function renderPool(ev){
     const all=S.boys.filter(b=>hits(b,Q.board));
     const placed=all.filter(b=>S.assign[b]);
     hitEl.classList.toggle('none',!all.length);
-    hitEl.textContent=!all.length?'לא נמצא אף בחור'
-      :all.length===1
-        ?(placed.length?`נמצא — בחדר ${S.assign[all[0]]}`:'נמצא — ממתין לשיבוץ')
-        :`${all.length} תואמים · ${placed.length} בחדרים · ${all.length-placed.length} ממתינים`;
+    hitEl.textContent='';
+    hitEl.className=hitEl.className.replace(/\s*lnk\b/,'');
+    if(!all.length){hitEl.textContent='לא נמצא אף בחור';return;}
+    if(all.length>1){
+      hitEl.textContent=`${all.length} תואמים · ${placed.length} בחדרים · ${all.length-placed.length} ממתינים`;
+      return;
+    }
+    const who=all[0],rm=S.assign[who];
+    if(!rm){hitEl.textContent='נמצא — ממתין לשיבוץ';return;}
+    /* the whole answer to "where does he sleep", in the sentence itself — and one
+       click that actually walks there, instead of telling him to look "below" */
+    const w=wingBy((roomBy(rm)||{}).wing);
+    hitEl.textContent=`${who} — חדר ${rm}${w?' · '+w.name:''} ›`;
+    hitEl.classList.add('lnk');
+    hitEl.title='לחיצה — מעבר לחדר שלו';
+    hitEl.onclick=()=>{
+      if(!w)return;
+      setTab('board');go('wing',w.building,w.id);RSEL=rm;render();
+    };
   }
 }
 
@@ -6645,15 +6660,22 @@ function renderHelp(){
   const mine=HELP.filter(h=>!(h.pro&&!isPro())&&!(h.basic&&isPro()));
   const list=q?mine.filter(h=>hits(helpText(h),q)):mine;
   if(!list.some(h=>h.id===HP.topic)&&list.length)HP.topic=list[0].id;
-  for(const h of list){
-    const b=el('button',h.id===HP.topic?'on':'');
+  /* A search that matches nothing used to empty the chapter list too, leaving a
+     stuck man staring at a guide with no guide in it. The chapters always stay. */
+  const navList=list.length?list:mine;
+  for(const h of navList){
+    const b=el('button',h.id===HP.topic&&list.length?'on':'');
     b.append(el('span','hn-i',h.ico),el('span','hn-t',h.t));
-    b.addEventListener('click',()=>{HP.topic=h.id;renderHelp();});
+    b.addEventListener('click',()=>{HP.q='';$('#hpSearch').value='';HP.topic=h.id;renderHelp();});
     nav.appendChild(b);
   }
   const doc=$('#hpDoc'); doc.innerHTML='';
   if(!list.length){
-    doc.appendChild(el('div','hp-none',`לא נמצא במדריך שום דבר שתואם ל"${q}". נסו מילה אחרת — למשל: תבנית, קבוצה, אקסל, גיבוי.`));
+    doc.appendChild(el('div','hp-none',`לא מצאנו "${q}" במדריך. אפשר לבחור פרק מהרשימה שמימין, או לנסות מילה אחרת.`));
+    const all=el('button','btn mini','הצגת כל הפרקים');
+    all.style.marginTop='10px';
+    all.addEventListener('click',()=>{HP.q='';$('#hpSearch').value='';$('#hpSearchClr').hidden=true;renderHelp();});
+    doc.appendChild(all);
     return;
   }
   const h=HELP.find(x=>x.id===HP.topic)||list[0];
@@ -6689,7 +6711,13 @@ function keysTable(){
 }
 $('#btnData').addEventListener('click',openData);
 $('#btnFind').addEventListener('click',openFind);
-$('#btnHelp').addEventListener('click',()=>openHelp(HELP_FOR_SEC[SEC]||'start'));
+/* a first-timer who presses ❔ while nothing exists yet needs the getting-started
+   chapter, not the chapter for whichever tab happens to be open behind him */
+function helpTopicNow(){
+  if(!PID||V.level==='projects'||(!S.boys.length&&!S.rooms.length))return 'start';
+  return HELP_FOR_SEC[SEC]||'start';
+}
+$('#btnHelp').addEventListener('click',()=>openHelp(helpTopicNow()));
 $('#hpClose').addEventListener('click',()=>$('#dlgHelp').close());
 $('#hpX').addEventListener('click',()=>$('#dlgHelp').close());
 $('#hpAbout').addEventListener('click',()=>{$('#dlgHelp').close();openAbout();});
@@ -11174,7 +11202,7 @@ document.addEventListener('keydown',e=>{
   const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable;
   const dlgOpen=!!document.querySelector('dialog[open]');
   /* help is reachable from anywhere, even mid-dialog — that is the point of F1 */
-  if(e.key==='F1'){e.preventDefault();openHelp(HELP_FOR_SEC[SEC]||'start');return;}
+  if(e.key==='F1'){e.preventDefault();openHelp(helpTopicNow());return;}
   if(e.ctrlKey&&(e.key==='k'||e.key==='K')){
     e.preventDefault();
     if(!PID)return;
