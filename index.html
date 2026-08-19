@@ -461,6 +461,10 @@ label.row small{font-size:11.5px;color:var(--dim);font-weight:600}
 .opt .ot{display:flex;flex-direction:column;gap:2px}
 .opt .ot b{font-size:14px;font-weight:800}
 .opt .ot small{font-size:12px;color:var(--dim);font-weight:600;line-height:1.55}
+/* the destructive choice must LOOK destructive before it is touched — a hover-only
+   cue is invisible to someone deciding whether it is safe to press */
+.opt.danger-opt{border-color:color-mix(in srgb,var(--red) 45%,var(--line2))}
+.opt.danger-opt .ot b{color:var(--red2)}
 .opt.danger-opt:hover{border-color:var(--red);box-shadow:0 8px 18px rgba(239,68,68,.2)}
 
 /* ---- api key guide ---- */
@@ -1900,8 +1904,11 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
   <span class="stat" id="saveState" hidden></span>
   <div class="actions">
     <button class="btn" id="btnProjects" title="מעבר בין פרויקטים">📁 פרויקטים</button>
+    <!-- undo existed only as Ctrl+Z, while ten confirms promised "אפשר לבטל" —
+         a promise a non-technical user could not collect on -->
+    <button class="btn" id="btnUndo" title="ביטול הפעולה האחרונה (Ctrl+Z)" disabled>↩️ ביטול</button>
     <button class="btn accent" id="btnAuto">🤖 שיבוץ אוטומטי</button>
-    <button class="btn" id="btnClear">🧹 נקה לוח</button>
+    <button class="btn" id="btnClear" title="מוציא את כל הבחורים מהחדרים — השמות והחדרים נשארים">🧹 הוצאת כולם מהחדרים</button>
     <button class="btn" id="btnData" title="ייבוא, ייצוא, גיבוי והדפסה">🗄️ נתונים</button>
     <button class="btn" id="btnFind" title="חיפוש בכל התוכנה (Ctrl+K)">🔍 חיפוש</button>
     <button class="btn" id="btnHelp" title="מדריך ההפעלה (F1)">❔ עזרה</button>
@@ -1990,7 +1997,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
     <div class="drop" id="byDrop">
       <div class="dz-ico">📄</div>
       <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="byPickFile">בחרו קובץ מהמכשיר</span></div>
-      <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
+      <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הקובץ נקרא כאן, לא נשלח לשום מקום<br>
         קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא גם את המבנה ·
         <span class="lnk" id="byTemplate">הורדת תבנית</span></div>
     </div>
@@ -2390,12 +2397,16 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <p class="hint" style="margin:10px 0 0">אפשר לנהל כמה פרויקטים במקביל — זמן אחר, מחזור אחר, או סתם ניסיון צדדי — והם לא מתערבבים.</p>
       </div>
       <div class="ed-sec" id="projModeSec">
-        <h4>🎚️ מצב עבודה</h4>
+        <!-- labelled by the WORK, not by the person. "פשוט / מתקדם" made a man who
+             runs a whole dormitory pick "מתקדם" for self-respect and then meet a
+             drawing canvas he never needed. -->
+        <h4>🎚️ איך תגדירו את החדרים?</h4>
         <div class="mode-seg" id="projMode" style="margin-bottom:9px">
-          <button data-m="basic">🙂 פשוט</button>
-          <button data-m="pro">📐 מתקדם</button>
+          <button data-m="basic">📝 רשימה</button>
+          <button data-m="pro">✏️ שרטוט</button>
         </div>
         <p class="hint" id="projModeNote" style="margin:0"></p>
+        <p class="hint" style="margin:7px 0 0">אפשר להחליף בין השניים בכל רגע — שום דבר לא נמחק.</p>
       </div>
       <div class="ed-sec" id="projActions" hidden>
         <h4>⚙️ פעולות</h4>
@@ -2596,13 +2607,13 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
 
 <dialog id="dlgClear">
   <div class="dlg-in">
-    <div class="dlg-head"><h3>🧹 ניקוי הלוח</h3>
+    <div class="dlg-head"><h3 id="clearTtl">🧹 הוצאת הבחורים מהחדרים</h3>
       <button class="dlg-x" id="clearX" title="סגירה">✕</button></div>
     <div class="dlg-body">
       <p class="dlg-lead" id="clearLead"></p>
       <div class="opts" id="clearOpts"></div>
     </div>
-    <div class="dlg-foot"><button class="btn" id="clearCancel">ביטול</button></div>
+    <div class="dlg-foot"><button class="btn" id="clearCancel">ביטול — לא לעשות כלום</button></div>
   </div>
 </dialog>
 
@@ -2837,7 +2848,7 @@ body.basic #structHint,body.basic #bldBarEd,body.basic #structBldBar{display:non
         <div class="drop" id="edDrop">
           <div class="dz-ico">📄</div>
           <div><b>גררו לכאן קובץ</b> או <span class="lnk" id="edPickFile">בחרו קובץ מהמכשיר</span></div>
-          <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הכול נקרא מקומית במחשב<br>
+          <div class="dz-sub">Excel · Word · CSV · TXT · JSON — הקובץ נקרא כאן, לא נשלח לשום מקום<br>
             קובץ עם עמודות <b>בחורים / חדר / מיטות / אגף</b> ייבא הכול בבת אחת ·
             <span class="lnk" id="edTemplate">הורדת תבנית</span></div>
         </div>
@@ -3612,8 +3623,11 @@ function createProject(name,desc,mode){
   editingRule=null; formMembers.clear(); ED=null; EDW=null; EDB=null; STR={bld:null};
   V={level:'home',bld:null,wing:null};
   initDynamic(); applySettings();
-  /* always the same landing — the welcome panel there offers the ways in */
-  setTab('board');
+  /* The five sections are NUMBERED. Dropping a first-timer on step 4 while the
+     toast tells him to add wings — which is step 1 — is the app contradicting its
+     own instructions. A brand-new project starts at step 1, where the thing he
+     must do first has its own screen. */
+  setTab('struct');
   render();
   return id;
 }
@@ -3843,6 +3857,13 @@ function undo(){
   save();initDynamic();render();
   toast('↩️ הפעולה האחרונה בוטלה');
 }
+/* the on-screen undo button mirrors the stack, so "אפשר לבטל" is something the
+   user can actually SEE and press rather than a keyboard secret */
+function paintUndo(){
+  const b=$('#btnUndo'); if(!b)return;
+  b.disabled=!UNDO.length;
+  b.title=UNDO.length?'ביטול הפעולה האחרונה (Ctrl+Z)':'אין כרגע מה לבטל';
+}
 function askConfirm(msg){return S.settings.confirm?confirm(msg):true;}
 
 /* ---------- locking ---------- */
@@ -4054,7 +4075,7 @@ function paintSuggestions(){
     bt.addEventListener('click',()=>{
       snapshot();
       S.assign={...sg.asg}; S.activeSim=null; selected=null;
-      save(); render(); toast('ההצעה בוצעה ✓ — Ctrl+Z לביטול');
+      save(); render(); toast('ההצעה בוצעה ✓ — ↩️ ביטול מחזיר');
     });
     row.append(tx,gn,bt); list.appendChild(row);
   }
@@ -5139,7 +5160,7 @@ function renderRules(ev){
       trashPut('rule',ruleText(r),r.level==='hard'?'בלתי מתפשר':'עדיף',{rule:{...r},note:noteOf('rule',r.id)});
       delete S.notes[noteKey('rule',r.id)];
       S.rules=S.rules.filter(x=>x.id!==r.id);save();render();
-      toast('הכלל נמחק — Ctrl+Z לביטול');
+      toast('הכלל נמחק — ↩️ ביטול מחזיר');
     });
 
     const edit=document.createElement('button');
@@ -5209,7 +5230,7 @@ function renderSims(){
       if(!askConfirm(`לדרוס את "${sim.name}" במצב שעל הלוח עכשיו?`))return;
       snapshot();
       sim.assign={...S.assign}; sim.ts=Date.now(); S.activeSim=sim.id;
-      save();render();toast(`"${sim.name}" עודכנה למצב הנוכחי — Ctrl+Z מחזיר`);
+      save();render();toast(`"${sim.name}" עודכנה למצב הנוכחי — ↩️ ביטול מחזיר`);
     });
     const bDel=document.createElement('button'); bDel.className='btn mini danger'; bDel.textContent='✕';
     bDel.addEventListener('click',e=>{
@@ -5219,7 +5240,7 @@ function renderSims(){
         trashPut('sim',sim.name,`${S.boys.filter(b2=>sim.assign[b2]).length} משובצים`,{sim:JSON.parse(JSON.stringify(sim))});
         S.sims=S.sims.filter(x=>x.id!==sim.id);
         if(S.activeSim===sim.id)S.activeSim=null;
-        save();render();toast('נמחקה — Ctrl+Z מחזיר');
+        save();render();toast('נמחקה — ↩️ ביטול מחזיר');
       }
     });
     btns.append(bLoad,bUpd,bDel);
@@ -5588,9 +5609,12 @@ $('#btnClear').addEventListener('click',()=>{
   if(!Object.keys(S.assign).length){toast('הלוח כבר ריק');return;}
   const lockedN=S.locks.filter(b=>S.assign[b]).length;
   if(!lockedN){
-    if(askConfirm('לנקות את הלוח ולהתחיל סימולציה חדשה?\n(הכללים והסימולציות השמורות נשארים)'))doClear('plain');
+    if(askConfirm('להוריד את כל הבחורים מהחדרים ולהתחיל את הסידור מחדש?\n\n'
+      +'רשימת השמות, החדרים והכללים נשארים — מתרוקן רק מי ישן איפה.\n'
+      +'אם תתחרטו, אפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.'))doClear('plain');
     return;
   }
+  $('#clearTtl').textContent='🧹 הוצאת הבחורים מהחדרים';
   $('#clearLead').textContent=lockedN===1
     ?'יש בחור אחד נעול 🔒 על הלוח. מה לעשות איתו?'
     :`יש ${lockedN} בחורים נעולים 🔒 על הלוח. מה לעשות איתם?`;
@@ -5689,13 +5713,37 @@ function optimize(locked){
   return best?{asg:best,score:bestScore,short:bestShort,ev:evaluate(best)}:null;
 }
 $('#btnAuto').addEventListener('click',()=>{
-  let locked=new Set(S.locks.filter(b=>S.assign[b]));
-  const unlockedPlaced=Object.keys(S.assign).filter(b=>!locked.has(b));
+  const locked0=new Set(S.locks.filter(b=>S.assign[b]));
+  const unlockedPlaced=Object.keys(S.assign).filter(b=>!locked0.has(b));
+  /* This used to be a bare confirm() whose CANCEL button meant "throw away every
+     placement I made by hand". Cancel/Esc/✕ mean "nothing happened" in every dialog
+     a person has ever seen — so the escape hatch was the destructive branch, and an
+     hour of manual work vanished with no way to connect it to the click.
+     Three named choices instead, and the safe one is the default. */
   if(unlockedPlaced.length){
-    const note=locked.size?'\n(בחורים נעולים 🔒 נשארים במקומם בכל מקרה)':'';
-    if(confirm(`לשמור על הבחורים שכבר משובצים ולהשלים רק את החסרים?${note}\n\nאישור — להשלים סביב הקיימים\nביטול — לשבץ מחדש מאפס`))
-      locked=new Set([...locked,...unlockedPlaced]);
+    $('#clearTtl').textContent='🤖 שיבוץ אוטומטי';
+    $('#clearLead').textContent=
+      `${cnt(unlockedPlaced.length,'בחורים')} כבר משובצים על הלוח${locked0.size?' (ועוד '+cnt(locked0.size,'בחורים')+' נעולים 🔒 שיישארו במקומם בכל מקרה)':''}. מה לעשות איתם?`;
+    const box=$('#clearOpts'); box.innerHTML='';
+    const opt=(ico,title,sub,fn,danger)=>{
+      const b=document.createElement('button');
+      b.className='opt'+(danger?' danger-opt':'');
+      b.innerHTML=`<span class="oi">${ico}</span><span class="ot"><b>${esc(title)}</b><small>${esc(sub)}</small></span>`;
+      b.addEventListener('click',()=>{$('#dlgClear').close();fn();});
+      box.appendChild(b);
+    };
+    opt('✅','להשאיר אותם ולהשלים רק את החסרים',
+        'מי שכבר סידרתם נשאר בדיוק במקומו — התוכנה תמלא רק את המיטות הריקות',
+        ()=>runAuto(new Set([...locked0,...unlockedPlaced])));
+    opt('🔄','לשבץ הכול מחדש מאפס',
+        'הסידור הידני שעשיתם יימחק והתוכנה תתחיל מדף חלק — אפשר להחזיר ב-↩️ ביטול',
+        ()=>runAuto(locked0),true);
+    $('#dlgClear').showModal();
+    return;
   }
+  runAuto(locked0);
+});
+function runAuto(locked){
   const btn=$('#btnAuto');
   btn.disabled=true;btn.textContent='⏳ מחשב…';
   /* the search can block the thread for a moment. Yielding a frame first lets the
@@ -5728,7 +5776,7 @@ $('#btnAuto').addEventListener('click',()=>{
   };
   requestAnimationFrame(()=>setTimeout(go,0));
   setTimeout(go,120);
-});
+}
 
 /* ---------- sims save ---------- */
 $('#simName').addEventListener('keydown',e=>{
@@ -5787,7 +5835,7 @@ $('#fileImport').addEventListener('change',e=>{
       S=migrate(s);save();initDynamic();
       applySettings();applyAiIdentity();paintDisplayUI();
       V={level:'home',bld:null,wing:null};
-      render();toast('הגיבוי שוחזר ✓ — Ctrl+Z מחזיר');
+      render();toast('הגיבוי שוחזר ✓ — ↩️ ביטול מחזיר');
     }catch(err){toast('הקובץ לא תקין');}
   };
   rd.readAsText(f);
@@ -5945,7 +5993,7 @@ $('#btnEditApply').addEventListener('click',()=>{
     const bits=[gone&&`${gone} אגפים יימחקו`,evicted&&`${evicted} בחורים יצאו מחדריהם`,
                 lostRules&&`${lostRules} כללים יימחקו`].filter(Boolean);
     if(bits.length&&!confirm('שמירת העריכה תגרור:\n· '+bits.join('\n· ')
-      +'\n\nCtrl+Z מחזיר. להמשיך?'))return;
+      +'\n\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה. להמשיך?'))return;
   }
   snapshot();
   const renB={},renR={};
@@ -6999,11 +7047,11 @@ function byRow(name){
   const x=el('button','ed-x','✕'); x.title='הסרה מהרשימה';
   x.addEventListener('click',()=>{
     const extra=rm?`\nהוא משובץ בחדר ${rm} — החדר יתפנה.`:'';
-    if(!confirm(`להסיר את "${name}" מהרשימה?${extra}\nCtrl+Z מחזיר.`))return;
+    if(!confirm(`להסיר את "${name}" מהרשימה?${extra}\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.`))return;
     snapshot();
     removeBoyEverywhere(name);
     save();initDynamic();render();
-    toast('הוסר — Ctrl+Z מחזיר');
+    toast('הוסר — ↩️ ביטול מחזיר');
   });
   row.appendChild(x);
   return row;
@@ -7330,8 +7378,8 @@ function fillWingFromGroup(wingId,groupId){
 /* ---------------- project dialog ---------------- */
 let EDP=null;
 const MODE_NOTE={
-  basic:'רק אגפים וחדרים — בלי בניינים, בלי קומות ובלי שרטוט. הכי מהיר להתחיל, ומספיק לרוב הפנימיות.',
-  pro:'בניינים, קומות ושרטוט פריסה: מסדרון שמתפתל, חדרים בגדלים שונים, מקלחות ושירותים במקומם.'
+  basic:'שורה לכל אגף — השם, כמה חדרים וכמה מיטות בכל אחד. בלי לצייר כלום. מספיק לרוב הפנימיות, והכי מהיר להתחיל.',
+  pro:'מסדרים את הקומה על המסך כמו בדף שתלוי על הקיר — חדרים בגדלים שונים, מקלחות ושירותים במקומם. לוקח יותר זמן.'
 };
 let PROJ_MODE='basic';
 function paintProjMode(){
@@ -7346,6 +7394,8 @@ function openProjDlg(id){
   EDP=id||null;
   const p=id?projMeta(id):null;
   $('#projTtl').textContent=p?'📁 '+p.name:'📁 פרויקט חדש';
+  /* "שמירה" on a thing that does not exist yet reads as "save what?" */
+  $('#projSave').textContent=p?'שמירה':'✓ יצירה — ונתחיל';
   $('#projName').value=p?p.name:'';
   $('#projDesc').value=p?p.desc:'';
   /* the mode is chosen once here, and can be flipped later on the structure page */
@@ -7503,7 +7553,7 @@ function renderFloorSeq(b){
       snapshot();
       layoutFloorSequence(b.id,EDB.floor,order);
       save();bldPaint();render();
-      toast('סדר האגפים בקומה עודכן — Ctrl+Z מחזיר');
+      toast('סדר האגפים בקומה עודכן — ↩️ ביטול מחזיר');
     });
     box.appendChild(d);
   });
@@ -7538,7 +7588,7 @@ function setMode(m){
 function renderModeBar(){
   const bar=$('#modeBar'); bar.innerHTML='';
   const seg=el('div','mode-seg');
-  [['basic','🙂 פשוט'],['pro','📐 מתקדם']].forEach(([m,lbl])=>{
+  [['basic','📝 רשימה'],['pro','✏️ שרטוט']].forEach(([m,lbl])=>{
     const b=el('button',S.mode===m?'on':'',lbl);
     b.addEventListener('click',()=>setMode(m));
     seg.appendChild(b);
@@ -7569,6 +7619,16 @@ function renderStructBasic(){
   if(ghost||!S.wings.length){
     box.appendChild(el('div','empty-note',
       'עדיין אין חדרים. מלאו את השורה למטה — שם האגף, כמה חדרים וכמה מיטות — ולחצו "הוספת אגף".'));
+    /* the shortcut for someone who already has the list in a file. It used to live
+       only on the board's welcome panel — which a first-timer no longer lands on. */
+    const alt=el('div','empty-note');
+    alt.style.marginTop='6px';
+    alt.appendChild(document.createTextNode('כבר יש לכם קובץ אקסל עם הבחורים והחדרים? '));
+    const lnk=el('span','lnk','אפשר לייבא אותו במקום להקליד');
+    lnk.addEventListener('click',()=>{setTab('boys');setTimeout(()=>{
+      const d=$('#byDrop'); if(d)d.scrollIntoView({block:'center'});},60);});
+    alt.appendChild(lnk);
+    box.appendChild(alt);
   }
   for(const w of S.wings){
     if(ghost)break;
@@ -7805,7 +7865,7 @@ function bldPaint(){
         e.stopPropagation();
         const ws=floorWings(b.id,f.id);
         const rooms=S.rooms.filter(r=>ws.some(w=>w.id===r.wing));
-        if(!confirm(`למחוק את "${f.name}"?\n\n${ws.length} אגפים ו־${rooms.length} חדרים יימחקו איתה.\nCtrl+Z מחזיר.`))return;
+        if(!confirm(`למחוק את "${f.name}"?\n\n${ws.length} אגפים ו־${rooms.length} חדרים יימחקו איתה.\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.`))return;
         snapshot();
         /* file the wings FIRST, then drop the rooms without filing them separately.
            Filing rooms whose wing was deleted without a record of its own produced
@@ -8083,7 +8143,7 @@ $('#bldBarDel').addEventListener('click',()=>{
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
   if(S.wings.length<2){toast('לא ניתן למחוק את האגף האחרון — לפרויקט חייב להישאר אגף אחד לפחות.\nאפשר לשנות את שמו, למחוק את חדריו, או להוסיף אגף אחר ואז למחוק את זה.');return;}
   if(!confirm(`למחוק את "${w.name}"?\n\n${rooms.length} חדרים`
-    +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\nCtrl+Z מחזיר.'))return;
+    +(boys?` ו־${boys} בחורים שיחזרו לממתינים`:'')+'.\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.'))return;
   dropBldAnchor();
   snapshot();
   trashWing(w);
@@ -8136,7 +8196,7 @@ function deleteBuilding(id){
   const rooms=S.rooms.filter(r=>wid.has(r.wing));
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
   if(!askConfirm(`למחוק את "${b.name}"?\n\nיימחקו גם ${ws.length} אגפים ו־${rooms.length} חדרים`
-    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
+    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.'))return;
   snapshot();
   /* exactly once, and BEFORE the wings are unlinked — a second call after the filter
      would file a second copy that has already lost its wings, and restoring that one
@@ -8150,7 +8210,7 @@ function deleteBuilding(id){
   V={level:'home',bld:null,wing:null};
   STR.bld=S.buildings[0].id; EDB=null;
   if(SEC==='struct')renderStruct(); else render();
-  toast('הבניין נמחק — Ctrl+Z מחזיר');
+  toast('הבניין נמחק — ↩️ ביטול מחזיר');
 }
 $('#bldDel').addEventListener('click',()=>deleteBuilding(EDB&&EDB.id));
 
@@ -9113,14 +9173,14 @@ $('#wgDel').addEventListener('click',()=>{
   const rooms=roomsOf(w.id);
   const boys=rooms.reduce((a,r)=>a+occupants(r.num).length,0);
   if(!confirm(`למחוק את "${w.name}"?\n\nיימחקו ${rooms.length} חדרים`
-    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר לבטל מיד ב־Ctrl+Z.'))return;
+    +(boys?`, ו־${boys} בחורים יחזרו לרשימת הממתינים`:'')+'.\n\nאפשר להחזיר מיד בכפתור ↩️ ביטול שלמעלה.'))return;
   snapshot();
   trashWing(w);
   dropRooms(rooms.map(r=>r.num),false);
   S.wings=S.wings.filter(x=>x.id!==w.id);
   save(); closeWing(); initDynamic();
   V={level:S.buildings.length>1?'building':'home',bld:w.building,wing:null};
-  render(); toast('האגף נמחק — Ctrl+Z מחזיר');
+  render(); toast('האגף נמחק — ↩️ ביטול מחזיר');
 });
 
 /* ---------- Excel export (.xlsx built from scratch, zero deps) ---------- */
@@ -10855,6 +10915,7 @@ $('#btnCopyLink').addEventListener('click',async()=>{
 /* which chrome is on screen. An empty project greets with the big welcome
    buttons; the waiting rail stays visible in every section, like it always was */
 function renderWelcome(){
+  paintUndo();
   const inProj=!!PID&&V.level!=='projects';
   const empty=!S.boys.length&&!S.rooms.length;
   const wel=inProj&&SEC==='board'&&empty;
@@ -11039,6 +11100,7 @@ function openSettings(){
   renderSetStats();
   $('#dlgSettings').showModal();
 }
+$('#btnUndo').addEventListener('click',undo);
 $('#btnSettings').addEventListener('click',openSettings);
 $('#setClose').addEventListener('click',()=>$('#dlgSettings').close());
 $('#setX').addEventListener('click',()=>$('#dlgSettings').close());
@@ -11083,7 +11145,7 @@ $('#rstSims').addEventListener('click',()=>{
   if(!askConfirm(`למחוק את כל ${S.sims.length} הסימולציות השמורות?`))return;
   snapshot();
   S.sims=[];S.activeSim=null;save();render();renderSetStats();
-  toast('הסימולציות נמחקו — Ctrl+Z מחזיר');
+  toast('הסימולציות נמחקו — ↩️ ביטול מחזיר');
 });
 /* the same full reset, reachable from the Data center — the place people actually
    look for "clear everything", instead of the bottom of the settings dialog */
